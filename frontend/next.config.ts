@@ -23,6 +23,10 @@ const nextConfig: NextConfig = {
         source: "/admin/:path*",
         destination: `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/admin/:path*`,
       },
+      {
+        source: "/icon/:path*",
+        destination: `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/icon/:path*`,
+      },
     ];
   },
 };

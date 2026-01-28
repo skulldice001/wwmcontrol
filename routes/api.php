@@ -2,13 +2,54 @@
 
 use App\Http\Controllers\Admin\Auth\LoginController;
 use App\Services\DiscordService;
+use App\Http\Controllers\Auth\DiscordController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\Auth;
 
 Route::get('/user', function (Request $request) {
-    return $request->user();
+    return $request->user()->load(['mainSkill', 'subSkill']);
 })->middleware('auth:sanctum');
+
+Route::middleware('auth:sanctum')->get('/skills', [ProfileController::class, 'getSkills']);
+
+Route::middleware('auth:sanctum')->get('/user/inner-ways', function (Request $request) {
+    $colorOrder = ['gold', 'purple', 'blue'];
+
+    $innerWays = $request->user()->innerWays()
+        ->get()
+        ->sort(function ($a, $b) use ($colorOrder) {
+            $indexA = array_search($a->color, $colorOrder);
+            $indexB = array_search($b->color, $colorOrder);
+
+            $indexA = $indexA === false ? 999 : $indexA;
+            $indexB = $indexB === false ? 999 : $indexB;
+
+            if ($indexA !== $indexB) {
+                return $indexA <=> $indexB;
+            }
+
+            // If same color, sort by level descending
+            if ($a->pivot->level !== $b->pivot->level) {
+                return $b->pivot->level <=> $a->pivot->level;
+            }
+
+            // If same color and same level, sort by name ascending
+            return strcasecmp($a->name, $b->name);
+        })
+        ->values();
+
+    return response()->json([
+        'inner_ways' => $innerWays->map(function($iw) {
+            return [
+                'name' => $iw->name,
+                'slug' => $iw->slug,
+                'icon' => $iw->icon,
+                'color' => $iw->color,
+                'level' => $iw->pivot->level
+            ];
+        })
+    ]);
+});
 
 Route::get('/discord/check-role', function (Request $request, DiscordService $discordService) {
     $user = $request->user();
@@ -38,10 +79,14 @@ Route::get('/discord/roles', function (Request $request, DiscordService $discord
 
 use App\Http\Controllers\Admin\StaffController;
 use App\Http\Controllers\Admin\EventController;
+use App\Http\Controllers\ProfileController;
 
 Route::get('/admin/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:staff');
+
+Route::middleware('auth:sanctum')->post('/user/profile', [ProfileController::class, 'update']);
+Route::middleware('auth:sanctum')->post('/user/inner-ways', [ProfileController::class, 'updateInnerWays']);
 
 Route::prefix('admin')->middleware('auth:staff')->group(function () {
     Route::apiResource('staffs', StaffController::class);

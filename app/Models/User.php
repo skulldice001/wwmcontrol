@@ -25,6 +25,13 @@ class User extends Authenticatable
         'discord_token',
         'discord_refresh_token',
         'discord_avatar',
+        'country',
+        'online_from',
+        'online_to',
+        'ingame_name',
+        'ingame_id',
+        'main_skill_id',
+        'sub_skill_id',
     ];
 
     /**
@@ -52,5 +59,20 @@ class User extends Authenticatable
     public function events()
     {
         return $this->belongsToMany(Event::class);
+    }
+
+    public function innerWays()
+    {
+        return $this->belongsToMany(InnerWay::class, 'user_inner_way')->withPivot('level')->withTimestamps();
+    }
+
+    public function mainSkill()
+    {
+        return $this->belongsTo(Skill::class, 'main_skill_id');
+    }
+
+    public function subSkill()
+    {
+        return $this->belongsTo(Skill::class, 'sub_skill_id');
     }
 }

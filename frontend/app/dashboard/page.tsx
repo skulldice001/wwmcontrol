@@ -3,22 +3,27 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import api from "@/lib/axios";
+import Navbar from "@/components/Navbar";
 
 export default function Dashboard() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
+  const [innerWays, setInnerWays] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [roles, setRoles] = useState<any[]>([]);
+  const [selectedIcon, setSelectedIcon] = useState<any>(null);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [userResponse, rolesResponse] = await Promise.all([
+        const [userResponse, rolesResponse, innerWaysResponse] = await Promise.all([
           api.get("/user"),
-          api.get("/discord/roles")
+          api.get("/discord/roles"),
+          api.get("/user/inner-ways")
         ]);
         setUser(userResponse.data);
         setRoles(rolesResponse.data.roles || []);
+        setInnerWays(innerWaysResponse.data.inner_ways || []);
       } catch (error) {
         // If unauthorized, redirect to home/login
         router.push("/");
@@ -49,43 +54,7 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-[#FDFDFC] dark:bg-[#0a0a0a] text-[#1b1b18] dark:text-[#EDEDEC]">
-      {/* Navigation */}
-      <nav className="border-b border-[#1914001a] dark:border-[#fffaed1a] bg-white/50 dark:bg-[#161615]/50 backdrop-blur-md sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16 items-center">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-[#f53003] rounded-lg flex items-center justify-center text-white font-bold">
-                W
-              </div>
-              <span className="font-bold text-lg tracking-tight">WWM2</span>
-            </div>
-
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-3 px-3 py-1.5 rounded-full bg-[#19140005] dark:bg-[#fffaed05] border border-[#1914001a] dark:border-[#fffaed1a]">
-                {user?.discord_avatar ? (
-                  <img
-                    src={user.discord_avatar}
-                    alt={user.name}
-                    className="w-7 h-7 rounded-full border border-[#1914001a] dark:border-[#fffaed1a]"
-                  />
-                ) : (
-                  <div className="w-7 h-7 rounded-full bg-[#f53003]/10 flex items-center justify-center text-[#f53003] text-xs font-bold">
-                    {user?.name?.charAt(0)}
-                  </div>
-                )}
-                <span className="text-sm font-medium">{user?.name}</span>
-              </div>
-
-              <button
-                onClick={handleLogout}
-                className="text-sm font-medium text-[#706f6c] dark:text-[#A1A09A] hover:text-[#1b1b18] dark:hover:text-[#EDEDEC] transition-colors"
-              >
-                Logout
-              </button>
-            </div>
-          </div>
-        </div>
-      </nav>
+      <Navbar user={user} innerWays={innerWays} onInnerWaysUpdate={setInnerWays} onUserUpdate={setUser} />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Welcome Header */}
@@ -112,6 +81,133 @@ export default function Dashboard() {
             </div>
           ))}
         </div>
+
+        {/* Martial Arts Section */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
+          {/* Main Skill */}
+          <div className="bg-white dark:bg-[#161615] rounded-3xl border border-[#1914001a] dark:border-[#fffaed1a] p-8 shadow-sm flex items-center gap-6">
+            <div className="w-24 h-24 rounded-2xl bg-amber-400/10 flex items-center justify-center border-2 border-amber-400/20">
+              {user?.main_skill ? (
+                <img src={`/icon/skill/${user.main_skill.icon}`} alt={user.main_skill.name} className="w-20 h-20 object-contain drop-shadow-md" />
+              ) : (
+                <div className="text-4xl">⚔️</div>
+              )}
+            </div>
+            <div>
+              <div className="text-xs font-bold text-amber-500 uppercase tracking-widest mb-1">Võ công chính</div>
+              <div className="text-2xl font-black capitalize">{user?.main_skill?.name || 'Chưa chọn'}</div>
+              <div className="text-sm text-[#706f6c] dark:text-[#A1A09A] mt-1">Sức mạnh chủ đạo của nhân vật</div>
+            </div>
+          </div>
+
+          {/* Sub Skill */}
+          <div className="bg-white dark:bg-[#161615] rounded-3xl border border-[#1914001a] dark:border-[#fffaed1a] p-8 shadow-sm flex items-center gap-6">
+            <div className="w-24 h-24 rounded-2xl bg-blue-500/10 flex items-center justify-center border-2 border-blue-500/20">
+              {user?.sub_skill ? (
+                <img src={`/icon/skill/${user.sub_skill.icon}`} alt={user.sub_skill.name} className="w-20 h-20 object-contain drop-shadow-md" />
+              ) : (
+                <div className="text-4xl">🛡️</div>
+              )}
+            </div>
+            <div>
+              <div className="text-xs font-bold text-blue-500 uppercase tracking-widest mb-1">Võ công phụ</div>
+              <div className="text-2xl font-black capitalize">{user?.sub_skill?.name || 'Chưa chọn'}</div>
+              <div className="text-sm text-[#706f6c] dark:text-[#A1A09A] mt-1">Kỹ năng bổ trợ linh hoạt</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Inner Ways Section */}
+        {innerWays && innerWays.length > 0 && (
+          <div className="mb-12">
+            <h2 className="text-2xl font-bold mb-6">Tâm Pháp Võ Công</h2>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+              {innerWays.map((iw: any) => (
+                <div key={iw.slug} className="p-4 flex flex-col items-center text-center group cursor-pointer" onClick={() => setSelectedIcon(iw)}>
+                  <div className={`w-24 h-24 mb-3 relative transition-transform duration-300 group-hover:scale-110 rounded-2xl flex items-center justify-center ${
+                    iw.color === 'gold' ? 'bg-amber-400/10' :
+                    iw.color === 'purple' ? 'bg-purple-500/10' :
+                    'bg-blue-500/10'
+                  }`}>
+                    <img
+                      src={`/icon/inner_way/${iw.icon}`}
+                      alt={iw.name}
+                      className="w-20 h-20 object-contain drop-shadow-md"
+                    />
+                    <div className="absolute top-0 right-0 bg-[#f53003] text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full border-2 border-white dark:border-[#161615] shadow-sm">
+                      Lv.{iw.level}
+                    </div>
+                  </div>
+                  <div className="text-sm font-bold capitalize truncate w-full group-hover:text-[#f53003] transition-colors" title={iw.name}>
+                    {iw.name}
+                  </div>
+                  <div className="mt-2 w-16 bg-[#1914000a] dark:bg-[#fffaed0a] h-1.5 rounded-full overflow-hidden">
+                    <div
+                      className="bg-[#f53003] h-full transition-all duration-500"
+                      style={{ width: `${(iw.level / 6) * 100}%` }}
+                    ></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Icon Zoom Modal */}
+        {selectedIcon && (
+          <div
+            className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200"
+            onClick={() => setSelectedIcon(null)}
+          >
+            <div
+              className="relative max-w-sm w-full bg-white dark:bg-[#161615] rounded-3xl p-8 flex flex-col items-center shadow-2xl animate-in zoom-in duration-300"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                onClick={() => setSelectedIcon(null)}
+                className="absolute top-4 right-4 p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+              >
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
+                </svg>
+              </button>
+
+              <div className={`w-48 h-48 mb-6 relative rounded-3xl flex items-center justify-center ${
+                selectedIcon.color === 'gold' ? 'bg-amber-400/20' :
+                selectedIcon.color === 'purple' ? 'bg-purple-500/20' :
+                'bg-blue-500/20'
+              }`}>
+                <img
+                  src={`/icon/inner_way/${selectedIcon.icon}`}
+                  alt={selectedIcon.name}
+                  className="w-40 h-40 object-contain drop-shadow-2xl"
+                />
+                <div className="absolute -top-3 -right-3 bg-[#f53003] text-white text-xl font-bold px-4 py-1.5 rounded-full border-4 border-white dark:border-[#161615] shadow-xl">
+                  Lv.{selectedIcon.level}
+                </div>
+              </div>
+
+              <h3 className="text-2xl font-black capitalize mb-2">{selectedIcon.name}</h3>
+              <p className="text-[#706f6c] dark:text-[#A1A09A] font-medium mb-6">
+                Phẩm chất: <span className={`capitalize ${
+                  selectedIcon.color === 'gold' ? 'text-amber-500' :
+                  selectedIcon.color === 'purple' ? 'text-purple-500' :
+                  'text-blue-500'
+                }`}>{selectedIcon.color === 'gold' ? 'Vàng' : selectedIcon.color === 'purple' ? 'Tím' : 'Xanh'}</span>
+              </p>
+
+              <div className="w-full bg-[#1914000a] dark:bg-[#fffaed0a] h-3 rounded-full overflow-hidden mb-2">
+                <div
+                  className="bg-[#f53003] h-full transition-all duration-1000"
+                  style={{ width: `${(selectedIcon.level / 6) * 100}%` }}
+                ></div>
+              </div>
+              <div className="text-xs font-bold text-[#706f6c] dark:text-[#A1A09A] uppercase tracking-widest">
+                Tiến độ tu luyện: {selectedIcon.level}/6
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Content Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -147,10 +243,21 @@ export default function Dashboard() {
                   </div>
                 </div>
                 <div className="space-y-1">
-                  <div className="text-xs font-bold uppercase tracking-wider text-[#706f6c] dark:text-[#A1A09A]">Email Verified</div>
-                  <div className="text-sm flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-green-500"></span>
-                    Yes
+                  <div className="text-xs font-bold uppercase tracking-wider text-[#706f6c] dark:text-[#A1A09A]">Quốc gia</div>
+                  <div className="text-sm p-2 bg-[#19140005] dark:bg-[#fffaed05] rounded border border-[#1914000a] dark:border-[#fffaed0a]">
+                    {user?.country || 'Chưa cập nhật'}
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <div className="text-xs font-bold uppercase tracking-wider text-[#706f6c] dark:text-[#A1A09A]">Online (GMT+7)</div>
+                  <div className="text-sm p-2 bg-[#19140005] dark:bg-[#fffaed05] rounded border border-[#1914000a] dark:border-[#fffaed0a]">
+                    {user?.online_from && user?.online_to ? `${user.online_from} - ${user.online_to}` : 'Chưa cập nhật'}
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <div className="text-xs font-bold uppercase tracking-wider text-[#706f6c] dark:text-[#A1A09A]">Ingame</div>
+                  <div className="text-sm p-2 bg-[#19140005] dark:bg-[#fffaed05] rounded border border-[#1914000a] dark:border-[#fffaed0a]">
+                    {user?.ingame_name ? `${user.ingame_name} (${user.ingame_id || 'N/A'})` : 'Chưa cập nhật'}
                   </div>
                 </div>
               </div>
