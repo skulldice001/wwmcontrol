@@ -3,6 +3,9 @@
 use App\Http\Controllers\Admin\Auth\LoginController;
 use App\Services\DiscordService;
 use App\Http\Controllers\Auth\DiscordController;
+use App\Http\Controllers\Admin\StaffController;
+use App\Http\Controllers\Admin\EventController;
+use App\Http\Controllers\ProfileController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -76,10 +79,6 @@ Route::get('/discord/roles', function (Request $request, DiscordService $discord
         'roles' => $roles,
     ]);
 })->middleware('auth:sanctum');
-
-use App\Http\Controllers\Admin\StaffController;
-use App\Http\Controllers\Admin\EventController;
-use App\Http\Controllers\ProfileController;
 
 Route::get('/admin/user', function (Request $request) {
     return $request->user();

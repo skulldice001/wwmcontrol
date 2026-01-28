@@ -43,10 +43,17 @@ class ProfileController extends Controller
             return response()->json(['message' => 'Võ công chính và phụ không được trùng nhau.'], 422);
         }
 
-        $user->update([
-            'main_skill_id' => $validated['main_skill_id'] ?? null,
-            'sub_skill_id' => $validated['sub_skill_id'] ?? null,
-        ]);
+        $updateData = [];
+        if ($request->has('main_skill_id')) {
+            $updateData['main_skill_id'] = $validated['main_skill_id'];
+        }
+        if ($request->has('sub_skill_id')) {
+            $updateData['sub_skill_id'] = $validated['sub_skill_id'];
+        }
+
+        if (!empty($updateData)) {
+            $user->update($updateData);
+        }
 
         $syncData = [];
         foreach ($validated['inner_ways'] as $iw) {
