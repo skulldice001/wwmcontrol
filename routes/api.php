@@ -87,6 +87,12 @@ Route::get('/admin/user', function (Request $request) {
 Route::middleware('auth:sanctum')->post('/user/profile', [ProfileController::class, 'update']);
 Route::middleware('auth:sanctum')->post('/user/inner-ways', [ProfileController::class, 'updateInnerWays']);
 
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/events', [\App\Http\Controllers\UserEventController::class, 'index']);
+    Route::post('/events/{event}/register', [\App\Http\Controllers\UserEventController::class, 'register']);
+    Route::post('/events/{event}/unregister', [\App\Http\Controllers\UserEventController::class, 'unregister']);
+});
+
 Route::prefix('admin')->middleware('auth:staff')->group(function () {
     Route::apiResource('staffs', StaffController::class);
     Route::apiResource('events', EventController::class);
