@@ -12,7 +12,7 @@ class EventController extends Controller
 {
     public function index()
     {
-        return response()->json(Event::with(['creator:id,name', 'participants:id,name'])->get()->map(fn($e) => $this->formatEvent($e)));
+        return response()->json(Event::with(['creator:id,name', 'participants:id,name,ingame_name,ingame_id,main_skill_id,sub_skill_id', 'participants.mainSkill', 'participants.subSkill'])->get()->map(fn($e) => $this->formatEvent($e)));
     }
 
     public function store(Request $request)
@@ -57,12 +57,12 @@ class EventController extends Controller
             $event->participants()->sync($validated['participant_ids']);
         }
 
-        return response()->json($this->formatEvent($event->load(['creator:id,name', 'participants:id,name'])), 201);
+        return response()->json($this->formatEvent($event->load(['creator:id,name', 'participants:id,name,ingame_name,ingame_id,main_skill_id,sub_skill_id', 'participants.mainSkill', 'participants.subSkill'])), 201);
     }
 
     public function show(Event $event)
     {
-        return response()->json($this->formatEvent($event->load(['creator:id,name', 'participants:id,name'])));
+        return response()->json($this->formatEvent($event->load(['creator:id,name', 'participants:id,name,ingame_name,ingame_id,main_skill_id,sub_skill_id', 'participants.mainSkill', 'participants.subSkill'])));
     }
 
     public function update(Request $request, Event $event)
@@ -109,7 +109,7 @@ class EventController extends Controller
             $event->participants()->sync($validated['participant_ids']);
         }
 
-        return response()->json($this->formatEvent($event->load(['creator:id,name', 'participants:id,name'])));
+        return response()->json($this->formatEvent($event->load(['creator:id,name', 'participants:id,name,ingame_name,ingame_id,main_skill_id,sub_skill_id', 'participants.mainSkill', 'participants.subSkill'])));
     }
 
     public function destroy(Request $request, Event $event)
@@ -123,14 +123,21 @@ class EventController extends Controller
 
     protected function formatEvent(Event $event)
     {
-        $event->participants = $event->participants->map(function ($user) {
+        $data = $event->toArray();
+        $data['creator'] = $event->creator ? $event->creator->only(['id', 'name']) : null;
+        $data['participants'] = $event->participants->map(function ($user) {
             return [
                 'id' => $user->id,
                 'name' => $user->name,
+                'ingame_name' => $user->ingame_name,
+                'ingame_id' => $user->ingame_id,
+                'main_skill' => $user->mainSkill ? $user->mainSkill->name : null,
+                'sub_skill' => $user->subSkill ? $user->subSkill->name : null,
                 'preferred_time' => $user->pivot ? $user->pivot->preferred_time : null
             ];
-        });
-        return $event;
+        })->toArray();
+
+        return $data;
     }
 
     protected function prepareGuildWarData(Request $request, $existingEvent = null)
