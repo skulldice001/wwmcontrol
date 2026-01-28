@@ -12,7 +12,7 @@ class EventController extends Controller
 {
     public function index()
     {
-        return response()->json(Event::with(['creator:id,name', 'participants:id,name'])->get());
+        return response()->json(Event::with(['creator:id,name', 'participants:id,name'])->get()->map(fn($e) => $this->formatEvent($e)));
     }
 
     public function store(Request $request)
@@ -57,12 +57,12 @@ class EventController extends Controller
             $event->participants()->sync($validated['participant_ids']);
         }
 
-        return response()->json($event->load('participants'), 201);
+        return response()->json($this->formatEvent($event->load(['creator:id,name', 'participants:id,name'])), 201);
     }
 
     public function show(Event $event)
     {
-        return response()->json($event->load(['creator:id,name', 'participants:id,name']));
+        return response()->json($this->formatEvent($event->load(['creator:id,name', 'participants:id,name'])));
     }
 
     public function update(Request $request, Event $event)
@@ -109,7 +109,7 @@ class EventController extends Controller
             $event->participants()->sync($validated['participant_ids']);
         }
 
-        return response()->json($event->load('participants'));
+        return response()->json($this->formatEvent($event->load(['creator:id,name', 'participants:id,name'])));
     }
 
     public function destroy(Request $request, Event $event)
@@ -119,6 +119,18 @@ class EventController extends Controller
         $event->delete();
 
         return response()->json(null, 204);
+    }
+
+    protected function formatEvent(Event $event)
+    {
+        $event->participants = $event->participants->map(function ($user) {
+            return [
+                'id' => $user->id,
+                'name' => $user->name,
+                'preferred_time' => $user->pivot ? $user->pivot->preferred_time : null
+            ];
+        });
+        return $event;
     }
 
     protected function prepareGuildWarData(Request $request, $existingEvent = null)

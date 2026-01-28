@@ -495,6 +495,11 @@ export default function StaffDashboardPage() {
                         {idx + 1}
                       </div>
                       <div className="font-bold text-gray-900">{user.name}</div>
+                      {user.preferred_time && (
+                        <div className="px-2 py-0.5 bg-amber-50 text-amber-700 border border-amber-100 rounded text-[10px] font-black">
+                          {user.preferred_time}
+                        </div>
+                      )}
                       <div className="text-xs text-gray-400 ml-auto">ID: {user.id}</div>
                     </div>
                   ))}
