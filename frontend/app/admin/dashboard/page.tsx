@@ -3,14 +3,18 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import api from "@/lib/axios";
+import { useNotification } from "@/context/NotificationContext";
 
 export default function StaffDashboardPage() {
+  const { showNotification, showConfirm } = useNotification();
   const [staff, setStaff] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [staffs, setStaffs] = useState<any[]>([]);
   const [events, setEvents] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState("events");
   const [selectedEventForDetails, setSelectedEventForDetails] = useState<any>(null);
+  const [participantSearch, setParticipantSearch] = useState("");
+  const [skillFilter, setSkillFilter] = useState("");
 
   // Form states for Staff
   const [showStaffForm, setShowStaffForm] = useState(false);
@@ -58,19 +62,25 @@ export default function StaffDashboardPage() {
       setShowStaffForm(false);
       setNewStaff({ name: "", account: "", email: "", password: "", role: "admin" });
       fetchData();
+      showNotification(editingStaffId ? "Updated staff" : "Created staff", { type: "success" });
     } catch (err: any) {
-      alert(err.response?.data?.message || "Failed to save staff");
+      showNotification(err.response?.data?.message || "Failed to save staff", { type: "error" });
     }
   };
 
-  const handleDeleteStaff = async (id: number) => {
-    if (!confirm("Are you sure you want to delete this staff member?")) return;
-    try {
-      await api.delete(`/admin/staffs/${id}`);
-      fetchData();
-    } catch (err: any) {
-      alert(err.response?.data?.message || "Failed to delete staff");
-    }
+  const handleDeleteStaff = (id: number) => {
+    showConfirm({
+      message: "Are you sure you want to delete this staff member?",
+      onConfirm: async () => {
+        try {
+          await api.delete(`/admin/staffs/${id}`);
+          fetchData();
+          showNotification("Staff member deleted", { type: "success" });
+        } catch (err: any) {
+          showNotification(err.response?.data?.message || "Failed to delete staff", { type: "error" });
+        }
+      }
+    });
   };
 
   const handleEditStaff = (s: any) => {
@@ -92,8 +102,9 @@ export default function StaffDashboardPage() {
       setShowEventForm(false);
       setNewEvent({ title: "", description: "", type: "casual", rules: "", rewards: "", start_time: "", status: "upcoming" });
       fetchData();
+      showNotification("Event created successfully", { type: "success" });
     } catch (err: any) {
-      alert(err.response?.data?.message || "Failed to create event");
+      showNotification(err.response?.data?.message || "Failed to create event", { type: "error" });
     }
   };
 
@@ -472,54 +483,151 @@ export default function StaffDashboardPage() {
       </div>
 
       {selectedEventForDetails && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in duration-200">
+        (() => {
+          const filteredParticipants = selectedEventForDetails.participants?.filter((user: any) => {
+            const searchLower = participantSearch.toLowerCase();
+            const matchesSearch =
+              (user.ingame_name || user.name || "").toLowerCase().includes(searchLower) ||
+              (user.ingame_id || user.id || "").toString().includes(searchLower);
+
+            const matchesSkill = !skillFilter ||
+              user.main_skill === skillFilter ||
+              user.sub_skill === skillFilter;
+
+            return matchesSearch && matchesSkill;
+          }) || [];
+
+          return (
+            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-4xl overflow-hidden animate-in fade-in zoom-in duration-200">
             <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
               <div>
                 <h3 className="font-black text-xl text-gray-900">{selectedEventForDetails.title}</h3>
                 <p className="text-sm text-gray-500 font-medium">Danh sách báo danh ({selectedEventForDetails.participants?.length || 0}/30)</p>
               </div>
               <button
-                onClick={() => setSelectedEventForDetails(null)}
+                onClick={() => {
+                  setSelectedEventForDetails(null);
+                  setParticipantSearch("");
+                  setSkillFilter("");
+                }}
                 className="p-2 hover:bg-gray-100 rounded-full transition-colors"
               >
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
               </button>
             </div>
-            <div className="p-6 max-h-[60vh] overflow-y-auto">
-              {selectedEventForDetails.participants && selectedEventForDetails.participants.length > 0 ? (
-                <div className="grid grid-cols-1 gap-2">
-                  {selectedEventForDetails.participants.map((user: any, idx: number) => (
-                    <div key={user.id} className="flex items-center gap-4 p-3 rounded-xl bg-gray-50 border border-gray-100">
-                      <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-sm">
-                        {idx + 1}
-                      </div>
-                      <div className="font-bold text-gray-900">{user.name}</div>
-                      {user.preferred_time && (
-                        <div className="px-2 py-0.5 bg-amber-50 text-amber-700 border border-amber-100 rounded text-[10px] font-black">
-                          {user.preferred_time}
-                        </div>
-                      )}
-                      <div className="text-xs text-gray-400 ml-auto">ID: {user.id}</div>
-                    </div>
-                  ))}
+
+            <div className="p-6 border-b border-gray-100 bg-white">
+              <div className="flex flex-col md:flex-row gap-4">
+                <div className="flex-1 relative">
+                  <input
+                    type="text"
+                    placeholder="Tìm theo tên hoặc ID..."
+                    className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    value={participantSearch}
+                    onChange={(e) => setParticipantSearch(e.target.value)}
+                  />
+                  <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                 </div>
+                <div className="md:w-48">
+                  <select
+                    className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    value={skillFilter}
+                    onChange={(e) => setSkillFilter(e.target.value)}
+                  >
+                    <option value="">Tất cả võ công</option>
+                    {Array.from(new Set([
+                      ...selectedEventForDetails.participants.map((p: any) => p.main_skill),
+                      ...selectedEventForDetails.participants.map((p: any) => p.sub_skill)
+                    ])).filter(Boolean).sort().map((skill: any) => (
+                      <option key={skill} value={skill}>{skill}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div className="overflow-x-auto max-h-[50vh]">
+              {selectedEventForDetails.participants && selectedEventForDetails.participants.length > 0 ? (
+                <>
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50 sticky top-0 z-10">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-[10px] font-bold text-gray-500 uppercase tracking-widest">STT</th>
+                        <th className="px-6 py-3 text-left text-[10px] font-bold text-gray-500 uppercase tracking-widest">Thành viên</th>
+                        <th className="px-6 py-3 text-left text-[10px] font-bold text-gray-500 uppercase tracking-widest">Võ công chính</th>
+                        <th className="px-6 py-3 text-left text-[10px] font-bold text-gray-500 uppercase tracking-widest">Võ công phụ</th>
+                        <th className="px-6 py-3 text-left text-[10px] font-bold text-gray-500 uppercase tracking-widest">Giờ mong muốn</th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-100">
+                      {filteredParticipants.map((user: any, idx: number) => (
+                        <tr key={user.id} className="hover:bg-gray-50 transition-colors">
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-[10px]">
+                              {idx + 1}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex flex-col">
+                              <span className="font-bold text-gray-900 text-sm">{user.ingame_name || user.name}</span>
+                              <span className="text-[10px] text-gray-400 font-bold">#{user.ingame_id || user.id}</span>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className="px-2 py-1 bg-blue-50 text-blue-700 rounded-lg text-xs font-bold border border-blue-100">
+                              {user.main_skill || '---'}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className="px-2 py-1 bg-purple-50 text-purple-700 rounded-lg text-xs font-bold border border-purple-100">
+                              {user.sub_skill || '---'}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            {user.preferred_time ? (
+                              <span className="px-2 py-1 bg-amber-50 text-amber-700 rounded-lg text-[10px] font-black border border-amber-100">
+                                {user.preferred_time}
+                              </span>
+                            ) : (
+                              <span className="text-gray-300">---</span>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  {filteredParticipants.length === 0 && (
+                    <div className="text-center py-12 text-gray-400 italic">
+                      Không tìm thấy thành viên nào phù hợp.
+                    </div>
+                  )}
+                </>
               ) : (
                 <div className="text-center py-12 text-gray-400 italic">
                   Chưa có ai báo danh.
                 </div>
               )}
             </div>
-            <div className="p-6 bg-gray-50 border-t border-gray-100">
+            <div className="p-6 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
+              <div className="text-sm font-bold text-gray-500">
+                Tìm thấy: <span className="text-blue-600 font-black">{filteredParticipants.length}</span> / {selectedEventForDetails.participants?.length || 0}
+              </div>
               <button
-                onClick={() => setSelectedEventForDetails(null)}
-                className="w-full py-3 bg-white border border-gray-200 text-gray-700 rounded-xl font-bold hover:bg-gray-50 transition shadow-sm"
+                onClick={() => {
+                  setSelectedEventForDetails(null);
+                  setParticipantSearch("");
+                  setSkillFilter("");
+                }}
+                className="px-8 py-3 bg-white border border-gray-200 text-gray-700 rounded-xl font-bold hover:bg-gray-50 transition shadow-sm"
               >
                 Đóng
               </button>
             </div>
           </div>
         </div>
+          );
+        })()
       )}
     </div>
   );
