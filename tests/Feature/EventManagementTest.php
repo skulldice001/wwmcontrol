@@ -25,8 +25,8 @@ class EventManagementTest extends TestCase
         $user = User::factory()->create();
 
         $response = $this->actingAs($master, 'staff')->postJson('/api/admin/events', [
-            'title' => 'PVP Tournament',
-            'type' => 'pvp',
+            'title' => 'Guild War Tournament',
+            'type' => 'guild_war',
             'rules' => 'No cheating',
             'rewards' => '1000 Gold',
             'start_time' => now()->addDay()->toDateTimeString(),
@@ -34,7 +34,7 @@ class EventManagementTest extends TestCase
         ]);
 
         $response->assertStatus(201);
-        $this->assertDatabaseHas('events', ['title' => 'PVP Tournament', 'type' => 'pvp']);
+        $this->assertDatabaseHas('events', ['title' => 'Guild War Tournament', 'type' => 'guild_war']);
         $this->assertDatabaseHas('event_user', ['user_id' => $user->id]);
     }
 
@@ -74,5 +74,35 @@ class EventManagementTest extends TestCase
         ]);
 
         $response->assertStatus(403);
+    }
+
+    public function test_cannot_create_duplicate_guild_war_event_in_same_week(): void
+    {
+        $master = Staff::create([
+            'name' => 'Master',
+            'account' => 'master',
+            'email' => 'master@example.com',
+            'password' => 'password',
+            'role' => Staff::ROLE_MASTER,
+        ]);
+
+        // Create first guild war on a Wednesday
+        $firstDate = \Carbon\Carbon::parse('2026-01-28'); // Wednesday
+        $this->actingAs($master, 'staff')->postJson('/api/admin/events', [
+            'title' => 'First Guild War',
+            'type' => 'guild_war',
+            'start_time' => $firstDate->toDateTimeString(),
+        ])->assertStatus(201);
+
+        // Try to create second guild war on Friday of the same week
+        $secondDate = \Carbon\Carbon::parse('2026-01-30'); // Friday
+        $response = $this->actingAs($master, 'staff')->postJson('/api/admin/events', [
+            'title' => 'Second Guild War',
+            'type' => 'guild_war',
+            'start_time' => $secondDate->toDateTimeString(),
+        ]);
+
+        $response->assertStatus(422);
+        $response->assertJson(['message' => 'Đã có sự kiện Bang chiến trong tuần này.']);
     }
 }

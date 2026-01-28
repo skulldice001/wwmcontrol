@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('events', function (Blueprint $table) {
-            $table->string('type')->default('casual'); // pvp, casual
+            $table->string('type')->default('casual'); // guild_war, casual
             $table->text('rules')->nullable();
             $table->text('rewards')->nullable();
         });

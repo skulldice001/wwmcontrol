@@ -26,6 +26,6 @@ class Event extends Model
 
     public function participants()
     {
-        return $this->belongsToMany(User::class);
+        return $this->belongsToMany(User::class)->withPivot('preferred_time')->withTimestamps();
     }
 }
