@@ -10,6 +10,7 @@ export default function StaffDashboardPage() {
   const [staffs, setStaffs] = useState<any[]>([]);
   const [events, setEvents] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState("events");
+  const [selectedEventForDetails, setSelectedEventForDetails] = useState<any>(null);
 
   // Form states for Staff
   const [showStaffForm, setShowStaffForm] = useState(false);
@@ -96,17 +97,52 @@ export default function StaffDashboardPage() {
     }
   };
 
-  if (loading) return <div className="p-8 text-black">Loading...</div>;
+  const updateEventType = (type: string) => {
+    let updates: any = { type };
+    if (type === "guild_war") {
+      const now = new Date();
+      const day = now.getDay();
+      const mondayDiff = day === 0 ? -6 : 1 - day;
+      const saturday = new Date(now);
+      saturday.setDate(now.getDate() + mondayDiff + 5);
+      const sunday = new Date(now);
+      sunday.setDate(now.getDate() + mondayDiff + 6);
+
+      const formatDate = (date: Date) => {
+        return date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
+      };
+
+      updates.title = `Bang Chiến ngày ${formatDate(saturday)} - ${formatDate(sunday)}`;
+
+      // Set start time to Saturday at 20:00 (default for guild war)
+      const startTime = new Date(saturday);
+      startTime.setHours(20, 0, 0, 0);
+
+      // Format to YYYY-MM-DDTHH:mm for datetime-local input
+      const pad = (n: number) => n.toString().padStart(2, '0');
+      updates.start_time = `${startTime.getFullYear()}-${pad(startTime.getMonth() + 1)}-${pad(startTime.getDate())}T${pad(startTime.getHours())}:${pad(startTime.getMinutes())}`;
+      updates.rules = "";
+      updates.rewards = "";
+    } else {
+      updates.title = "";
+      updates.start_time = "";
+      updates.rules = "";
+      updates.rewards = "";
+    }
+    setNewEvent(prev => ({ ...prev, ...updates }));
+  };
+
+  if (loading) return <div className="p-8 text-black font-medium">Loading...</div>;
 
   return (
-    <div className="min-h-screen bg-gray-100 text-black p-4 md:p-8">
+    <div className="min-h-screen bg-gray-50 text-gray-900 p-4 md:p-8">
       <div className="max-w-6xl mx-auto">
-        <div className="flex justify-between items-center mb-8 bg-white p-6 rounded-lg shadow-sm">
+        <div className="flex justify-between items-center mb-8 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
           <div>
-            <h1 className="text-2xl font-bold">Staff Dashboard</h1>
+            <h1 className="text-2xl font-black tracking-tight">Staff Dashboard</h1>
             <div className="flex items-center gap-2 mt-1">
-              <span className="text-gray-600">{staff.name}</span>
-              <span className="px-2 py-0.5 bg-blue-100 text-blue-800 text-xs font-semibold rounded uppercase">{staff.role}</span>
+              <span className="text-gray-500 text-sm font-medium">{staff.name}</span>
+              <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-[10px] font-bold rounded-full uppercase tracking-wider">{staff.role}</span>
             </div>
           </div>
           <button
@@ -114,23 +150,23 @@ export default function StaffDashboardPage() {
               await api.post("/admin/logout");
               router.push("/admin/login");
             }}
-            className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition"
+            className="px-6 py-2 bg-red-50 text-red-600 rounded-xl hover:bg-red-100 transition font-bold text-sm"
           >
             Logout
           </button>
         </div>
 
-        <div className="flex gap-4 mb-6 border-b border-gray-200">
+        <div className="flex gap-8 mb-8 border-b border-gray-200">
           <button
             onClick={() => setActiveTab("events")}
-            className={`pb-2 px-4 font-medium transition ${activeTab === "events" ? "border-b-2 border-blue-500 text-blue-600" : "text-gray-500 hover:text-gray-700"}`}
+            className={`pb-4 px-2 font-bold text-sm transition relative ${activeTab === "events" ? "text-blue-600 after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-blue-600" : "text-gray-400 hover:text-gray-600"}`}
           >
             Events
           </button>
           {staff.role === "master" && (
             <button
               onClick={() => setActiveTab("staffs")}
-              className={`pb-2 px-4 font-medium transition ${activeTab === "staffs" ? "border-b-2 border-blue-500 text-blue-600" : "text-gray-500 hover:text-gray-700"}`}
+              className={`pb-4 px-2 font-bold text-sm transition relative ${activeTab === "staffs" ? "text-blue-600 after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-blue-600" : "text-gray-400 hover:text-gray-600"}`}
             >
               Staff Management
             </button>
@@ -138,13 +174,13 @@ export default function StaffDashboardPage() {
         </div>
 
         {activeTab === "events" && (
-          <div>
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold text-gray-800">Events List</h2>
+          <div className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-xl font-bold text-gray-800">Events List</h2>
               {(staff.role === "master" || staff.role === "admin") && (
                 <button
                   onClick={() => setShowEventForm(!showEventForm)}
-                  className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition text-sm font-medium"
+                  className={`px-6 py-2 rounded-xl transition text-sm font-bold shadow-sm ${showEventForm ? "bg-gray-100 text-gray-600 hover:bg-gray-200" : "bg-green-600 text-white hover:bg-green-700"}`}
                 >
                   {showEventForm ? "Cancel" : "Create Event"}
                 </button>
@@ -152,85 +188,147 @@ export default function StaffDashboardPage() {
             </div>
 
             {showEventForm && (
-              <form onSubmit={handleCreateEvent} className="bg-white p-6 rounded-lg shadow-md mb-8 grid grid-cols-1 md:grid-cols-2 gap-4">
+              <form onSubmit={handleCreateEvent} className="bg-white p-8 rounded-2xl shadow-xl border border-gray-100 mb-12 grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in slide-in-from-top-4 duration-300">
                 <div className="col-span-2">
-                  <label className="block text-sm font-bold text-gray-700 mb-1">Title</label>
-                  <input
-                    type="text"
-                    required
-                    className="w-full px-3 py-2 border rounded"
-                    value={newEvent.title}
-                    onChange={(e) => setNewEvent({ ...newEvent, title: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-1">Type</label>
+                  <label className="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-widest">Type</label>
                   <select
-                    className="w-full px-3 py-2 border rounded"
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all font-medium text-gray-900"
                     value={newEvent.type}
-                    onChange={(e) => setNewEvent({ ...newEvent, type: e.target.value })}
+                    onChange={(e) => updateEventType(e.target.value)}
                   >
                     <option value="casual">Casual</option>
-                    <option value="pvp">PVP</option>
+                    <option value="guild_war">Bang chiến</option>
                   </select>
                 </div>
-                <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-1">Start Time</label>
-                  <input
-                    type="datetime-local"
-                    required
-                    className="w-full px-3 py-2 border rounded"
-                    value={newEvent.start_time}
-                    onChange={(e) => setNewEvent({ ...newEvent, start_time: e.target.value })}
-                  />
-                </div>
+
+                {newEvent.type === "casual" && (
+                  <>
+                    <div className="col-span-2">
+                      <label className="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-widest">Title</label>
+                      <input
+                        type="text"
+                        required
+                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all font-medium text-gray-900"
+                        value={newEvent.title}
+                        onChange={(e) => setNewEvent(prev => ({ ...prev, title: e.target.value }))}
+                        placeholder="Enter event title..."
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-widest">Start Time</label>
+                      <input
+                        type="datetime-local"
+                        required
+                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all font-medium text-gray-900"
+                        value={newEvent.start_time}
+                        onChange={(e) => setNewEvent(prev => ({ ...prev, start_time: e.target.value }))}
+                      />
+                    </div>
+                  </>
+                )}
+
+                {newEvent.type === "guild_war" && (
+                  <div className="col-span-2 p-4 bg-blue-50 border border-blue-100 rounded-xl text-sm text-blue-800 space-y-1">
+                    <p className="flex items-center gap-2">
+                      <span className="font-bold uppercase text-[10px] bg-blue-200 px-1.5 py-0.5 rounded">Auto Title</span>
+                      <span>{newEvent.title}</span>
+                    </p>
+                  </div>
+                )}
+
                 <div className="col-span-2">
-                  <label className="block text-sm font-bold text-gray-700 mb-1">Description</label>
+                  <label className="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-widest">Description</label>
                   <textarea
-                    className="w-full px-3 py-2 border rounded"
-                    rows={2}
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all font-medium text-gray-900 min-h-[100px]"
+                    rows={3}
                     value={newEvent.description}
-                    onChange={(e) => setNewEvent({ ...newEvent, description: e.target.value })}
+                    onChange={(e) => setNewEvent(prev => ({ ...prev, description: e.target.value }))}
+                    placeholder="Enter event description..."
                   />
                 </div>
-                <div className="col-span-2">
-                  <label className="block text-sm font-bold text-gray-700 mb-1">Rules</label>
-                  <textarea
-                    className="w-full px-3 py-2 border rounded"
-                    rows={2}
-                    value={newEvent.rules}
-                    onChange={(e) => setNewEvent({ ...newEvent, rules: e.target.value })}
-                  />
+
+                {newEvent.type === "casual" && (
+                  <>
+                    <div className="col-span-2">
+                      <label className="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-widest">Rules</label>
+                      <textarea
+                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all font-medium text-gray-900"
+                        rows={2}
+                        value={newEvent.rules}
+                        onChange={(e) => setNewEvent(prev => ({ ...prev, rules: e.target.value }))}
+                        placeholder="Enter rules (optional)..."
+                      />
+                    </div>
+                    <div className="col-span-2">
+                      <label className="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-widest">Rewards</label>
+                      <input
+                        type="text"
+                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all font-medium text-gray-900"
+                        value={newEvent.rewards}
+                        onChange={(e) => setNewEvent(prev => ({ ...prev, rewards: e.target.value }))}
+                        placeholder="Enter rewards (optional)..."
+                      />
+                    </div>
+                  </>
+                )}
+                <div className="col-span-2 pt-4">
+                  <button type="submit" className="w-full bg-blue-600 text-white py-4 rounded-xl hover:bg-blue-700 font-bold transition-all shadow-lg shadow-blue-500/20 active:scale-[0.98]">
+                    Save Event
+                  </button>
                 </div>
-                <div className="col-span-2">
-                  <label className="block text-sm font-bold text-gray-700 mb-1">Rewards</label>
-                  <input
-                    type="text"
-                    className="w-full px-3 py-2 border rounded"
-                    value={newEvent.rewards}
-                    onChange={(e) => setNewEvent({ ...newEvent, rewards: e.target.value })}
-                  />
-                </div>
-                <button type="submit" className="col-span-2 bg-blue-600 text-white py-2 rounded hover:bg-blue-700 font-bold">
-                  Save Event
-                </button>
               </form>
             )}
 
             <div className="grid grid-cols-1 gap-4">
               {events.length === 0 ? (
-                <p className="text-gray-500 italic bg-white p-6 rounded shadow-sm text-center">No events found.</p>
+                <div className="text-gray-400 italic bg-white p-12 rounded-2xl shadow-sm text-center border border-dashed border-gray-200">
+                  <div className="text-4xl mb-2">empty</div>
+                  No events found.
+                </div>
               ) : (
                 events.map((event) => (
-                  <div key={event.id} className="bg-white p-4 rounded-lg shadow-sm border-l-4 border-blue-500">
+                  <div key={event.id} className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow group">
                     <div className="flex justify-between items-start">
-                      <div>
-                        <h3 className="font-bold text-lg">{event.title}</h3>
-                        <p className="text-sm text-gray-600 capitalize">Type: {event.type} | Status: {event.status}</p>
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-3">
+                          <h3 className="font-black text-lg text-gray-900 group-hover:text-blue-600 transition-colors">{event.title}</h3>
+                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                            event.type === 'guild_war' ? 'bg-amber-100 text-amber-700' : 'bg-blue-100 text-blue-700'
+                          }`}>
+                            {event.type === 'guild_war' ? 'Bang chiến' : 'Casual'}
+                          </span>
+                          <span className="px-2 py-0.5 bg-gray-100 text-gray-600 rounded-full text-[10px] font-bold">
+                            {event.participants?.length || 0}/30
+                          </span>
+                        </div>
+                        <p className="text-sm text-gray-500 line-clamp-2">{event.description || 'No description provided.'}</p>
+                        <div className="flex items-center gap-4 text-xs font-medium text-gray-400 pt-2">
+                          {event.type !== 'guild_war' && (
+                            <span className="flex items-center gap-1">
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                              {new Date(event.start_time).toLocaleString('vi-VN')}
+                            </span>
+                          )}
+                          <span className="flex items-center gap-1">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                            {event.creator?.name}
+                          </span>
+                        </div>
                       </div>
-                      <div className="text-right">
-                        <p className="text-xs text-gray-500">Starts: {new Date(event.start_time).toLocaleString()}</p>
-                        <p className="text-xs text-gray-400">Created by: {event.creator?.name}</p>
+                      <div className="flex flex-col items-end gap-2">
+                        <span className={`px-3 py-1 rounded-lg text-xs font-bold uppercase ${
+                          event.status === 'upcoming' ? 'bg-green-100 text-green-700' :
+                          event.status === 'ongoing' ? 'bg-blue-100 text-blue-700' :
+                          'bg-gray-100 text-gray-600'
+                        }`}>
+                          {event.status}
+                        </span>
+                        <button
+                          onClick={() => setSelectedEventForDetails(event)}
+                          className="px-6 py-2 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700 transition shadow-sm"
+                        >
+                          Danh sách báo danh
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -241,9 +339,9 @@ export default function StaffDashboardPage() {
         )}
 
         {activeTab === "staffs" && staff.role === "master" && (
-          <div>
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold text-gray-800">Staff List</h2>
+          <div className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-xl font-bold text-gray-800">Staff List</h2>
               <button
                 onClick={() => {
                   if (showStaffForm) {
@@ -252,105 +350,113 @@ export default function StaffDashboardPage() {
                   }
                   setShowStaffForm(!showStaffForm);
                 }}
-                className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition text-sm font-medium"
+                className={`px-6 py-2 rounded-xl transition text-sm font-bold shadow-sm ${showStaffForm ? "bg-gray-100 text-gray-600 hover:bg-gray-200" : "bg-green-600 text-white hover:bg-green-700"}`}
               >
                 {showStaffForm ? "Cancel" : "Add Staff"}
               </button>
             </div>
 
             {showStaffForm && (
-              <form onSubmit={handleCreateStaff} className="bg-white p-6 rounded-lg shadow-md mb-8 grid grid-cols-1 md:grid-cols-2 gap-4">
+              <form onSubmit={handleCreateStaff} className="bg-white p-8 rounded-2xl shadow-xl border border-gray-100 mb-12 grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in slide-in-from-top-4 duration-300">
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-1">Name</label>
+                  <label className="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-widest">Name</label>
                   <input
                     type="text"
                     required
-                    className="w-full px-3 py-2 border rounded"
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all font-medium text-gray-900"
                     value={newStaff.name}
-                    onChange={(e) => setNewStaff({ ...newStaff, name: e.target.value })}
+                    onChange={(e) => setNewStaff(prev => ({ ...prev, name: e.target.value }))}
+                    placeholder="Enter full name..."
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-1">Account</label>
+                  <label className="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-widest">Account</label>
                   <input
                     type="text"
                     required
-                    className="w-full px-3 py-2 border rounded"
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all font-medium text-gray-900"
                     value={newStaff.account}
-                    onChange={(e) => setNewStaff({ ...newStaff, account: e.target.value })}
+                    onChange={(e) => setNewStaff(prev => ({ ...prev, account: e.target.value }))}
+                    placeholder="Enter username/account..."
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-1">Email</label>
+                  <label className="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-widest">Email</label>
                   <input
                     type="email"
                     required
-                    className="w-full px-3 py-2 border rounded"
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all font-medium text-gray-900"
                     value={newStaff.email}
-                    onChange={(e) => setNewStaff({ ...newStaff, email: e.target.value })}
+                    onChange={(e) => setNewStaff(prev => ({ ...prev, email: e.target.value }))}
+                    placeholder="Enter email address..."
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-1">Password {editingStaffId && "(Leave blank to keep current)"}</label>
+                  <label className="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-widest">Password {editingStaffId && "(Leave blank to keep current)"}</label>
                   <input
                     type="password"
                     required={!editingStaffId}
-                    className="w-full px-3 py-2 border rounded"
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all font-medium text-gray-900"
                     value={newStaff.password}
-                    onChange={(e) => setNewStaff({ ...newStaff, password: e.target.value })}
+                    onChange={(e) => setNewStaff(prev => ({ ...prev, password: e.target.value }))}
+                    placeholder="Enter password..."
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-1">Role</label>
+                  <label className="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-widest">Role</label>
                   <select
-                    className="w-full px-3 py-2 border rounded"
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all font-medium text-gray-900"
                     value={newStaff.role}
-                    onChange={(e) => setNewStaff({ ...newStaff, role: e.target.value })}
+                    onChange={(e) => setNewStaff(prev => ({ ...prev, role: e.target.value }))}
                   >
                     <option value="master">Master</option>
                     <option value="admin">Admin</option>
                     <option value="observer">Observer</option>
                   </select>
                 </div>
-                <div className="md:col-span-2 flex items-end">
-                  <button type="submit" className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 font-bold">
+                <div className="md:col-span-2 pt-4">
+                  <button type="submit" className="w-full bg-blue-600 text-white py-4 rounded-xl hover:bg-blue-700 font-bold transition-all shadow-lg shadow-blue-500/20 active:scale-[0.98]">
                     {editingStaffId ? "Update Staff Account" : "Create Staff Account"}
                   </button>
                 </div>
               </form>
             )}
 
-            <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Account</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Name</th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Account</th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Role</th>
+                    <th className="px-6 py-4 text-right text-xs font-bold text-gray-500 uppercase tracking-widest">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="bg-white divide-y divide-gray-100">
                   {staffs.map((s) => (
-                    <tr key={s.id}>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{s.name}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{s.account}</td>
+                    <tr key={s.id} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">{s.name}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-medium">{s.account}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${s.role === 'master' ? 'bg-purple-100 text-purple-800' : s.role === 'admin' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'}`}>
+                        <span className={`px-2.5 py-0.5 inline-flex text-[10px] leading-5 font-bold rounded-full uppercase tracking-wider ${
+                          s.role === 'master' ? 'bg-purple-100 text-purple-700' :
+                          s.role === 'admin' ? 'bg-blue-100 text-blue-700' :
+                          'bg-gray-100 text-gray-600'
+                        }`}>
                           {s.role}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-bold">
                         <button
                           onClick={() => handleEditStaff(s)}
-                          className="text-blue-600 hover:text-blue-900 mr-4"
+                          className="text-blue-600 hover:text-blue-800 mr-6 transition-colors"
                         >
                           Edit
                         </button>
                         {s.id !== staff.id && (
                           <button
                             onClick={() => handleDeleteStaff(s.id)}
-                            className="text-red-600 hover:text-red-900"
+                            className="text-red-600 hover:text-red-800 transition-colors"
                           >
                             Delete
                           </button>
@@ -364,6 +470,52 @@ export default function StaffDashboardPage() {
           </div>
         )}
       </div>
+
+      {selectedEventForDetails && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in duration-200">
+            <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+              <div>
+                <h3 className="font-black text-xl text-gray-900">{selectedEventForDetails.title}</h3>
+                <p className="text-sm text-gray-500 font-medium">Danh sách báo danh ({selectedEventForDetails.participants?.length || 0}/30)</p>
+              </div>
+              <button
+                onClick={() => setSelectedEventForDetails(null)}
+                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+              >
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+            <div className="p-6 max-h-[60vh] overflow-y-auto">
+              {selectedEventForDetails.participants && selectedEventForDetails.participants.length > 0 ? (
+                <div className="grid grid-cols-1 gap-2">
+                  {selectedEventForDetails.participants.map((user: any, idx: number) => (
+                    <div key={user.id} className="flex items-center gap-4 p-3 rounded-xl bg-gray-50 border border-gray-100">
+                      <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-sm">
+                        {idx + 1}
+                      </div>
+                      <div className="font-bold text-gray-900">{user.name}</div>
+                      <div className="text-xs text-gray-400 ml-auto">ID: {user.id}</div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12 text-gray-400 italic">
+                  Chưa có ai báo danh.
+                </div>
+              )}
+            </div>
+            <div className="p-6 bg-gray-50 border-t border-gray-100">
+              <button
+                onClick={() => setSelectedEventForDetails(null)}
+                className="w-full py-3 bg-white border border-gray-200 text-gray-700 rounded-xl font-bold hover:bg-gray-50 transition shadow-sm"
+              >
+                Đóng
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
