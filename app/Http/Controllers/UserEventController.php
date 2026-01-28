@@ -39,7 +39,7 @@ class UserEventController extends Controller
                 Rule::requiredIf($event->type === 'guild_war'),
                 'nullable',
                 'string',
-                Rule::in(['19:00', '20:00', '21:00', '22:00', '23:00'])
+                'max:20',
             ],
         ]);
 
