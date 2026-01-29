@@ -1,9 +1,7 @@
 import axios from "axios";
 
-const apiBaseURL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-
 const api = axios.create({
-  baseURL: `${apiBaseURL}/api`,
+  baseURL: "/api",
   withCredentials: true,
   headers: {
     "Content-Type": "application/json",
@@ -28,7 +26,7 @@ api.interceptors.request.use(
         if (isDebug) console.log('[API] Initializing CSRF cookie...');
         try {
           await axios.get(
-            `${apiBaseURL}/sanctum/csrf-cookie`,
+            "/sanctum/csrf-cookie",
             {
               withCredentials: true,
             }

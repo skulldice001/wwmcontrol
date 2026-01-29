@@ -2,30 +2,35 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   async rewrites() {
+    const apiBaseURL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
     return [
       {
-        source: "/auth/discord",
-        destination: `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/auth/discord`,
+        source: "/api/:path*",
+        destination: `${apiBaseURL}/api/:path*`,
       },
       {
-        source: "/auth/discord/callback",
-        destination: `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/auth/discord/callback`,
+        source: "/sanctum/:path*",
+        destination: `${apiBaseURL}/sanctum/:path*`,
+      },
+      {
+        source: "/auth/:path*",
+        destination: `${apiBaseURL}/auth/:path*`,
       },
       {
         source: "/login",
-        destination: `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/login`,
-      },
-      {
-        source: "/admin",
-        destination: `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/admin`,
+        destination: `${apiBaseURL}/login`,
       },
       {
         source: "/admin/:path*",
-        destination: `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/admin/:path*`,
+        destination: `${apiBaseURL}/admin/:path*`,
       },
       {
         source: "/icon/:path*",
-        destination: `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/icon/:path*`,
+        destination: `${apiBaseURL}/icon/:path*`,
+      },
+      {
+        source: "/storage/:path*",
+        destination: `${apiBaseURL}/storage/:path*`,
       },
     ];
   },
