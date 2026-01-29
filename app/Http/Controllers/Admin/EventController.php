@@ -12,7 +12,7 @@ class EventController extends Controller
 {
     public function index()
     {
-        return response()->json(Event::with(['creator:id,name', 'participants:id,name,ingame_name,ingame_id,main_skill_id,sub_skill_id', 'participants.mainSkill', 'participants.subSkill'])->get()->map(fn($e) => $this->formatEvent($e)));
+        return response()->json(Event::with(['creator:id,name', 'participants:id,name,ingame_name,ingame_id,main_skill_id,sub_skill_id', 'participants.mainSkill', 'participants.subSkill', 'participants.innerWays'])->get()->map(fn($e) => $this->formatEvent($e)));
     }
 
     public function store(Request $request)
@@ -57,12 +57,12 @@ class EventController extends Controller
             $event->participants()->sync($validated['participant_ids']);
         }
 
-        return response()->json($this->formatEvent($event->load(['creator:id,name', 'participants:id,name,ingame_name,ingame_id,main_skill_id,sub_skill_id', 'participants.mainSkill', 'participants.subSkill'])), 201);
+        return response()->json($this->formatEvent($event->load(['creator:id,name', 'participants:id,name,ingame_name,ingame_id,main_skill_id,sub_skill_id', 'participants.mainSkill', 'participants.subSkill', 'participants.innerWays'])), 201);
     }
 
     public function show(Event $event)
     {
-        return response()->json($this->formatEvent($event->load(['creator:id,name', 'participants:id,name,ingame_name,ingame_id,main_skill_id,sub_skill_id', 'participants.mainSkill', 'participants.subSkill'])));
+        return response()->json($this->formatEvent($event->load(['creator:id,name', 'participants:id,name,ingame_name,ingame_id,main_skill_id,sub_skill_id', 'participants.mainSkill', 'participants.subSkill', 'participants.innerWays'])));
     }
 
     public function update(Request $request, Event $event)
@@ -109,7 +109,7 @@ class EventController extends Controller
             $event->participants()->sync($validated['participant_ids']);
         }
 
-        return response()->json($this->formatEvent($event->load(['creator:id,name', 'participants:id,name,ingame_name,ingame_id,main_skill_id,sub_skill_id', 'participants.mainSkill', 'participants.subSkill'])));
+        return response()->json($this->formatEvent($event->load(['creator:id,name', 'participants:id,name,ingame_name,ingame_id,main_skill_id,sub_skill_id', 'participants.mainSkill', 'participants.subSkill', 'participants.innerWays'])));
     }
 
     public function destroy(Request $request, Event $event)
@@ -133,6 +133,13 @@ class EventController extends Controller
                 'ingame_id' => $user->ingame_id,
                 'main_skill' => $user->mainSkill ? $user->mainSkill->name : null,
                 'sub_skill' => $user->subSkill ? $user->subSkill->name : null,
+                'gold_inner_ways' => $user->innerWays->where('color', 'gold')->map(function($iw) {
+                    return [
+                        'name' => $iw->name,
+                        'icon' => $iw->icon,
+                        'level' => $iw->pivot->level
+                    ];
+                })->values()->toArray(),
                 'preferred_time' => $user->pivot ? $user->pivot->preferred_time : null
             ];
         })->toArray();

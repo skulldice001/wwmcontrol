@@ -15,6 +15,8 @@ export default function StaffDashboardPage() {
   const [selectedEventForDetails, setSelectedEventForDetails] = useState<any>(null);
   const [participantSearch, setParticipantSearch] = useState("");
   const [skillFilter, setSkillFilter] = useState("");
+  const [innerWayFilter, setInnerWayFilter] = useState("");
+  const [minLevelFilter, setMinLevelFilter] = useState(1);
 
   // Form states for Staff
   const [showStaffForm, setShowStaffForm] = useState(false);
@@ -494,7 +496,10 @@ export default function StaffDashboardPage() {
               user.main_skill === skillFilter ||
               user.sub_skill === skillFilter;
 
-            return matchesSearch && matchesSkill;
+            const matchesInnerWay = !innerWayFilter ||
+              (user.gold_inner_ways || []).some((iw: any) => iw.name === innerWayFilter && iw.level >= minLevelFilter);
+
+            return matchesSearch && matchesSkill && matchesInnerWay;
           }) || [];
 
           return (
@@ -510,6 +515,8 @@ export default function StaffDashboardPage() {
                   setSelectedEventForDetails(null);
                   setParticipantSearch("");
                   setSkillFilter("");
+                  setInnerWayFilter("");
+                  setMinLevelFilter(1);
                 }}
                 className="p-2 hover:bg-gray-100 rounded-full transition-colors"
               >
@@ -518,31 +525,62 @@ export default function StaffDashboardPage() {
             </div>
 
             <div className="p-6 border-b border-gray-100 bg-white">
-              <div className="flex flex-col md:flex-row gap-4">
-                <div className="flex-1 relative">
-                  <input
-                    type="text"
-                    placeholder="Tìm theo tên hoặc ID..."
-                    className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    value={participantSearch}
-                    onChange={(e) => setParticipantSearch(e.target.value)}
-                  />
-                  <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <div className="flex flex-col gap-4">
+                <div className="flex flex-col md:flex-row gap-4">
+                  <div className="flex-1 relative">
+                    <input
+                      type="text"
+                      placeholder="Tìm theo tên hoặc ID..."
+                      className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      value={participantSearch}
+                      onChange={(e) => setParticipantSearch(e.target.value)}
+                    />
+                    <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                  </div>
+                  <div className="md:w-48">
+                    <select
+                      className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      value={skillFilter}
+                      onChange={(e) => setSkillFilter(e.target.value)}
+                    >
+                      <option value="">Tất cả võ công</option>
+                      {Array.from(new Set([
+                        ...selectedEventForDetails.participants.map((p: any) => p.main_skill),
+                        ...selectedEventForDetails.participants.map((p: any) => p.sub_skill),
+                      ])).filter(Boolean).sort().map((skill: any) => (
+                        <option key={skill} value={skill}>{skill}</option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
-                <div className="md:w-48">
-                  <select
-                    className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    value={skillFilter}
-                    onChange={(e) => setSkillFilter(e.target.value)}
-                  >
-                    <option value="">Tất cả võ công</option>
-                    {Array.from(new Set([
-                      ...selectedEventForDetails.participants.map((p: any) => p.main_skill),
-                      ...selectedEventForDetails.participants.map((p: any) => p.sub_skill)
-                    ])).filter(Boolean).sort().map((skill: any) => (
-                      <option key={skill} value={skill}>{skill}</option>
-                    ))}
-                  </select>
+
+                <div className="flex flex-col md:flex-row gap-4">
+                  <div className="flex-1">
+                    <select
+                      className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      value={innerWayFilter}
+                      onChange={(e) => setInnerWayFilter(e.target.value)}
+                    >
+                      <option value="">Tất cả tâm pháp vàng</option>
+                      {Array.from(new Set([
+                        ...selectedEventForDetails.participants.flatMap((p: any) => (p.gold_inner_ways || []).map((iw: any) => iw.name))
+                      ])).filter(Boolean).sort().map((iwName: any) => (
+                        <option key={iwName} value={iwName}>{iwName}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="md:w-48 flex items-center gap-2">
+                    <label className="text-xs font-bold text-gray-500 whitespace-nowrap">Level tối thiểu:</label>
+                    <select
+                      className="flex-1 px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      value={minLevelFilter}
+                      onChange={(e) => setMinLevelFilter(parseInt(e.target.value))}
+                    >
+                      {[1, 2, 3, 4, 5, 6].map(lv => (
+                        <option key={lv} value={lv}>Lv.{lv}</option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
               </div>
             </div>
@@ -557,6 +595,7 @@ export default function StaffDashboardPage() {
                         <th className="px-6 py-3 text-left text-[10px] font-bold text-gray-500 uppercase tracking-widest">Thành viên</th>
                         <th className="px-6 py-3 text-left text-[10px] font-bold text-gray-500 uppercase tracking-widest">Võ công chính</th>
                         <th className="px-6 py-3 text-left text-[10px] font-bold text-gray-500 uppercase tracking-widest">Võ công phụ</th>
+                        <th className="px-6 py-3 text-left text-[10px] font-bold text-gray-500 uppercase tracking-widest">Tâm pháp vàng</th>
                         <th className="px-6 py-3 text-left text-[10px] font-bold text-gray-500 uppercase tracking-widest">Giờ mong muốn</th>
                       </tr>
                     </thead>
@@ -583,6 +622,28 @@ export default function StaffDashboardPage() {
                             <span className="px-2 py-1 bg-purple-50 text-purple-700 rounded-lg text-xs font-bold border border-purple-100">
                               {user.sub_skill || '---'}
                             </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex flex-wrap gap-2 max-w-[240px]">
+                              {user.gold_inner_ways && user.gold_inner_ways.length > 0 ? (
+                                user.gold_inner_ways.map((iw: any) => (
+                                  <div key={iw.name} className="flex flex-col items-center group/iw relative" title={`${iw.name} - Lv.${iw.level}`}>
+                                    <div className="w-8 h-8 rounded-lg bg-amber-50 border border-amber-200 p-0.5 flex items-center justify-center relative overflow-hidden shadow-sm group-hover/iw:border-amber-400 transition-colors">
+                                      <img
+                                        src={`/icon/inner_way/${iw.icon}`}
+                                        alt={iw.name}
+                                        className="w-full h-full object-contain drop-shadow-sm"
+                                      />
+                                      <div className="absolute bottom-0 right-0 bg-red-600 text-white text-[7px] font-black px-0.5 min-w-[12px] text-center rounded-tl-sm">
+                                        {iw.level}
+                                      </div>
+                                    </div>
+                                  </div>
+                                ))
+                              ) : (
+                                <span className="text-gray-300 italic text-xs">Không có</span>
+                              )}
+                            </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             {user.preferred_time ? (
@@ -618,6 +679,8 @@ export default function StaffDashboardPage() {
                   setSelectedEventForDetails(null);
                   setParticipantSearch("");
                   setSkillFilter("");
+                  setInnerWayFilter("");
+                  setMinLevelFilter(1);
                 }}
                 className="px-8 py-3 bg-white border border-gray-200 text-gray-700 rounded-xl font-bold hover:bg-gray-50 transition shadow-sm"
               >
