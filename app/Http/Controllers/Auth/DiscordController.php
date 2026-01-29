@@ -29,7 +29,7 @@ class DiscordController extends Controller
         try {
             $discordUser = Socialite::driver('discord')->user();
         } catch (\Exception $e) {
-            dd($e->getMessage());
+            \Log::error('Discord Auth Error: ' . $e->getMessage());
             return redirect(config('app.frontend_url'))->with('error', 'Discord authentication failed.');
         }
 
