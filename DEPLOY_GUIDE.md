@@ -193,4 +193,9 @@ sudo certbot --nginx -d thezotopia.online
 - Đảm bảo các cổng 80 và 443 đã được mở trên Firewall (ufw hoặc security group của VPS).
 - Thay thế `your-domain.com`, `your-username`, `your-repo` và mật khẩu bằng thông tin thực tế của bạn.
 - Luôn kiểm tra log tại `/var/www/wwm/storage/logs/laravel.log` nếu gặp lỗi backend.
+    - Một số lỗi phổ biến gây ra Internal Server Error (500):
+        - **Thiếu APP_KEY**: Chạy `php artisan key:generate`.
+        - **Thiếu Driver Discord**: Đảm bảo `socialiteproviders/discord` đã được cài đặt và cấu hình.
+        - **Lỗi Kết nối DB**: Kiểm tra thông tin DB trong `.env`.
+        - **Quyền ghi Log**: Đảm bảo thư mục `storage/logs` có quyền ghi (`sudo chown -R www-data:www-data storage`).
 - Nếu gặp lỗi `cURL error 60: SSL certificate problem`, thêm `DISCORD_SSL_VERIFY=false` vào `.env`.
