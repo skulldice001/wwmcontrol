@@ -14,23 +14,23 @@ const nextConfig: NextConfig = {
       },
       {
         source: "/auth/:path*",
-        destination: `${apiBaseURL}/auth/:path*`,
+        destination: `${apiBaseURL}/api/auth/:path*`,
       },
       {
         source: "/login",
-        destination: `${apiBaseURL}/login`,
+        destination: `${apiBaseURL}/api/login`,
       },
       {
         source: "/admin/:path*",
-        destination: `${apiBaseURL}/admin/:path*`,
+        destination: `${apiBaseURL}/api/admin/:path*`,
       },
       {
         source: "/icon/:path*",
-        destination: `${apiBaseURL}/icon/:path*`,
+        destination: `${apiBaseURL}/api/icon/:path*`,
       },
       {
         source: "/storage/:path*",
-        destination: `${apiBaseURL}/storage/:path*`,
+        destination: `${apiBaseURL}/api/storage/:path*`,
       },
     ];
   },
