@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-    return redirect('http://localhost:3000');
+    return redirect(config('app.frontend_url'));
 });
 
 Route::get('/login', function () {

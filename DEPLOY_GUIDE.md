@@ -81,7 +81,10 @@ Chỉnh sửa `.env`:
 ```text
 APP_ENV=production
 APP_DEBUG=false
-APP_URL=thezotopia.online
+APP_URL=http://thezotopia.online
+FRONTEND_URL=http://thezotopia.online
+SANCTUM_STATEFUL_DOMAINS=thezotopia.online
+SESSION_DOMAIN=thezotopia.online
 
 DB_CONNECTION=pgsql
 DB_HOST=127.0.0.1
@@ -93,7 +96,7 @@ DB_PASSWORD=Neo@6666
 # Cấu hình Discord
 DISCORD_CLIENT_ID=your_client_id
 DISCORD_CLIENT_SECRET=your_client_secret
-DISCORD_REDIRECT_URI=https://your-domain.com/api/auth/callback/discord
+DISCORD_REDIRECT_URI=http://thezotopia.online/auth/discord/callback
 ```
 
 Chạy các lệnh setup:
@@ -108,8 +111,8 @@ php artisan db:seed --force
 ```bash
 cd frontend
 npm install
-# Tạo file .env cho frontend nếu cần
-echo "NEXT_PUBLIC_API_URL=https://your-domain.com/api" > .env.local
+# Tạo file .env cho frontend
+echo "NEXT_PUBLIC_API_URL=http://thezotopia.online" > .env.local
 npm run build
 ```
 
@@ -118,7 +121,7 @@ Tạo file cấu hình `/etc/nginx/sites-available/wwm`:
 ```nginx
 server {
     listen 80;
-    server_name your-domain.com;
+    server_name thezotopia.online;
     root /var/www/wwm/public;
 
     add_header X-Frame-Options "SAMEORIGIN";
@@ -128,8 +131,8 @@ server {
 
     charset utf-8;
 
-    # Backend API & Static Files
-    location /api {
+    # Backend API, Sanctum & Auth
+    location ~ ^/(api|sanctum|auth) {
         try_files $uri $uri/ /index.php?$query_string;
     }
 
@@ -182,10 +185,11 @@ sudo chown -R www-data:www-data /var/www/wwm/storage /var/www/wwm/bootstrap/cach
 ## 8. Bảo mật (SSL với Certbot)
 ```bash
 sudo apt install -y certbot python3-certbot-nginx
-sudo certbot --nginx -d your-domain.com
+sudo certbot --nginx -d thezotopia.online
 ```
 
 ## 9. Lưu ý quan trọng
 - Đảm bảo các cổng 80 và 443 đã được mở trên Firewall (ufw hoặc security group của VPS).
 - Thay thế `your-domain.com`, `your-username`, `your-repo` và mật khẩu bằng thông tin thực tế của bạn.
 - Luôn kiểm tra log tại `/var/www/wwm/storage/logs/laravel.log` nếu gặp lỗi backend.
+- Nếu gặp lỗi `cURL error 60: SSL certificate problem`, thêm `DISCORD_SSL_VERIFY=false` vào `.env`.
