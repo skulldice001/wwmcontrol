@@ -57,7 +57,7 @@ sudo -u postgres psql
 Trong shell psql:
 ```sql
 CREATE DATABASE wwm;
-CREATE USER wwm_user WITH PASSWORD 'your_secure_password';
+CREATE USER wwm_user WITH PASSWORD '123';
 GRANT ALL PRIVILEGES ON DATABASE wwm TO wwm_user;
 \q
 ```
@@ -67,7 +67,7 @@ GRANT ALL PRIVILEGES ON DATABASE wwm TO wwm_user;
 ### Clone Repo
 ```bash
 cd /var/www
-sudo git clone https://github.com/your-username/your-repo.git wwm
+sudo git clone git@github.com:skulldice001/wwmcontrol.git wwm
 sudo chown -R $USER:$USER /var/www/wwm
 cd /var/www/wwm
 ```
@@ -81,14 +81,14 @@ Chỉnh sửa `.env`:
 ```text
 APP_ENV=production
 APP_DEBUG=false
-APP_URL=https://your-domain.com
+APP_URL=thezotopia.online
 
 DB_CONNECTION=pgsql
 DB_HOST=127.0.0.1
 DB_PORT=5432
 DB_DATABASE=wwm
-DB_USERNAME=wwm_user
-DB_PASSWORD=your_secure_password
+DB_USERNAME=postgres
+DB_PASSWORD=Neo@6666
 
 # Cấu hình Discord
 DISCORD_CLIENT_ID=your_client_id
