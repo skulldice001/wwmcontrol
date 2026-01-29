@@ -112,6 +112,7 @@ php artisan db:seed --force
 cd frontend
 npm install
 # Tạo file .env cho frontend
+# NEXT_PUBLIC_API_URL là URL của Laravel Backend
 echo "NEXT_PUBLIC_API_URL=http://thezotopia.online" > .env.local
 npm run build
 ```
