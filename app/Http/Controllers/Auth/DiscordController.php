@@ -18,7 +18,15 @@ class DiscordController extends Controller
      */
     public function redirect(): RedirectResponse
     {
-        return Socialite::driver('discord')->redirect();
+        try {
+            return Socialite::driver('discord')->redirect();
+        } catch (\Exception $e) {
+            \Log::error('Discord Redirect Error: ' . $e->getMessage(), [
+                'exception' => $e,
+                'trace' => $e->getTraceAsString()
+            ]);
+            return redirect(config('app.frontend_url'))->with('error', 'Failed to connect to Discord.');
+        }
     }
 
     /**
@@ -29,7 +37,10 @@ class DiscordController extends Controller
         try {
             $discordUser = Socialite::driver('discord')->user();
         } catch (\Exception $e) {
-            dd($e->getMessage());
+            \Log::error('Discord Auth Callback Error: ' . $e->getMessage(), [
+                'exception' => $e,
+                'trace' => $e->getTraceAsString()
+            ]);
             return redirect(config('app.frontend_url'))->with('error', 'Discord authentication failed.');
         }
 

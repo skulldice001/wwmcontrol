@@ -7,7 +7,39 @@ use App\Http\Controllers\Admin\StaffController;
 use App\Http\Controllers\Admin\EventController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Http\Request;
+use App\Http\Controllers\Admin\Auth\LoginController as AdminLoginController;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
+
+Route::get('/', function () {
+    return redirect(config('app.frontend_url'));
+});
+
+Route::get('/login', function () {
+    return redirect(config('app.frontend_url') . '/admin/login');
+})->name('login');
+
+// Staff Routes
+Route::get('/admin', function () {
+    return redirect(config('app.frontend_url') . '/admin/login');
+});
+
+Route::prefix('admin')->name('admin.')->group(function () {
+    Route::get('/login', function () {
+        return redirect(config('app.frontend_url') . '/admin/login');
+    })->name('login');
+
+    Route::post('/logout', [AdminLoginController::class, 'logout'])->name('logout');
+
+    Route::middleware('auth:staff')->group(function () {
+        Route::get('/dashboard', function () {
+            return redirect(config('app.frontend_url') . '/admin/dashboard');
+        })->name('dashboard');
+    });
+});
+
+Route::get('/auth/discord', [DiscordController::class, 'redirect'])->name('auth.discord');
+Route::get('/auth/discord/callback', [DiscordController::class, 'callback']);
 
 Route::get('/user', function (Request $request) {
     return $request->user()->load(['mainSkill', 'subSkill']);
