@@ -59,6 +59,7 @@ Trong shell psql:
 CREATE DATABASE wwm;
 CREATE USER wwm_user WITH PASSWORD '123';
 GRANT ALL PRIVILEGES ON DATABASE wwm TO wwm_user;
+ALTER USER postgres WITH PASSWORD 'Neo@6666';
 \q
 ```
 
@@ -68,7 +69,8 @@ GRANT ALL PRIVILEGES ON DATABASE wwm TO wwm_user;
 ```bash
 cd /var/www
 sudo git clone git@github.com:skulldice001/wwmcontrol.git wwm
-sudo chown -R $USER:$USER /var/www/wwm
+# Đảm bảo user hiện tại sở hữu thư mục project
+sudo chown -R $(whoami):$(whoami) /var/www/wwm
 cd /var/www/wwm
 ```
 
@@ -139,7 +141,7 @@ server {
 
     # Frontend (Next.js)
     location / {
-        proxy_pass http://localhost:3000;
+        proxy_pass http://61.14.234.57:3000;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection 'upgrade';
@@ -185,7 +187,44 @@ sudo apt install -y certbot python3-certbot-nginx
 sudo certbot --nginx -d your-domain.com
 ```
 
-## 9. Lưu ý quan trọng
-- Đảm bảo các cổng 80 và 443 đã được mở trên Firewall (ufw hoặc security group của VPS).
+## 9. Cấu hình Server hỗ trợ kết nối SFTP (FileZilla)
+Vì chúng ta sử dụng cổng **2222** thay vì cổng 22 mặc định, bạn cần cấu hình SSH server trên máy chủ:
+
+### Thay đổi cổng SSH
+1. Mở file cấu hình SSH:
+   ```bash
+   sudo nano /etc/ssh/sshd_config
+   ```
+2. Tìm dòng `#Port 22`, bỏ dấu `#` và đổi thành:
+   ```text
+   Port 2222
+   ```
+3. Lưu và thoát (Ctrl+O, Enter, Ctrl+X).
+
+### Mở cổng trên Firewall
+Nếu bạn dùng `ufw`:
+```bash
+sudo ufw allow 2222/tcp
+sudo ufw reload
+```
+
+### Khởi động lại dịch vụ SSH
+```bash
+sudo systemctl restart ssh
+```
+
+## 10. Cấu hình FileZilla Client
+- Tải và cài đặt [FileZilla Client](https://filezilla-project.org/).
+- Mở FileZilla, vào **File > Site Manager**.
+- Tạo **New Site**:
+    - **Protocol**: SFTP - SSH File Transfer Protocol.
+    - **Host**: Địa chỉ IP hoặc domain của server.
+    - **Port**: 2222.
+    - **Logon Type**: Chọn `Key file` (khuyến khích) hoặc `Ask for password`.
+    - **User**: Tên user của bạn trên server.
+- Nhấn **Connect**.
+
+## 11. Lưu ý quan trọng
+- Đảm bảo các cổng 80, 443 và **2222** đã được mở trên Firewall (ufw hoặc security group của VPS).
 - Thay thế `your-domain.com`, `your-username`, `your-repo` và mật khẩu bằng thông tin thực tế của bạn.
 - Luôn kiểm tra log tại `/var/www/wwm/storage/logs/laravel.log` nếu gặp lỗi backend.
