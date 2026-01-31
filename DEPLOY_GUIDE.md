@@ -70,8 +70,8 @@ ALTER USER postgres WITH PASSWORD 'Neo@6666';
 cd /var/www
 sudo git clone git@github.com:skulldice001/wwmcontrol.git wwm
 # Đảm bảo user hiện tại sở hữu thư mục project
-sudo chown -R $(whoami):$(whoami) /var/www/wwm
-cd /var/www/wwm
+sudo chown -R $(whoami):$(whoami) /var/www/wwmcontrol
+cd /var/www/wwmcontrol
 ```
 
 ### Cấu hình Backend (Laravel)
@@ -83,9 +83,9 @@ Chỉnh sửa `.env`:
 ```text
 APP_ENV=production
 APP_DEBUG=false
-APP_URL=http://thezotopia.online
+APP_URL=http://api.thezotopia.online
 FRONTEND_URL=http://thezotopia.online
-SANCTUM_STATEFUL_DOMAINS=thezotopia.online
+SANCTUM_STATEFUL_DOMAINS=thezotopia.online,api.thezotopia.online
 SESSION_DOMAIN=thezotopia.online
 
 DB_CONNECTION=pgsql
@@ -98,7 +98,7 @@ DB_PASSWORD=Neo@6666
 # Cấu hình Discord
 DISCORD_CLIENT_ID=your_client_id
 DISCORD_CLIENT_SECRET=your_client_secret
-DISCORD_REDIRECT_URI=http://thezotopia.online/auth/discord/callback
+DISCORD_REDIRECT_URI=http://api.thezotopia.online/auth/discord/callback
 ```
 
 Chạy các lệnh setup:
@@ -115,7 +115,7 @@ cd frontend
 npm install
 # Tạo file .env cho frontend
 # NEXT_PUBLIC_API_URL là URL của Laravel Backend
-echo "NEXT_PUBLIC_API_URL=http://thezotopia.online" > .env.local
+echo "NEXT_PUBLIC_API_URL=http://api.thezotopia.online" > .env.local
 npm run build
 ```
 
@@ -124,8 +124,8 @@ Tạo file cấu hình `/etc/nginx/sites-available/wwm`:
 ```nginx
 server {
     listen 80;
-    server_name thezotopia.online;
-    root /var/www/wwm/public;
+    server_name thezotopia.online api.thezotopia.online;
+    root /var/www/wwmcontrol/public;
 
     add_header X-Frame-Options "SAMEORIGIN";
     add_header X-Content-Type-Options "nosniff";
@@ -140,12 +140,12 @@ server {
     }
 
     location /storage {
-        alias /var/www/wwm/storage/app/public;
+        alias /var/www/wwmcontrol/storage/app/public;
     }
 
     # Frontend (Next.js)
     location / {
-        proxy_pass http://61.14.234.57:3000;
+        proxy_pass http://127.0.0.1:3000;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection 'upgrade';
@@ -174,7 +174,7 @@ sudo systemctl restart nginx
 ## 6. Chạy Frontend với PM2
 ```bash
 sudo npm install -g pm2
-cd /var/www/wwm/frontend
+cd /var/www/wwmcontrol/frontend
 pm2 start npm --name "wwm-frontend" -- start
 pm2 save
 pm2 startup
@@ -182,13 +182,13 @@ pm2 startup
 
 ## 7. Cấp quyền thư mục
 ```bash
-sudo chown -R www-data:www-data /var/www/wwm/storage /var/www/wwm/bootstrap/cache
+sudo chown -R www-data:www-data /var/www/wwmcontrol/storage /var/www/wwmcontrol/bootstrap/cache
 ```
 
 ## 8. Bảo mật (SSL với Certbot)
 ```bash
 sudo apt install -y certbot python3-certbot-nginx
-sudo certbot --nginx -d thezotopia.online
+sudo certbot --nginx -d thezotopia.online -d api.thezotopia.online
 ```
 
 ## 9. Cấu hình Server hỗ trợ kết nối SFTP (FileZilla)
@@ -231,7 +231,7 @@ sudo systemctl restart ssh
 ## 11. Lưu ý quan trọng
 - Đảm bảo các cổng 80, 443 và **2222** đã được mở trên Firewall (ufw hoặc security group của VPS).
 - Thay thế `your-domain.com`, `your-username`, `your-repo` và mật khẩu bằng thông tin thực tế của bạn.
-- Luôn kiểm tra log tại `/var/www/wwm/storage/logs/laravel.log` nếu gặp lỗi backend.
+- Luôn kiểm tra log tại `/var/www/wwmcontrol/storage/logs/laravel.log` nếu gặp lỗi backend.
     - Một số lỗi phổ biến gây ra Internal Server Error (500):
         - **Thiếu APP_KEY**: Chạy `php artisan key:generate`.
         - **Thiếu Driver Discord**: Đảm bảo `socialiteproviders/discord` đã được cài đặt và cấu hình.
