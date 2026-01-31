@@ -52,9 +52,9 @@ return [
     |
     */
 
-    'url' => env('APP_URL', 'http://61.14.234.57:8000'),
+    'url' => env('APP_URL', 'http://api.thezotopia.online'),
 
-    'frontend_url' => env('FRONTEND_URL', 'http://61.14.234.57:3000'),
+    'frontend_url' => env('FRONTEND_URL', 'http://thezotopia.online'),
 
     /*
     |--------------------------------------------------------------------------

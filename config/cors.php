@@ -20,9 +20,8 @@ return [
     'allowed_methods' => ['*'],
 
     'allowed_origins' => [
-        'http://61.14.234.57:3000',
-        'http://61.14.234.57:8000',
-        'http://61.14.234.57',
+        'http://thezotopia.online',
+        'http://api.thezotopia.online',
     ],
 
     'allowed_origins_patterns' => [],
