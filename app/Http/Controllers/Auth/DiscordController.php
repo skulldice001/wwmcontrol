@@ -19,7 +19,7 @@ class DiscordController extends Controller
     public function redirect(): RedirectResponse
     {
         try {
-            return Socialite::driver('discord')->redirect();
+            return Socialite::driver('discord')->stateless()->redirect();
         } catch (\Exception $e) {
             \Log::error('Discord Redirect Error: ' . $e->getMessage(), [
                 'exception' => $e,
