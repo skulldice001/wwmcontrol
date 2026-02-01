@@ -114,6 +114,9 @@ class DiscordController extends Controller
 
         Auth::login($user, true);
 
+        // Ensure session is saved before redirecting
+        request()->session()->save();
+
         return redirect(config('app.frontend_url') . '/dashboard');
     }
 }
