@@ -20,8 +20,11 @@ return [
     'allowed_methods' => ['*'],
 
     'allowed_origins' => [
+        'http://localhost:3000',
+        'http://127.0.0.1:8000',
         'http://thezotopia.online',
         'http://api.thezotopia.online',
+        env('FRONTEND_URL', 'http://thezotopia.online'),
     ],
 
     'allowed_origins_patterns' => [],
