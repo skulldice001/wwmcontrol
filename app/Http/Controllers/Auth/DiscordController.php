@@ -35,7 +35,7 @@ class DiscordController extends Controller
     public function callback(): RedirectResponse
     {
         try {
-            $discordUser = Socialite::driver('discord')->user();
+            $discordUser = Socialite::driver('discord')->stateless()->user();
         } catch (\Exception $e) {
             \Log::error('Discord Auth Callback Error: ' . $e->getMessage(), [
                 'exception' => $e,

@@ -12,6 +12,14 @@ const nextConfig: NextConfig = {
         destination: "http://api.thezotopia.online/auth/discord/callback",
       },
       {
+        source: "/sanctum/csrf-cookie",
+        destination: "http://api.thezotopia.online/sanctum/csrf-cookie",
+      },
+      {
+        source: "/api/:path*",
+        destination: "http://api.thezotopia.online/api/:path*",
+      },
+      {
         source: "/login",
         destination: "http://api.thezotopia.online/login",
       },
