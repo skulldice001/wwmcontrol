@@ -26,7 +26,7 @@
         <!-- Right navbar links -->
         <ul class="navbar-nav ml-auto">
             <li class="nav-item">
-                <form action="{{ route('admin.logout') }}" method="POST" class="d-inline">
+                <form action="{{ Auth::guard('staff')->check() ? route('admin.logout') : route('logout') }}" method="POST" class="d-inline">
                     @csrf
                     <button type="submit" class="btn btn-link nav-link">
                         <i class="fas fa-sign-out-alt"></i> Logout

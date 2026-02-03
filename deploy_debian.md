@@ -176,6 +176,7 @@ php artisan key:generate
 php artisan migrate --force
 
 # Cài đặt Node modules & Build assets
+# BƯỚC NÀY QUAN TRỌNG ĐỂ TẠO MANIFEST.JSON
 npm install
 npm run build
 
@@ -269,3 +270,24 @@ supervisorctl reread
 supervisorctl update
 supervisorctl start wwmcontrol-worker:*
 ```
+
+## 9. Troubleshooting (Sửa lỗi thường gặp)
+
+### Lỗi: ViteManifestNotFoundException
+Nếu gặp lỗi `Vite manifest not found at: ...`, nghĩa là bạn chưa chạy build assets hoặc quá trình build bị lỗi.
+
+**Cách khắc phục:**
+Chạy lệnh sau trên server:
+```bash
+cd /var/www/wwmcontrol
+npm install
+npm run build
+```
+
+Nếu server quá yếu (RAM < 1GB) và bị crash khi chạy `npm run build`, bạn hãy build ở máy local (máy tính của bạn) sau đó upload thư mục `public/build` lên server:
+
+1. Tại máy local:
+   ```bash
+   npm run build
+   ```
+2. Upload thư mục `public/build` lên server vào vị trí `/var/www/wwmcontrol/public/build`.
