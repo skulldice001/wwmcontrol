@@ -21,6 +21,10 @@ class LoginController extends Controller
             'password' => ['required'],
         ]);
 
+        // Invalidate old session and regenerate token before attempt
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
         if (Auth::guard('staff')->attempt($credentials, $request->boolean('remember'))) {
             $request->session()->regenerate();
 
