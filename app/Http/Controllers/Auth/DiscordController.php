@@ -32,7 +32,7 @@ class DiscordController extends Controller
     /**
      * Obtain the user information from Discord.
      */
-    public function callback(): RedirectResponse
+    public function callback(\Illuminate\Http\Request $request): RedirectResponse
     {
         try {
             $discordUser = Socialite::driver('discord')->user();
@@ -43,6 +43,10 @@ class DiscordController extends Controller
             ]);
             return redirect(config('app.frontend_url'))->with('error', 'Discord authentication failed.');
         }
+
+        // Invalidate old session and regenerate token
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
 
         $user = User::where('discord_id', $discordUser->getId())->first();
 
