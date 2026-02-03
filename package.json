@@ -1,14 +1,26 @@
 {
-    "$schema": "https://www.schemastore.org/package.json",
     "private": true,
     "type": "module",
     "scripts": {
-        "dev": "concurrently \"php artisan serve --host=api.thezotopia.online --port=80\" \"cd frontend && npm run dev\"",
-        "build": "cd frontend && npm run build",
-        "start": "cd frontend && npm start",
-        "lint": "cd frontend && npm run lint"
+        "dev": "vite",
+        "build": "vite build"
     },
     "devDependencies": {
-        "concurrently": "^9.0.1"
+        "@fortawesome/fontawesome-free": "^6.5.1",
+        "@vitejs/plugin-vue": "^6.0.4",
+        "admin-lte": "^3.2.0",
+        "autoprefixer": "^10.4.17",
+        "axios": "^1.6.7",
+        "bootstrap": "^4.6.2",
+        "concurrently": "^9.0.1",
+        "jquery": "^3.7.1",
+        "laravel-vite-plugin": "^1.0.0",
+        "popper.js": "^1.16.1",
+        "postcss": "^8.4.35",
+        "vite": "^5.0.0"
+    },
+    "dependencies": {
+        "select2": "^4.1.0-rc.0",
+        "vue": "^3.5.27"
     }
 }

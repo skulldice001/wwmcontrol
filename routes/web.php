@@ -1,37 +1,64 @@
 <?php
 
 use App\Http\Controllers\Auth\DiscordController;
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Admin\Auth\LoginController as AdminLoginController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-    return redirect('http://thezotopia.online');
-});
+    return view('welcome');
+})->name('home');
 
 Route::get('/login', function () {
-    return redirect(config('app.frontend_url') . '/admin/login');
+    return redirect()->route('home');
 })->name('login');
 
 // Staff Routes
 Route::get('/admin', function () {
-    return redirect(config('app.frontend_url') . '/admin/login');
+    return redirect()->route('admin.dashboard');
 });
 
-Route::prefix('admin')->name('admin.')->group(function () {
-    Route::get('/login', function () {
-        return redirect(config('app.frontend_url') . '/admin/login');
-    })->name('login');
+use App\Http\Controllers\Admin\StaffController;
+use App\Http\Controllers\Admin\EventController;
+use App\Http\Controllers\Admin\UserController;
 
+Route::prefix('admin')->name('admin.')->group(function () {
+    Route::get('/login', [AdminLoginController::class, 'showLoginForm'])->name('login');
+    Route::post('/login', [AdminLoginController::class, 'login']);
     Route::post('/logout', [AdminLoginController::class, 'logout'])->name('logout');
 
     Route::middleware('auth:staff')->group(function () {
         Route::get('/dashboard', function () {
-            return redirect(config('app.frontend_url') . '/admin/dashboard');
+            return view('admin.dashboard');
         })->name('dashboard');
+
+        Route::resource('staff', StaffController::class);
+        Route::get('events/{event}/participants', [EventController::class, 'participants'])->name('events.participants');
+        Route::resource('events', EventController::class);
+        Route::get('/users', [UserController::class, 'index'])->name('users.index');
     });
 });
+
+use App\Http\Controllers\UserEventController;
+
+Route::middleware('auth')->group(function () {
+    Route::get('/dashboard', function () {
+        return view('dashboard');
+    })->name('dashboard');
+
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::get('/skills', [ProfileController::class, 'editSkills'])->name('skills.edit');
+    Route::put('/skills', [ProfileController::class, 'updateInnerWays'])->name('skills.update');
+
+    // User Events Routes
+    Route::get('/events', [UserEventController::class, 'index'])->name('events.index');
+    Route::post('/events/{event}/register', [UserEventController::class, 'register'])->name('events.register');
+    Route::delete('/events/{event}/unregister', [UserEventController::class, 'unregister'])->name('events.unregister');
+});
+
 
 Route::get('/user', function (Request $request) {
     return $request->user();

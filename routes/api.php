@@ -125,7 +125,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/events/{event}/unregister', [\App\Http\Controllers\UserEventController::class, 'unregister']);
 });
 
-Route::prefix('admin')->middleware('auth:staff')->group(function () {
+Route::prefix('admin')->name('api.admin.')->middleware('auth:staff')->group(function () {
     Route::apiResource('staffs', StaffController::class);
     Route::apiResource('events', EventController::class);
 });
