@@ -86,13 +86,13 @@ nano .env
 ```ini
 APP_ENV=production
 APP_DEBUG=false
-APP_URL=http://thezotopia.online
-FRONTEND_URL=http://thezotopia.online
+APP_URL=https://thezotopia.online
+FRONTEND_URL=https://thezotopia.online
 SANCTUM_STATEFUL_DOMAINS=thezotopia.online
 SESSION_DOMAIN=thezotopia.online
 APP_KEY=base64:zobDEG/Qb1RpTHqiJJw5Wb2KL5fQhBtUqqr+x4zgW6c=
 
-SESSION_SECURE_COOKIE=false
+SESSION_SECURE_COOKIE=true
 LOG_CHANNEL=stack
 LOG_LEVEL=debug
 
@@ -162,7 +162,7 @@ VITE_APP_NAME="${APP_NAME}"
 DISCORD_SSL_VERIFY=false
 DISCORD_CLIENT_ID=1457655406372458650
 DISCORD_CLIENT_SECRET=***REMOVED***
-DISCORD_REDIRECT_URI="http://thezotopia.online/auth/discord/callback"
+DISCORD_REDIRECT_URI="https://thezotopia.online/auth/discord/callback"
 DISCORD_BOT_TOKEN=***REMOVED***
 DISCORD_GUILD_ID=1459088384747376798
 DISCORD_ROLE_ID=

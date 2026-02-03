@@ -13,11 +13,12 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->trustProxies(at: '*');
         $middleware->statefulApi();
         $middleware->validateCsrfTokens(except: [
             'api/admin/login',
         ]);
-        
+
         $middleware->redirectGuestsTo(function (Request $request) {
             if ($request->is('admin/*')) {
                 return route('admin.login');
