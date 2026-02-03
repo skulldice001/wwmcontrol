@@ -4,9 +4,17 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Models\Skill;
+use App\Models\InnerWay;
 
 class ProfileController extends Controller
 {
+    public function edit()
+    {
+        $user = Auth::user();
+        return view('profile.edit', compact('user'));
+    }
+
     public function update(Request $request)
     {
         $user = Auth::user();
@@ -21,91 +29,56 @@ class ProfileController extends Controller
 
         $user->update($validated);
 
-        return response()->json([
-            'message' => 'Profile updated successfully',
-            'user' => $user
-        ]);
+        return redirect()->back()->with('success', 'Profile updated successfully.');
+    }
+
+    public function editSkills()
+    {
+        $user = Auth::user();
+        $skills = Skill::all();
+        $innerWays = InnerWay::all();
+
+        // Load user's current inner ways with pivot data
+        $user->load('innerWays');
+
+        return view('skills.edit', compact('user', 'skills', 'innerWays'));
     }
 
     public function updateInnerWays(Request $request)
     {
         $user = Auth::user();
+
+        // Validate for Blade form structure: inner_ways[slug] = level
         $validated = $request->validate([
-            'inner_ways' => 'required|array',
-            'inner_ways.*.slug' => 'required|string|exists:inner_ways,slug',
-            'inner_ways.*.level' => 'required|integer|min:1|max:6',
-            'main_skill_id' => 'nullable|exists:skills,id',
-            'sub_skill_id' => 'nullable|exists:skills,id',
+             'inner_ways' => 'array',
+             'inner_ways.*' => 'integer|min:0|max:6', // Key is slug, value is level
+             'main_skill_id' => 'nullable|exists:skills,id',
+             'sub_skill_id' => 'nullable|exists:skills,id',
         ]);
 
-        // Constraint: main and sub skills must be different
+        // Update Skills
         if ($request->filled('main_skill_id') && $request->filled('sub_skill_id') && $request->main_skill_id == $request->sub_skill_id) {
-            return response()->json(['message' => 'Võ công chính và phụ không được trùng nhau.'], 422);
+             return redirect()->back()->withErrors(['sub_skill_id' => 'Võ công chính và phụ không được trùng nhau.']);
         }
 
-        $updateData = [];
-        if ($request->has('main_skill_id')) {
-            $updateData['main_skill_id'] = $validated['main_skill_id'];
-        }
-        if ($request->has('sub_skill_id')) {
-            $updateData['sub_skill_id'] = $validated['sub_skill_id'];
-        }
+        $user->main_skill_id = $request->input('main_skill_id');
+        $user->sub_skill_id = $request->input('sub_skill_id');
+        $user->save();
 
-        if (!empty($updateData)) {
-            $user->update($updateData);
-        }
-
-        $syncData = [];
-        foreach ($validated['inner_ways'] as $iw) {
-            $innerWay = \App\Models\InnerWay::where('slug', $iw['slug'])->first();
-            if ($innerWay) {
-                $syncData[$innerWay->id] = ['level' => $iw['level']];
+        // Update Inner Ways
+        if ($request->has('inner_ways')) {
+            $syncData = [];
+            foreach ($request->input('inner_ways') as $slug => $level) {
+                if ($level > 0) {
+                    $innerWay = InnerWay::where('slug', $slug)->first();
+                    if ($innerWay) {
+                        $syncData[$innerWay->id] = ['level' => $level];
+                    }
+                }
             }
+            $user->innerWays()->sync($syncData);
         }
 
-        $user->innerWays()->sync($syncData);
-
-        $colorOrder = ['gold', 'purple', 'blue'];
-        $innerWays = $user->innerWays()
-            ->get()
-            ->sort(function ($a, $b) use ($colorOrder) {
-                $indexA = array_search($a->color, $colorOrder);
-                $indexB = array_search($b->color, $colorOrder);
-
-                $indexA = $indexA === false ? 999 : $indexA;
-                $indexB = $indexB === false ? 999 : $indexB;
-
-                if ($indexA !== $indexB) {
-                    return $indexA <=> $indexB;
-                }
-
-                if ($a->pivot->level !== $b->pivot->level) {
-                    return $b->pivot->level <=> $a->pivot->level;
-                }
-
-                return strcasecmp($a->name, $b->name);
-            })
-            ->values();
-
-        return response()->json([
-            'message' => 'Cập nhật võ công thành công',
-            'inner_ways' => $innerWays->map(function($iw) {
-                return [
-                    'name' => $iw->name,
-                    'slug' => $iw->slug,
-                    'icon' => $iw->icon,
-                    'color' => $iw->color,
-                    'level' => $iw->pivot->level
-                ];
-            }),
-            'user' => $user->fresh(['mainSkill', 'subSkill'])
-        ]);
-    }
-
-    public function getSkills()
-    {
-        return response()->json([
-            'skills' => \App\Models\Skill::all()
-        ]);
+        return redirect()->back()->with('success', 'Cập nhật võ công thành công');
     }
 }

@@ -3,6 +3,7 @@
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Request;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -16,10 +17,15 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->validateCsrfTokens(except: [
             'api/admin/login',
         ]);
-        $middleware->redirectTo(
-            guests: '/admin/login',
-            users: '/dashboard'
-        );
+        
+        $middleware->redirectGuestsTo(function (Request $request) {
+            if ($request->is('admin/*')) {
+                return route('admin.login');
+            }
+            return route('login');
+        });
+
+        $middleware->redirectUsersTo('/dashboard');
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

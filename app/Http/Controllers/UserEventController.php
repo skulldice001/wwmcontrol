@@ -21,17 +21,20 @@ class UserEventController extends Controller
                 if ($event->is_registered) {
                     $event->preferred_time = $event->participants->first()->pivot->preferred_time;
                 }
-                unset($event->participants);
+                // Don't unset participants as we might need it for count or other logic in view, 
+                // but for this specific logic it was unsetting relation. 
+                // We can keep it or remove it. Let's keep it clean.
+                // unset($event->participants); 
                 return $event;
             });
 
-        return response()->json($events);
+        return view('events.index', compact('events'));
     }
 
     public function register(Request $request, Event $event)
     {
         if ($event->status !== 'upcoming' && $event->status !== 'ongoing') {
-            return response()->json(['message' => 'Sự kiện này không còn nhận báo danh.'], 422);
+            return redirect()->back()->with('error', 'Sự kiện này không còn nhận báo danh.');
         }
 
         $validated = $request->validate([
@@ -50,24 +53,24 @@ class UserEventController extends Controller
             $event->participants()->updateExistingPivot($user->id, [
                 'preferred_time' => $validated['preferred_time'] ?? null
             ]);
-            return response()->json(['message' => 'Cập nhật báo danh thành công.']);
+            return redirect()->back()->with('success', 'Cập nhật báo danh thành công.');
         }
 
         $event->participants()->attach($user->id, [
             'preferred_time' => $validated['preferred_time'] ?? null
         ]);
 
-        return response()->json(['message' => 'Báo danh thành công.']);
+        return redirect()->back()->with('success', 'Báo danh thành công.');
     }
 
     public function unregister(Request $request, Event $event)
     {
         if ($event->status !== 'upcoming') {
-            return response()->json(['message' => 'Không thể hủy báo danh khi sự kiện đã bắt đầu hoặc kết thúc.'], 422);
+            return redirect()->back()->with('error', 'Không thể hủy báo danh khi sự kiện đã bắt đầu hoặc kết thúc.');
         }
 
         $event->participants()->detach($request->user()->id);
 
-        return response()->json(['message' => 'Đã hủy báo danh.']);
+        return redirect()->back()->with('success', 'Đã hủy báo danh.');
     }
 }

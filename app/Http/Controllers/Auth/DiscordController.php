@@ -25,7 +25,7 @@ class DiscordController extends Controller
                 'exception' => $e,
                 'trace' => $e->getTraceAsString()
             ]);
-            return redirect(config('app.frontend_url'))->with('error', 'Failed to connect to Discord.');
+            return redirect()->route('login')->with('error', 'Failed to connect to Discord.');
         }
     }
 

@@ -12,7 +12,13 @@ class StaffController extends Controller
 {
     public function index()
     {
-        return response()->json(Staff::all());
+        $staffs = Staff::all();
+        return view('admin.staff.index', compact('staffs'));
+    }
+
+    public function create()
+    {
+        return view('admin.staff.create');
     }
 
     public function store(Request $request)
@@ -29,9 +35,14 @@ class StaffController extends Controller
 
         $validated['password'] = Hash::make($validated['password']);
 
-        $staff = Staff::create($validated);
+        Staff::create($validated);
 
-        return response()->json($staff, 201);
+        return redirect()->route('admin.staff.index')->with('success', 'Staff member created successfully.');
+    }
+
+    public function edit(Staff $staff)
+    {
+        return view('admin.staff.edit', compact('staff'));
     }
 
     public function update(Request $request, Staff $staff)
@@ -54,7 +65,7 @@ class StaffController extends Controller
 
         $staff->update($validated);
 
-        return response()->json($staff);
+        return redirect()->route('admin.staff.index')->with('success', 'Staff member updated successfully.');
     }
 
     public function destroy(Request $request, Staff $staff)
@@ -62,12 +73,12 @@ class StaffController extends Controller
         $this->authorizeMaster($request);
 
         if ($staff->id === $request->user()->id) {
-            return response()->json(['message' => 'Cannot delete yourself.'], 400);
+            return redirect()->back()->with('error', 'Cannot delete yourself.');
         }
 
         $staff->delete();
 
-        return response()->json(null, 204);
+        return redirect()->route('admin.staff.index')->with('success', 'Staff member deleted successfully.');
     }
 
     protected function authorizeMaster(Request $request)

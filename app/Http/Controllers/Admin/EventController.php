@@ -7,12 +7,49 @@ use App\Models\Event;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Carbon\Carbon;
+use App\Models\User;
+use App\Models\Skill;
+use App\Models\InnerWay;
 
 class EventController extends Controller
 {
     public function index()
     {
-        return response()->json(Event::with(['creator:id,name', 'participants:id,name,ingame_name,ingame_id,main_skill_id,sub_skill_id', 'participants.mainSkill', 'participants.subSkill', 'participants.innerWays'])->get()->map(fn($e) => $this->formatEvent($e)));
+        $events = Event::with(['creator'])->get();
+        return view('admin.events.index', compact('events'));
+    }
+
+    public function participants(Request $request, Event $event)
+    {
+        $query = $event->participants()->with(['innerWays', 'mainSkill', 'subSkill']);
+
+        if ($request->filled('main_skill_id')) {
+            $query->where('main_skill_id', $request->main_skill_id);
+        }
+
+        if ($request->filled('sub_skill_id')) {
+            $query->where('sub_skill_id', $request->sub_skill_id);
+        }
+
+        if ($request->filled('inner_way_id')) {
+            $query->whereHas('innerWays', function ($q) use ($request) {
+                $q->where('inner_ways.id', $request->inner_way_id);
+                if ($request->filled('inner_way_level')) {
+                    $q->where('user_inner_way.level', '>=', $request->inner_way_level);
+                }
+            });
+        }
+
+        $participants = $query->get();
+        $skills = Skill::all();
+        $innerWays = InnerWay::all();
+
+        return view('admin.events.participants', compact('event', 'participants', 'skills', 'innerWays'));
+    }
+
+    public function create()
+    {
+        return view('admin.events.create');
     }
 
     public function store(Request $request)
@@ -47,7 +84,7 @@ class EventController extends Controller
                 ->exists();
 
             if ($exists) {
-                return response()->json(['message' => 'Đã có sự kiện Bang chiến trong tuần này.'], 422);
+                return redirect()->back()->withErrors(['start_time' => 'Đã có sự kiện Bang chiến trong tuần này.'])->withInput();
             }
         }
 
@@ -57,12 +94,12 @@ class EventController extends Controller
             $event->participants()->sync($validated['participant_ids']);
         }
 
-        return response()->json($this->formatEvent($event->load(['creator:id,name', 'participants:id,name,ingame_name,ingame_id,main_skill_id,sub_skill_id', 'participants.mainSkill', 'participants.subSkill', 'participants.innerWays'])), 201);
+        return redirect()->route('admin.events.index')->with('success', 'Event created successfully.');
     }
 
-    public function show(Event $event)
+    public function edit(Event $event)
     {
-        return response()->json($this->formatEvent($event->load(['creator:id,name', 'participants:id,name,ingame_name,ingame_id,main_skill_id,sub_skill_id', 'participants.mainSkill', 'participants.subSkill', 'participants.innerWays'])));
+        return view('admin.events.edit', compact('event'));
     }
 
     public function update(Request $request, Event $event)
@@ -99,7 +136,7 @@ class EventController extends Controller
                 ->exists();
 
             if ($exists) {
-                return response()->json(['message' => 'Đã có sự kiện Bang chiến trong tuần này.'], 422);
+                return redirect()->back()->withErrors(['start_time' => 'Đã có sự kiện Bang chiến trong tuần này.'])->withInput();
             }
         }
 
@@ -109,77 +146,68 @@ class EventController extends Controller
             $event->participants()->sync($validated['participant_ids']);
         }
 
-        return response()->json($this->formatEvent($event->load(['creator:id,name', 'participants:id,name,ingame_name,ingame_id,main_skill_id,sub_skill_id', 'participants.mainSkill', 'participants.subSkill', 'participants.innerWays'])));
+        return redirect()->route('admin.events.index')->with('success', 'Event updated successfully.');
     }
 
     public function destroy(Request $request, Event $event)
     {
         $this->authorizeAdmin($request);
-
         $event->delete();
-
-        return response()->json(null, 204);
-    }
-
-    protected function formatEvent(Event $event)
-    {
-        $data = $event->toArray();
-        $data['creator'] = $event->creator ? $event->creator->only(['id', 'name']) : null;
-        $data['participants'] = $event->participants->map(function ($user) {
-            return [
-                'id' => $user->id,
-                'name' => $user->name,
-                'ingame_name' => $user->ingame_name,
-                'ingame_id' => $user->ingame_id,
-                'main_skill' => $user->mainSkill ? $user->mainSkill->name : null,
-                'sub_skill' => $user->subSkill ? $user->subSkill->name : null,
-                'gold_inner_ways' => $user->innerWays->where('color', 'gold')->map(function($iw) {
-                    return [
-                        'name' => $iw->name,
-                        'icon' => $iw->icon,
-                        'level' => $iw->pivot->level
-                    ];
-                })->values()->toArray(),
-                'preferred_time' => $user->pivot ? $user->pivot->preferred_time : null
-            ];
-        })->toArray();
-
-        return $data;
-    }
-
-    protected function prepareGuildWarData(Request $request, $existingEvent = null)
-    {
-        $type = $request->input('type', $existingEvent ? $existingEvent->type : null);
-
-        if ($type === 'guild_war') {
-            if (!$request->filled('start_time')) {
-                if ($existingEvent && $existingEvent->type === 'guild_war') {
-                    $saturday = Carbon::parse($existingEvent->start_time);
-                } else {
-                    $saturday = Carbon::now()->startOfWeek()->addDays(5)->setTime(20, 0);
-                    $request->merge(['start_time' => $saturday->toDateTimeString()]);
-                }
-            } else {
-                try {
-                    $saturday = Carbon::parse($request->start_time);
-                } catch (\Exception $e) {
-                    $saturday = Carbon::now()->startOfWeek()->addDays(5)->setTime(20, 0);
-                    $request->merge(['start_time' => $saturday->toDateTimeString()]);
-                }
-            }
-
-            if (!$request->filled('title')) {
-                $sunday = $saturday->copy()->addDay();
-                $title = "Bang Chiến ngày " . $saturday->format('d/m') . " - " . $sunday->format('d/m');
-                $request->merge(['title' => $title]);
-            }
-        }
+        return redirect()->route('admin.events.index')->with('success', 'Event deleted successfully.');
     }
 
     protected function authorizeAdmin(Request $request)
     {
-        if (!$request->user()->isAdmin()) {
-            abort(403, 'Only Master and Admin can perform this action.');
+        if (!$request->user()->isAdmin() && !$request->user()->isMaster()) {
+            abort(403, 'Only Admin or Master can perform this action.');
         }
+    }
+
+    protected function prepareGuildWarData(Request $request, Event $event = null)
+    {
+        if ($request->input('type') === 'guild_war') {
+            $now = Carbon::now();
+
+            // Determine next Saturday (include today if it's Saturday and before 19:30)
+            if ($now->dayOfWeek === Carbon::SATURDAY && $now->hour < 19) {
+                $saturday = $now->copy();
+            } else {
+                $saturday = $now->next(Carbon::SATURDAY);
+            }
+
+            $startTime = $saturday->copy()->setTime(19, 30, 0);
+            $endTime = $saturday->copy()->addDay()->setTime(22, 30, 0); // Sunday 22:30
+
+            // Format: "Guild war ngày [x - y] tháng z"
+            // x: Saturday date, y: Sunday date, z: Month
+            // Note: If month changes between Sat and Sun (e.g. 31 Jan - 1 Feb), handling might need to be specific,
+            // but prompt says "tháng z", implying one month. Let's assume start month or format "x/z - y/z".
+            // User request: "Guild war ngày [x - y] tháng z" -> implies single month.
+            // If cross-month, maybe "Guild war ngày 30/1 - 1/2"?
+            // Let's stick to the user's exact format for same month, and maybe adapt if different.
+            // But strict adherence: "Guild war ngày 10 - 11 tháng 2"
+
+            $satDay = $startTime->day;
+            $sunDay = $endTime->day;
+            $month = $startTime->month; // Use start month
+
+            if ($startTime->month != $endTime->month) {
+                 // Fallback for cross-month: "Guild war ngày 31/1 - 1/2"
+                 $title = "Guild war ngày {$satDay}/{$startTime->month} - {$sunDay}/{$endTime->month}";
+            } else {
+                 $title = "Guild war ngày {$satDay} - {$sunDay} tháng {$month}";
+            }
+
+            $request->merge([
+                'title' => $title,
+                'start_time' => $startTime->format('Y-m-d H:i:s'),
+                'end_time' => $endTime->format('Y-m-d H:i:s'),
+            ]);
+        }
+    }
+
+    private function formatEvent($event)
+    {
+        // ... (Keep or remove, mainly for API formatting)
     }
 }
