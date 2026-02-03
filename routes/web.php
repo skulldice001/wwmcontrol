@@ -71,6 +71,6 @@ Route::post('/logout', function (Request $request) {
     Auth::logout();
     $request->session()->invalidate();
     $request->session()->regenerateToken();
-    return response()->noContent();
-})->middleware('auth');
+    return redirect()->route('login');
+})->middleware('auth')->name('logout');
 
