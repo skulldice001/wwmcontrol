@@ -44,8 +44,9 @@
                                 <td>
                                     @if($event->is_registered)
                                         <span class="badge badge-success">{{ __('messages.joined_event') }}</span>
-                                        <form action="{{ route('events.leave', $event->id) }}" method="POST" class="d-inline">
+                                        <form action="{{ route('events.unregister', $event->id) }}" method="POST" class="d-inline">
                                             @csrf
+                                            @method('DELETE')
                                             <button type="submit" class="btn btn-sm btn-danger">{{ __('messages.leave_event') }}</button>
                                         </form>
                                     @else
@@ -54,7 +55,7 @@
                                                 {{ __('messages.join_guild_war') }}
                                             </button>
                                         @else
-                                            <form action="{{ route('events.join', $event->id) }}" method="POST" class="d-inline">
+                                            <form action="{{ route('events.register', $event->id) }}" method="POST" class="d-inline">
                                                 @csrf
                                                 <button type="submit" class="btn btn-sm btn-primary">{{ __('messages.join_event') }}</button>
                                             </form>
@@ -68,7 +69,7 @@
                             <div class="modal fade" id="joinGuildWarModal{{ $event->id }}" tabindex="-1" role="dialog" aria-labelledby="joinGuildWarModalLabel{{ $event->id }}" aria-hidden="true">
                                 <div class="modal-dialog" role="document">
                                     <div class="modal-content">
-                                        <form action="{{ route('events.join', $event->id) }}" method="POST">
+                                        <form action="{{ route('events.register', $event->id) }}" method="POST">
                                             @csrf
                                             <div class="modal-header">
                                                 <h5 class="modal-title" id="joinGuildWarModalLabel{{ $event->id }}">{{ __('messages.join_guild_war') }}</h5>
