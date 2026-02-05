@@ -27,6 +27,10 @@ class DiscordController extends Controller
     public function redirect(): RedirectResponse
     {
         try {
+            \Log::info('Discord Redirect Initiated', [
+                'session_id' => session()->getId(),
+                'config_redirect' => config('services.discord.redirect'),
+            ]);
             return Socialite::driver('discord')->redirect();
         } catch (\Exception $e) {
             \Log::error('Discord Redirect Error: ' . $e->getMessage(), [
@@ -43,11 +47,23 @@ class DiscordController extends Controller
     public function callback(\Illuminate\Http\Request $request): RedirectResponse
     {
         try {
+            \Log::info('Discord Callback Received', [
+                'session_id' => $request->session()->getId(),
+                'request_state' => $request->input('state'),
+                'session_state' => $request->session()->get('state'), // Note: Socialite pulls it, so we might miss it if we don't peek or if Socialite runs first.
+                // Actually Socialite::driver()->user() pulls it.
+                'request_code' => $request->input('code'),
+            ]);
+            
             $discordUser = Socialite::driver('discord')->user();
+            
+            \Log::info('Discord User Obtained', ['id' => $discordUser->getId()]);
+            
         } catch (\Exception $e) {
             \Log::error('Discord Auth Callback Error: ' . $e->getMessage(), [
                 'exception' => $e,
-                'trace' => $e->getTraceAsString()
+                'session_id' => $request->session()->getId(),
+                'session_all' => $request->session()->all(),
             ]);
             return redirect(config('app.frontend_url'))->with('error', 'Discord authentication failed.');
         }
