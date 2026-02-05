@@ -1,13 +1,13 @@
 @extends('layouts.admin')
 
-@section('title', 'Edit Profile')
+@section('title', __('messages.profile_info'))
 
 @section('content')
 <div class="row">
     <div class="col-md-6">
         <div class="card card-primary">
             <div class="card-header">
-                <h3 class="card-title">User Information</h3>
+                <h3 class="card-title">{{ __('messages.edit_profile') }}</h3>
             </div>
 
             @if (session('success'))
@@ -21,16 +21,19 @@
                 @method('PUT')
                 <div class="card-body">
                     <div class="form-group">
-                        <label>Discord Name</label>
+                        <label>{{ __('messages.discord_name') }}</label>
                         <input type="text" class="form-control" value="{{ $user->name }}" disabled>
                     </div>
                     <div class="form-group">
-                        <label>Email</label>
+                        <label>{{ __('messages.email') }}</label>
                         <input type="email" class="form-control" value="{{ $user->email }}" disabled>
                     </div>
                     <div class="form-group">
-                        <label for="country">Country</label>
-                        <input type="text" class="form-control" id="country" name="country" value="{{ old('country', $user->country) }}" placeholder="Enter country">
+                        <label>{{ __('messages.country') }}</label>
+                        <input type="text" name="country" class="form-control @error('country') is-invalid @enderror" value="{{ old('country', $user->country) }}" placeholder="Enter country">
+                        @error('country')
+                            <span class="invalid-feedback">{{ $message }}</span>
+                        @enderror
                     </div>
                     <div class="row">
                         <div class="col-6">
@@ -47,8 +50,11 @@
                         </div>
                     </div>
                     <div class="form-group">
-                        <label for="ingame_name">Ingame Name</label>
-                        <input type="text" class="form-control" id="ingame_name" name="ingame_name" value="{{ old('ingame_name', $user->ingame_name) }}" placeholder="Enter Ingame Name">
+                        <label>Ingame Name</label>
+                        <input type="text" name="ingame_name" class="form-control @error('ingame_name') is-invalid @enderror" value="{{ old('ingame_name', $user->ingame_name) }}" placeholder="Enter ingame name">
+                        @error('ingame_name')
+                            <span class="invalid-feedback">{{ $message }}</span>
+                        @enderror
                     </div>
                     <div class="form-group">
                         <label for="ingame_id">Ingame ID</label>
@@ -85,7 +91,7 @@
                 </div>
 
                 <div class="card-footer">
-                    <button type="submit" class="btn btn-primary">Update Profile</button>
+                    <button type="submit" class="btn btn-primary">{{ __('messages.update') }}</button>
                 </div>
             </form>
         </div>

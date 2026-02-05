@@ -80,26 +80,26 @@
                         <li class="nav-item">
                             <a href="{{ route('admin.dashboard') }}" class="nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
                                 <i class="nav-icon fas fa-tachometer-alt"></i>
-                                <p>Dashboard</p>
+                                <p>{{ __('messages.dashboard') }}</p>
                             </a>
                         </li>
                         <li class="nav-item">
                             <a href="{{ route('admin.events.index') }}" class="nav-link {{ request()->routeIs('admin.events.*') ? 'active' : '' }}">
                                 <i class="nav-icon fas fa-calendar-alt"></i>
-                                <p>Events Management</p>
+                                <p>{{ __('messages.events_management') }}</p>
                             </a>
                         </li>
                         <li class="nav-item">
                             <a href="{{ route('admin.users.index') }}" class="nav-link {{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
                                 <i class="nav-icon fas fa-users"></i>
-                                <p>Guild Members</p>
+                                <p>{{ __('messages.guild_members') }}</p>
                             </a>
                         </li>
                         @if(Auth::guard('staff')->user()->isMaster())
                         <li class="nav-item">
                             <a href="{{ route('admin.staff.index') }}" class="nav-link {{ request()->routeIs('admin.staff.*') ? 'active' : '' }}">
                                 <i class="nav-icon fas fa-users-cog"></i>
-                                <p>Staff Management</p>
+                                <p>{{ __('messages.staff_management') }}</p>
                             </a>
                         </li>
                         @endif
@@ -107,25 +107,25 @@
                         <li class="nav-item">
                             <a href="{{ route('dashboard') }}" class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">
                                 <i class="nav-icon fas fa-tachometer-alt"></i>
-                                <p>Dashboard</p>
+                                <p>{{ __('messages.dashboard') }}</p>
                             </a>
                         </li>
                         <li class="nav-item">
                             <a href="{{ route('profile.edit') }}" class="nav-link {{ request()->routeIs('profile.edit') ? 'active' : '' }}">
                                 <i class="nav-icon fas fa-user"></i>
-                                <p>Profile Info</p>
+                                <p>{{ __('messages.profile_info') }}</p>
                             </a>
                         </li>
                         <li class="nav-item">
                             <a href="{{ route('skills.edit') }}" class="nav-link {{ request()->routeIs('skills.edit') ? 'active' : '' }}">
                                 <i class="nav-icon fas fa-khanda"></i>
-                                <p>My Skills</p>
+                                <p>{{ __('messages.my_skills') }}</p>
                             </a>
                         </li>
                         <li class="nav-item">
                             <a href="{{ route('events.index') }}" class="nav-link {{ request()->routeIs('events.index') ? 'active' : '' }}">
                                 <i class="nav-icon fas fa-calendar-check"></i>
-                                <p>Available Events</p>
+                                <p>{{ __('messages.available_events') }}</p>
                             </a>
                         </li>
                     @endif

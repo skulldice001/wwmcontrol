@@ -1,6 +1,6 @@
 @extends('layouts.admin')
 
-@section('title', 'Manage Skills & Inner Ways')
+@section('title', __('messages.my_skills'))
 
 @section('content')
 @push('styles')
@@ -54,13 +54,13 @@
 
             <div class="card card-primary">
                 <div class="card-header">
-                    <h3 class="card-title">Active Skills</h3>
+                    <h3 class="card-title">{{ __('messages.update_skills') }}</h3>
                 </div>
                 <div class="card-body">
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label>Main Skill</label>
+                                <label>{{ __('messages.main_skill') }}</label>
                                 <select name="main_skill_id" class="form-control select2-icon" style="width: 100%;">
                                     <option value="">-- Select Main Skill --</option>
                                     @foreach($skills as $skill)
@@ -69,11 +69,14 @@
                                         </option>
                                     @endforeach
                                 </select>
+                                @error('main_skill_id')
+                                    <span class="text-danger">{{ $message }}</span>
+                                @enderror
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label>Sub Skill</label>
+                                <label>{{ __('messages.sub_skill') }}</label>
                                 <select name="sub_skill_id" class="form-control select2-icon" style="width: 100%;">
                                     <option value="">-- Select Sub Skill --</option>
                                     @foreach($skills as $skill)
@@ -82,6 +85,9 @@
                                         </option>
                                     @endforeach
                                 </select>
+                                @error('sub_skill_id')
+                                    <span class="text-danger">{{ $message }}</span>
+                                @enderror
                             </div>
                         </div>
                     </div>
@@ -118,7 +124,7 @@
                     </div>
                 </div>
                 <div class="card-footer">
-                    <button type="submit" class="btn btn-primary btn-block">Save Changes</button>
+                    <button type="submit" class="btn btn-primary btn-block">{{ __('messages.update') }}</button>
                 </div>
             </div>
         </form>

@@ -1,86 +1,62 @@
 @extends('layouts.admin')
 
-@section('title', 'User Dashboard')
+@section('title', __('messages.dashboard'))
 
 @section('content')
-<div class="row">
-    <div class="col-md-4">
-        <!-- User Profile Card -->
-        <div class="card card-primary card-outline">
-            <div class="card-body box-profile">
-                <div class="text-center">
-                    @if(Auth::user()->discord_avatar)
-                        <img class="profile-user-img img-fluid img-circle"
-                             src="{{ Auth::user()->discord_avatar }}"
-                             alt="User profile picture">
-                    @else
-                        <img class="profile-user-img img-fluid img-circle"
-                             src="https://ui-avatars.com/api/?name={{ urlencode(Auth::user()->name) }}"
-                             alt="User profile picture">
-                    @endif
+<div class="container-fluid">
+    <h1 class="m-0">{{ __('messages.welcome_back') }}, {{ Auth::user()->name }}!</h1>
+
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">{{ __('messages.my_inner_ways') }}</h3>
                 </div>
-
-                <h3 class="profile-username text-center">{{ Auth::user()->name }}</h3>
-                <p class="text-muted text-center">{{ Auth::user()->email }}</p>
-
-                <ul class="list-group list-group-unbordered mb-3" v-pre>
-                    <li class="list-group-item">
-                        <b>Discord ID</b> <a class="float-right">{{ Auth::user()->discord_id }}</a>
-                    </li>
-                    <li class="list-group-item">
-                        <b>Ingame Name</b> <a class="float-right">{{ Auth::user()->ingame_name ?? 'N/A' }}</a>
-                    </li>
-                    <li class="list-group-item">
-                        <b>Country</b> <a class="float-right">{{ Auth::user()->country ?? 'N/A' }}</a>
-                    </li>
-                    <li class="list-group-item">
-                        <b>Main Skill</b>
-                        <div class="float-right">
-                            @if(Auth::user()->mainSkill)
-                                <img src="{{ asset('icon/skill/' . Auth::user()->mainSkill->icon) }}" width="20" height="20" class="mr-1">
-                                {{ Auth::user()->mainSkill->name }}
-                            @else
-                                <span class="text-muted">None</span>
-                            @endif
-                        </div>
-                    </li>
-                    <li class="list-group-item">
-                        <b>Sub Skill</b>
-                        <div class="float-right">
-                            @if(Auth::user()->subSkill)
-                                <img src="{{ asset('icon/skill/' . Auth::user()->subSkill->icon) }}" width="20" height="20" class="mr-1">
-                                {{ Auth::user()->subSkill->name }}
-                            @else
-                                <span class="text-muted">None</span>
-                            @endif
-                        </div>
-                    </li>
-                </ul>
-                
-                <a href="{{ route('profile.edit') }}" class="btn btn-primary btn-block"><b>Edit Profile</b></a>
+                <div class="card-body">
+                    <div class="row" v-pre>
+                        @foreach(Auth::user()->innerWays as $iw)
+                            <div class="d-inline-block text-center mr-2 position-relative" title="{{ $iw->name }}">
+                                <img src="{{ asset('icon/inner_way/' . $iw->icon) }}" width="32" height="32" class="img-fluid" alt="{{ $iw->name }}">
+                                <span class="badge badge-light border" style="position: absolute; bottom: -5px; right: -5px; font-size: 10px; padding: 2px 4px;">{{ $iw->pivot->level }}</span>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-    
-    <div class="col-md-8">
-        <div class="card">
-            <div class="card-header">
-                <h3 class="card-title">My Inner Ways</h3>
-            </div>
-            <div class="card-body">
-                <div class="row">
-                    @foreach(Auth::user()->innerWays as $innerWay)
-                        <div class="col-lg-4 col-md-6 col-sm-6 text-center mb-4">
-                            <div class="p-3 border rounded shadow-sm bg-light h-100">
-                                <img src="{{ asset('icon/inner_way/' . $innerWay->icon) }}" 
-                                     alt="{{ $innerWay->name }}" 
-                                     class="img-fluid mb-3" 
-                                     style="height: 80px; width: 80px; object-fit: contain;">
-                                <h6 class="font-weight-bold">{{ $innerWay->name }}</h6>
-                                <span class="badge badge-success px-3 py-2">Level {{ $innerWay->pivot->level }}</span>
-                            </div>
+
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">{{ __('messages.my_skills') }}</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row" v-pre>
+                        <div class="col-md-6">
+                            <strong>{{ __('messages.main_skill') }}:</strong>
+                            @if(Auth::user()->mainSkill)
+                                <div class="d-inline-block text-center ml-2 position-relative" title="{{ Auth::user()->mainSkill->name }}">
+                                    <img src="{{ asset('icon/skill/' . Auth::user()->mainSkill->icon) }}" width="32" height="32" class="img-fluid" alt="{{ Auth::user()->mainSkill->name }}">
+                                    <span>{{ Auth::user()->mainSkill->name }}</span>
+                                </div>
+                            @else
+                                <span class="text-muted">None</span>
+                            @endif
                         </div>
-                    @endforeach
+                        <div class="col-md-6">
+                            <strong>{{ __('messages.sub_skill') }}:</strong>
+                            @if(Auth::user()->subSkill)
+                                <div class="d-inline-block text-center ml-2 position-relative" title="{{ Auth::user()->subSkill->name }}">
+                                    <img src="{{ asset('icon/skill/' . Auth::user()->subSkill->icon) }}" width="32" height="32" class="img-fluid" alt="{{ Auth::user()->subSkill->name }}">
+                                    <span>{{ Auth::user()->subSkill->name }}</span>
+                                </div>
+                            @else
+                                <span class="text-muted">None</span>
+                            @endif
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

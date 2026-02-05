@@ -7,7 +7,7 @@
 
     <!-- Google Font: Source Sans Pro -->
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
-    
+
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="hold-transition login-page">
@@ -18,7 +18,7 @@
     <!-- /.login-logo -->
     <div class="card">
         <div class="card-body login-card-body">
-            <p class="login-box-msg">Sign in to start your session</p>
+            <p class="login-box-msg">{{ __('messages.sign_in_to_start') }}</p>
 
             <form action="{{ route('admin.login') }}" method="post">
                 @csrf
@@ -53,13 +53,13 @@
                         <div class="icheck-primary">
                             <input type="checkbox" id="remember" name="remember">
                             <label for="remember">
-                                Remember Me
+                                {{ __('messages.remember_me') }}
                             </label>
                         </div>
                     </div>
                     <!-- /.col -->
                     <div class="col-4">
-                        <button type="submit" class="btn btn-primary btn-block">Sign In</button>
+                        <button type="submit" class="btn btn-primary btn-block">{{ __('messages.sign_in') }}</button>
                     </div>
                     <!-- /.col -->
                 </div>
