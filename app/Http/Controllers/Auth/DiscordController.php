@@ -9,10 +9,18 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
+use App\Services\DiscordService;
 use Laravel\Socialite\Facades\Socialite;
 
 class DiscordController extends Controller
 {
+    protected $discordService;
+
+    public function __construct(DiscordService $discordService)
+    {
+        $this->discordService = $discordService;
+    }
+
     /**
      * Redirect the user to the Discord authentication page.
      */
@@ -47,6 +55,11 @@ class DiscordController extends Controller
         // Invalidate old session and regenerate token
         $request->session()->invalidate();
         $request->session()->regenerateToken();
+
+        // Check Guild Membership
+        if (!$this->discordService->isMember($discordUser->getId())) {
+             return redirect()->route('login')->with('error', 'Bạn phải là thành viên của Discord server để đăng nhập.');
+        }
 
         $user = User::where('discord_id', $discordUser->getId())->first();
 

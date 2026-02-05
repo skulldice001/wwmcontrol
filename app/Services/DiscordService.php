@@ -47,6 +47,35 @@ class DiscordService
     }
 
     /**
+     * Check if a user is a member of the configured guild.
+     *
+     * @param string $discordUserId
+     * @return bool
+     */
+    public function isMember(string $discordUserId): bool
+    {
+        if (!$this->botToken || !$this->guildId) {
+            Log::warning('Discord Bot configuration is incomplete (missing bot_token or guild_id).');
+            return false;
+        }
+
+        try {
+            $response = Http::withHeaders([
+                'Authorization' => "Bot {$this->botToken}",
+            ])
+            ->withOptions([
+                'verify' => config('services.discord.guzzle.verify', true),
+            ])
+            ->get("https://discord.com/api/v10/guilds/{$this->guildId}/members/{$discordUserId}");
+
+            return $response->successful();
+        } catch (\Exception $e) {
+            Log::error("Discord API exception (isMember): {$e->getMessage()}");
+            return false;
+        }
+    }
+
+    /**
      * Get all roles for a user in the configured guild.
      *
      * @param string $discordUserId

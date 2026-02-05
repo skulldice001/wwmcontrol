@@ -67,6 +67,13 @@ Route::get('/user', function (Request $request) {
 Route::get('/auth/discord', [DiscordController::class, 'redirect'])->name('auth.discord');
 Route::get('/auth/discord/callback', [DiscordController::class, 'callback']);
 
+Route::get('lang/{locale}', function ($locale) {
+    if (in_array($locale, ['en', 'vi'])) {
+        session(['locale' => $locale]);
+    }
+    return redirect()->back();
+})->name('lang.switch');
+
 Route::post('/logout', function (Request $request) {
     Auth::logout();
     $request->session()->invalidate();

@@ -25,6 +25,25 @@
 
         <!-- Right navbar links -->
         <ul class="navbar-nav ml-auto">
+            <!-- Language Dropdown Menu -->
+            <li class="nav-item dropdown">
+                <a class="nav-link" data-toggle="dropdown" href="#">
+                    <i class="fas fa-globe"></i>
+                    @if(App::getLocale() == 'vi')
+                        🇻🇳
+                    @else
+                        🇺🇸
+                    @endif
+                </a>
+                <div class="dropdown-menu dropdown-menu-right p-0">
+                    <a href="{{ route('lang.switch', 'en') }}" class="dropdown-item {{ App::getLocale() == 'en' ? 'active' : '' }}">
+                        <i class="mr-2">🇺🇸</i> English
+                    </a>
+                    <a href="{{ route('lang.switch', 'vi') }}" class="dropdown-item {{ App::getLocale() == 'vi' ? 'active' : '' }}">
+                        <i class="mr-2">🇻🇳</i> Tiếng Việt
+                    </a>
+                </div>
+            </li>
             <li class="nav-item">
                 <form action="{{ Auth::guard('staff')->check() ? route('admin.logout') : route('logout') }}" method="POST" class="d-inline">
                     @csrf

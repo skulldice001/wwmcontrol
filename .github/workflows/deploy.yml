@@ -1,0 +1,52 @@
+name: CD
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  # Optional: Add a test job here if you want to run tests before deploying
+  # tests:
+  #   runs-on: ubuntu-latest
+  #   steps: ...
+
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Deploy via SSH
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.HOST }}
+        username: ${{ secrets.USERNAME }}
+        key: ${{ secrets.SSH_KEY }}
+        port: ${{ secrets.PORT || '22' }}
+        script: |
+          cd ${{ secrets.DIR }}
+          
+          # Put site in maintenance mode
+          php artisan down || true
+
+          # Pull latest changes
+          git pull origin main
+
+          # Install dependencies
+          composer install --no-dev --optimize-autoloader --prefer-dist
+          npm install
+          npm run build
+
+          # Clear caches
+          php artisan optimize:clear
+          
+          # Run migrations
+          php artisan migrate --force
+
+          # Re-cache config and routes
+          php artisan config:cache
+          php artisan route:cache
+          php artisan view:cache
+          php artisan event:cache
+
+          # Bring site back up
+          php artisan up
+          
+          echo "Deployment finished successfully!"
