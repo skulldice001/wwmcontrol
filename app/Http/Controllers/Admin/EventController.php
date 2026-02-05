@@ -47,6 +47,13 @@ class EventController extends Controller
         return view('admin.events.participants', compact('event', 'participants', 'skills', 'innerWays'));
     }
 
+    public function removeParticipant(Request $request, Event $event, User $user)
+    {
+        $this->authorizeAdmin($request);
+        $event->participants()->detach($user->id);
+        return redirect()->back()->with('success', __('messages.participant_removed'));
+    }
+
     public function create()
     {
         return view('admin.events.create');

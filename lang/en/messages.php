@@ -56,4 +56,5 @@ return [
     'join_guild_war' => 'Join Guild War',
     'close' => 'Close',
     'join' => 'Join',
+    'participant_removed' => 'Participant removed successfully.',
 ];

@@ -56,4 +56,5 @@ return [
     'join_guild_war' => 'Tham gia Bang chiến',
     'close' => 'Đóng',
     'join' => 'Tham gia',
+    'participant_removed' => 'Đã xóa người tham gia thành công.',
 ];

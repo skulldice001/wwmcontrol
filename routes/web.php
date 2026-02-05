@@ -36,6 +36,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
         Route::resource('staff', StaffController::class);
         Route::get('events/{event}/participants', [EventController::class, 'participants'])->name('events.participants');
+        Route::delete('events/{event}/participants/{user}', [EventController::class, 'removeParticipant'])->name('events.remove_participant');
         Route::resource('events', EventController::class);
         Route::get('/users', [UserController::class, 'index'])->name('users.index');
     });
