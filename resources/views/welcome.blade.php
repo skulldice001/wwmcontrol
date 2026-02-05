@@ -7,9 +7,9 @@
 
     <!-- Google Font: Source Sans Pro -->
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
-    
+
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    
+
     <style>
         .welcome-page {
             height: 100vh;
@@ -33,8 +33,15 @@
 
 <div class="welcome-box">
     <h1 class="mb-4">{{ config('app.name') }}</h1>
+
+    @if(session('error'))
+        <div class="alert alert-danger mb-4" role="alert" style="color: #721c24; background-color: #f8d7da; border-color: #f5c6cb; padding: .75rem 1.25rem; border: 1px solid transparent; border-radius: .25rem;">
+            {{ session('error') }}
+        </div>
+    @endif
+
     <p class="mb-4">Welcome to the User Portal. Please sign in with Discord to continue.</p>
-    
+
     @if(Auth::check())
         <a href="{{ route('dashboard') }}" class="btn btn-primary btn-lg btn-block">
             <i class="fas fa-tachometer-alt mr-2"></i> Go to Dashboard
