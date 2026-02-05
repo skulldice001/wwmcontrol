@@ -42,7 +42,7 @@
                                     @endif
                                 </td>
                                 <td>
-                                    @if($event->users->contains(Auth::id()))
+                                    @if($event->participants->contains(Auth::id()))
                                         <span class="badge badge-success">{{ __('messages.joined_event') }}</span>
                                         <form action="{{ route('events.leave', $event->id) }}" method="POST" class="d-inline">
                                             @csrf
@@ -64,7 +64,7 @@
                             </tr>
 
                             <!-- Join Guild War Modal -->
-                            @if($event->type === 'guild_war' && !$event->users->contains(Auth::id()))
+                            @if($event->type === 'guild_war' && !$event->participants->contains(Auth::id()))
                             <div class="modal fade" id="joinGuildWarModal{{ $event->id }}" tabindex="-1" role="dialog" aria-labelledby="joinGuildWarModalLabel{{ $event->id }}" aria-hidden="true">
                                 <div class="modal-dialog" role="document">
                                     <div class="modal-content">
