@@ -47,6 +47,31 @@ class EventController extends Controller
         return view('admin.events.participants', compact('event', 'participants', 'skills', 'innerWays'));
     }
 
+    public function formation(Event $event)
+    {
+        if ($event->type !== 'guild_war') {
+            return redirect()->route('admin.events.index')->with('error', 'Only Guild War events have formation.');
+        }
+
+        $participantsRaw = $event->participants()->with(['innerWays', 'mainSkill', 'subSkill'])->get();
+
+        $participants = $participantsRaw->map(function ($user) {
+            return [
+                'id' => $user->id,
+                'name' => $user->ingame_name ?? $user->name,
+                'role' => $user->mainSkill->name ?? 'Unknown',
+                'team' => 'Unassigned', // Default team
+                'weapon1' => $user->mainSkill->name ?? '',
+                'weapon2' => $user->subSkill->name ?? '',
+            ];
+        });
+
+        $skills = Skill::all();
+        $innerWays = InnerWay::all();
+
+        return view('admin.events.formation', compact('event', 'participants', 'skills', 'innerWays'));
+    }
+
     public function create()
     {
         return view('admin.events.create');

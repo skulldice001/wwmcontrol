@@ -25,11 +25,29 @@
 
         <!-- Right navbar links -->
         <ul class="navbar-nav ml-auto">
+            <!-- Language Dropdown Menu -->
+            <li class="nav-item dropdown">
+                <a class="nav-link" data-toggle="dropdown" href="#">
+                    <i class="fas fa-globe"></i>
+                    <span class="d-none d-md-inline ml-1">
+                        {{ App::getLocale() == 'vi' ? 'Tiếng Việt' : 'English' }}
+                    </span>
+                </a>
+                <div class="dropdown-menu dropdown-menu-right">
+                    <a href="{{ route('lang.switch', 'en') }}" class="dropdown-item {{ App::getLocale() == 'en' ? 'active' : '' }}">
+                        <i class="flag-icon flag-icon-us mr-2"></i> English
+                    </a>
+                    <a href="{{ route('lang.switch', 'vi') }}" class="dropdown-item {{ App::getLocale() == 'vi' ? 'active' : '' }}">
+                        <i class="flag-icon flag-icon-vn mr-2"></i> Tiếng Việt
+                    </a>
+                </div>
+            </li>
+
             <li class="nav-item">
                 <form action="{{ Auth::guard('staff')->check() ? route('admin.logout') : route('logout') }}" method="POST" class="d-inline">
                     @csrf
                     <button type="submit" class="btn btn-link nav-link">
-                        <i class="fas fa-sign-out-alt"></i> Logout
+                        <i class="fas fa-sign-out-alt"></i> {{ __('messages.logout') }}
                     </button>
                 </form>
             </li>
@@ -61,26 +79,26 @@
                         <li class="nav-item">
                             <a href="{{ route('admin.dashboard') }}" class="nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
                                 <i class="nav-icon fas fa-tachometer-alt"></i>
-                                <p>Dashboard</p>
+                                <p>{{ __('messages.dashboard') }}</p>
                             </a>
                         </li>
                         <li class="nav-item">
                             <a href="{{ route('admin.events.index') }}" class="nav-link {{ request()->routeIs('admin.events.*') ? 'active' : '' }}">
                                 <i class="nav-icon fas fa-calendar-alt"></i>
-                                <p>Events Management</p>
+                                <p>{{ __('messages.events_management') }}</p>
                             </a>
                         </li>
                         <li class="nav-item">
                             <a href="{{ route('admin.users.index') }}" class="nav-link {{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
                                 <i class="nav-icon fas fa-users"></i>
-                                <p>Guild Members</p>
+                                <p>{{ __('messages.guild_members') }}</p>
                             </a>
                         </li>
-                        @if(Auth::guard('staff')->user()->isMaster())
+                        @if(Auth::guard('staff')->user()->isAdmin())
                         <li class="nav-item">
                             <a href="{{ route('admin.staff.index') }}" class="nav-link {{ request()->routeIs('admin.staff.*') ? 'active' : '' }}">
                                 <i class="nav-icon fas fa-users-cog"></i>
-                                <p>Staff Management</p>
+                                <p>{{ __('messages.staff_management') }}</p>
                             </a>
                         </li>
                         @endif
@@ -88,25 +106,25 @@
                         <li class="nav-item">
                             <a href="{{ route('dashboard') }}" class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">
                                 <i class="nav-icon fas fa-tachometer-alt"></i>
-                                <p>Dashboard</p>
+                                <p>{{ __('messages.dashboard') }}</p>
                             </a>
                         </li>
                         <li class="nav-item">
                             <a href="{{ route('profile.edit') }}" class="nav-link {{ request()->routeIs('profile.edit') ? 'active' : '' }}">
                                 <i class="nav-icon fas fa-user"></i>
-                                <p>Profile Info</p>
+                                <p>{{ __('messages.profile_info') }}</p>
                             </a>
                         </li>
                         <li class="nav-item">
                             <a href="{{ route('skills.edit') }}" class="nav-link {{ request()->routeIs('skills.edit') ? 'active' : '' }}">
                                 <i class="nav-icon fas fa-khanda"></i>
-                                <p>My Skills</p>
+                                <p>{{ __('messages.my_skills') }}</p>
                             </a>
                         </li>
                         <li class="nav-item">
                             <a href="{{ route('events.index') }}" class="nav-link {{ request()->routeIs('events.index') ? 'active' : '' }}">
                                 <i class="nav-icon fas fa-calendar-check"></i>
-                                <p>Available Events</p>
+                                <p>{{ __('messages.available_events') }}</p>
                             </a>
                         </li>
                     @endif

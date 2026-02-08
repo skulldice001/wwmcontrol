@@ -11,6 +11,14 @@ Route::get('/', function () {
     return view('welcome');
 })->name('home');
 
+Route::get('lang/{locale}', function ($locale) {
+    if (! in_array($locale, ['en', 'vi'])) {
+        abort(400);
+    }
+    session(['locale' => $locale]);
+    return redirect()->back();
+})->name('lang.switch');
+
 Route::get('/login', function () {
     return redirect()->route('home');
 })->name('login');
@@ -36,6 +44,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
         Route::resource('staff', StaffController::class);
         Route::get('events/{event}/participants', [EventController::class, 'participants'])->name('events.participants');
+        Route::get('events/{event}/formation', [EventController::class, 'formation'])->name('events.formation');
         Route::resource('events', EventController::class);
         Route::get('/users', [UserController::class, 'index'])->name('users.index');
     });
