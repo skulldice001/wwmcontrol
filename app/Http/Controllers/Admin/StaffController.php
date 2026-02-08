@@ -23,7 +23,7 @@ class StaffController extends Controller
 
     public function store(Request $request)
     {
-        $this->authorizeMaster($request);
+        $this->authorizeAdmin($request);
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
@@ -47,7 +47,7 @@ class StaffController extends Controller
 
     public function update(Request $request, Staff $staff)
     {
-        $this->authorizeMaster($request);
+        $this->authorizeAdmin($request);
 
         $validated = $request->validate([
             'name' => ['string', 'max:255'],
@@ -70,7 +70,7 @@ class StaffController extends Controller
 
     public function destroy(Request $request, Staff $staff)
     {
-        $this->authorizeMaster($request);
+        $this->authorizeAdmin($request);
 
         if ($staff->id === $request->user()->id) {
             return redirect()->back()->with('error', 'Cannot delete yourself.');
@@ -81,10 +81,10 @@ class StaffController extends Controller
         return redirect()->route('admin.staff.index')->with('success', 'Staff member deleted successfully.');
     }
 
-    protected function authorizeMaster(Request $request)
+    protected function authorizeAdmin(Request $request)
     {
-        if (!$request->user()->isMaster()) {
-            abort(403, 'Only Master can perform this action.');
+        if (!$request->user()->isAdmin()) {
+            abort(403, 'Only Master or Admin can perform this action.');
         }
     }
 }

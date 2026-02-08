@@ -1,13 +1,13 @@
 @extends('layouts.admin')
 
-@section('title', 'Staff Management')
+@section('title', __('messages.staff_management'))
 
 @section('content')
 <div class="card">
     <div class="card-header">
-        <h3 class="card-title">Staff List</h3>
+        <h3 class="card-title">{{ __('messages.staff_list') }}</h3>
         <div class="card-tools">
-            <a href="{{ route('admin.staff.create') }}" class="btn btn-primary btn-sm">Add New Staff</a>
+            <a href="{{ route('admin.staff.create') }}" class="btn btn-primary btn-sm">{{ __('messages.add_new_staff') }}</a>
         </div>
     </div>
     <div class="card-body">
@@ -21,11 +21,11 @@
             <thead>
                 <tr>
                     <th>ID</th>
-                    <th>Name</th>
-                    <th>Account</th>
-                    <th>Email</th>
-                    <th>Role</th>
-                    <th>Actions</th>
+                    <th>{{ __('messages.name') }}</th>
+                    <th>{{ __('messages.account') }}</th>
+                    <th>{{ __('messages.email') }}</th>
+                    <th>{{ __('messages.role') }}</th>
+                    <th>{{ __('messages.actions') }}</th>
                 </tr>
             </thead>
             <tbody>
@@ -41,12 +41,12 @@
                         </span>
                     </td>
                     <td>
-                        <a href="{{ route('admin.staff.edit', $staff->id) }}" class="btn btn-info btn-sm">Edit</a>
+                        <a href="{{ route('admin.staff.edit', $staff->id) }}" class="btn btn-info btn-sm">{{ __('messages.edit') }}</a>
                         @if($staff->id !== Auth::user()->id)
                             <form action="{{ route('admin.staff.destroy', $staff->id) }}" method="POST" style="display:inline-block;">
                                 @csrf
                                 @method('DELETE')
-                                <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure?')">Delete</button>
+                                <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('{{ __('messages.are_you_sure') }}')">{{ __('messages.delete') }}</button>
                             </form>
                         @endif
                     </td>

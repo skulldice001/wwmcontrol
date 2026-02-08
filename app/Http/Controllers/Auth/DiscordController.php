@@ -32,16 +32,36 @@ class DiscordController extends Controller
     /**
      * Obtain the user information from Discord.
      */
-    public function callback(\Illuminate\Http\Request $request): RedirectResponse
+    public function callback(\Illuminate\Http\Request $request)
     {
         try {
+            \Log::info('Discord Callback Received', [
+                'session_id' => $request->session()->getId(),
+                'request_state' => $request->input('state'),
+                'session_state' => $request->session()->get('state'),
+                'request_code' => $request->input('code'),
+            ]);
+
             $discordUser = Socialite::driver('discord')->user();
+
+            \Log::info('Discord User Obtained', ['id' => $discordUser->getId()]);
+
         } catch (\Exception $e) {
             \Log::error('Discord Auth Callback Error: ' . $e->getMessage(), [
                 'exception' => $e,
-                'trace' => $e->getTraceAsString()
+                'session_id' => $request->session()->getId(),
+                'session_all' => $request->session()->all(),
             ]);
-            return redirect(config('app.frontend_url'))->with('error', 'Discord authentication failed.');
+
+             // Temporary debugging: Show error directly to user
+             return response()->json([
+                 'message' => 'Discord authentication failed.',
+                 'error' => $e->getMessage(),
+                 'session_id' => $request->session()->getId(),
+                 'session_state' => $request->session()->get('state'),
+                 'request_state' => $request->input('state'),
+                 'session_data' => $request->session()->all(),
+             ], 500);
         }
 
         // Invalidate old session and regenerate token

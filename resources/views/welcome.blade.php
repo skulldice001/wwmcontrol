@@ -31,22 +31,28 @@
 </head>
 <body class="welcome-page">
 
+<div style="position: absolute; top: 20px; right: 20px;">
+    <a href="{{ route('lang.switch', 'en') }}" class="{{ App::getLocale() == 'en' ? 'font-weight-bold text-dark' : 'text-muted' }} mr-2">EN</a>
+    <span class="text-muted">|</span>
+    <a href="{{ route('lang.switch', 'vi') }}" class="{{ App::getLocale() == 'vi' ? 'font-weight-bold text-dark' : 'text-muted' }} ml-2">VN</a>
+</div>
+
 <div class="welcome-box">
     <h1 class="mb-4">{{ config('app.name') }}</h1>
-    <p class="mb-4">Welcome to the User Portal. Please sign in with Discord to continue.</p>
+    <p class="mb-4">{{ __('messages.welcome_message') }}</p>
     
     @if(Auth::check())
         <a href="{{ route('dashboard') }}" class="btn btn-primary btn-lg btn-block">
-            <i class="fas fa-tachometer-alt mr-2"></i> Go to Dashboard
+            <i class="fas fa-tachometer-alt mr-2"></i> {{ __('messages.go_to_dashboard') }}
         </a>
     @else
         <a href="{{ route('auth.discord') }}" class="btn btn-primary btn-lg btn-block" style="background-color: #5865F2; border-color: #5865F2;">
-            <i class="fab fa-discord mr-2"></i> Login with Discord
+            <i class="fab fa-discord mr-2"></i> {{ __('messages.login_discord') }}
         </a>
     @endif
 
     <div class="mt-4 pt-3 border-top">
-        <a href="{{ route('admin.login') }}" class="text-muted small">Are you a staff member? Login here</a>
+        <a href="{{ route('admin.login') }}" class="text-muted small">{{ __('messages.staff_login_link') }}</a>
     </div>
 </div>
 

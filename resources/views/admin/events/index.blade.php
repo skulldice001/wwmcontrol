@@ -50,8 +50,13 @@
                     <td>{{ $event->creator ? $event->creator->name : 'N/A' }}</td>
                     <td>
                         <a href="{{ route('admin.events.participants', $event->id) }}" class="btn btn-primary btn-sm mr-1">
-                            <i class="fas fa-users"></i> Participants
+                            <i class="fas fa-users"></i> {{ __('messages.participants') ?? 'Participants' }}
                         </a>
+                        @if($event->type == 'guild_war')
+                            <a href="{{ route('admin.events.formation', $event->id) }}" class="btn btn-warning btn-sm mr-1">
+                                <i class="fas fa-users-cog"></i> {{ __('messages.sort_formation') }}
+                            </a>
+                        @endif
                         <a href="{{ route('admin.events.edit', $event->id) }}" class="btn btn-info btn-sm mr-1">
                             <i class="fas fa-pencil-alt"></i> Edit
                         </a>
