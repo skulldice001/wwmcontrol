@@ -20,6 +20,13 @@ class Event extends Model
         'location',
         'status',
         'created_by',
+        'formation_data',
+    ];
+
+    protected $casts = [
+        'start_time' => 'datetime',
+        'end_time' => 'datetime',
+        'formation_data' => 'array',
     ];
 
     public function creator()

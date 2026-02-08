@@ -42,10 +42,11 @@ const MAX_ENEMIES = 30;
 const ENEMIES_PER_CLICK = 5;
 const GROUP_MERGE_DISTANCE = 80;
 const AUTO_DELETE_DELAY = 10000;
-const TEAM_ORDER = ['Team 1', 'Team 2', 'Team 3', 'Team 4', 'Team 5', 'Team 6'];
-// Add after TEAM_ORDER constant
+// Team Configuration
+let teams = [];
+// Removed TEAM_ORDER constant as it is replaced by dynamic teams array
 
-// Custom team name mappings
+// Custom team name mappings (Backwards compatibility)
 let teamNameMappings = {};
 
 // Load custom team names from localStorage
@@ -89,30 +90,90 @@ function saveTeamNames() {
 }
 
 // Get display name for team (custom or default)
-function getTeamDisplayName(teamName) {
-    return teamNameMappings[teamName] || teamName;
+function getTeamDisplayName(teamId) {
+    // Check dynamic teams first
+    const team = teams.find(t => t.id === teamId);
+    if (team) return team.name;
+
+    // Fallback to mappings or ID
+    return teamNameMappings[teamId] || teamId;
 }
 
-// Rename team
-async function renameTeam(teamName) {
-    const currentName = getTeamDisplayName(teamName);
-    const newName = await showPrompt(
-        'Rename Team',
-        `Enter new name for "${currentName}":`,
-        currentName
-    );
-
-    if (newName !== null && newName !== '') {
-        if (newName === teamName) {
-            // Reset to default
-            delete teamNameMappings[teamName];
-        } else {
-            teamNameMappings[teamName] = newName;
-        }
-        saveTeamNames();
+// Add new team
+async function addTeam() {
+    const name = await showPrompt('Create Team', 'Enter new team name:', 'New Team');
+    if (name) {
+        const id = `team_${Date.now()}`;
+        teams.push({
+            id: id,
+            name: name,
+            captainId: null
+        });
+        savePositions(); // Save structure
         renderMemberList();
     }
 }
+
+// Delete team
+async function deleteTeam(teamId) {
+    const team = teams.find(t => t.id === teamId);
+    if (!team) return;
+
+    // Check if team has members
+    const hasMembers = members.some(m => m.team === teamId);
+    if (hasMembers) {
+        alert(`Cannot delete "${team.name}" because it has members assigned. Move them first.`);
+        return;
+    }
+
+    if (await showConfirm('Delete Team', `Delete team "${team.name}"?`)) {
+        teams = teams.filter(t => t.id !== teamId);
+        savePositions();
+        renderMemberList();
+    }
+}
+
+// Rename team
+async function renameTeam(teamId) {
+    const team = teams.find(t => t.id === teamId);
+    if (team) {
+        const newName = await showPrompt('Rename Team', `Enter new name for "${team.name}":`, team.name);
+        if (newName && newName !== team.name) {
+            team.name = newName;
+            savePositions();
+            renderMemberList();
+        }
+    } else {
+        // Fallback for legacy
+        const currentName = getTeamDisplayName(teamId);
+        const newName = await showPrompt(
+            'Rename Team',
+            `Enter new name for "${currentName}":`,
+            currentName
+        );
+
+        if (newName !== null && newName !== '') {
+            teamNameMappings[teamId] = newName;
+            saveTeamNames();
+            renderMemberList();
+        }
+    }
+}
+
+// Toggle Captain
+function toggleCaptain(memberId, teamId) {
+    const team = teams.find(t => t.id === teamId);
+    if (!team) return;
+
+    if (team.captainId === memberId) {
+        team.captainId = null; // Unassign
+    } else {
+        team.captainId = memberId; // Assign new (replaces old)
+    }
+    savePositions();
+    renderMemberList();
+}
+
 
 // ============================================================================
 // DOM ELEMENT REFERENCES
@@ -135,23 +196,33 @@ let hotkeyHelpModal, closeHotkeyModalBtn;
 // CUSTOM CONFIRM DIALOG
 // ============================================================================
 
+let isPromptActive = false;
+
 function showConfirm(title, message) {
+    if (isPromptActive) return Promise.resolve(false);
+    isPromptActive = true;
     return new Promise((resolve) => {
+        let isResolved = false;
         confirmModalTitle.textContent = title;
         confirmModalMessage.textContent = message;
         confirmModal.style.display = 'flex';
 
         const handleOk = () => {
+            if (isResolved) return;
+            isResolved = true;
             cleanup();
             resolve(true);
         };
 
         const handleCancel = () => {
+            if (isResolved) return;
+            isResolved = true;
             cleanup();
             resolve(false);
         };
 
         const cleanup = () => {
+            isPromptActive = false;
             confirmModal.style.display = 'none';
             confirmOkBtn.removeEventListener('click', handleOk);
             confirmCancelBtn.removeEventListener('click', handleCancel);
@@ -163,7 +234,10 @@ function showConfirm(title, message) {
 }
 
 function showPrompt(title, message, defaultValue = '') {
+    if (isPromptActive) return Promise.resolve(null);
+    isPromptActive = true;
     return new Promise((resolve) => {
+        let isResolved = false;
         promptModalTitle.textContent = title;
         promptModalMessage.textContent = message;
         promptModalInput.value = defaultValue;
@@ -176,12 +250,16 @@ function showPrompt(title, message, defaultValue = '') {
         }, 100);
 
         const handleOk = () => {
+            if (isResolved) return;
+            isResolved = true;
             const value = promptModalInput.value.trim();
             cleanup();
             resolve(value || null);
         };
 
         const handleCancel = () => {
+            if (isResolved) return;
+            isResolved = true;
             cleanup();
             resolve(null);
         };
@@ -195,6 +273,7 @@ function showPrompt(title, message, defaultValue = '') {
         };
 
         const cleanup = () => {
+            isPromptActive = false;
             promptModal.style.display = 'none';
             promptOkBtn.removeEventListener('click', handleOk);
             promptCancelBtn.removeEventListener('click', handleCancel);
@@ -264,6 +343,8 @@ function initializeDOM() {
     promptCancelBtn = document.getElementById('promptCancelBtn');
     hotkeyHelpModal = document.getElementById('hotkeyHelpModal');
     closeHotkeyModalBtn = document.getElementById('closeHotkeyModalBtn');
+    formationNameInput = document.getElementById('formationNameInput');
+    loadFormationSelect = document.getElementById('loadFormationSelect');
 }
 
 function init() {
@@ -274,10 +355,46 @@ function init() {
     renderMemberList();
     setupEventListeners();
     loadSavedPositions();
+    initLoadFormationSelect();
     updateCounts();
     initializeCanvas();
     setupClickOutsideHandler();
     setupPlayerManagementHandlers();
+}
+// Initialize the load formation select dropdown
+function initLoadFormationSelect() {
+    if (!loadFormationSelect || !window.pastEvents || !Array.isArray(window.pastEvents)) return;
+
+    window.pastEvents.forEach(event => {
+        const option = document.createElement('option');
+        option.value = event.id;
+        // Format date simply
+        const dateObj = new Date(event.start_time);
+        const dateStr = dateObj.toLocaleDateString();
+        option.textContent = `${event.title} (${dateStr})`;
+        loadFormationSelect.appendChild(option);
+    });
+
+    loadFormationSelect.addEventListener('change', async function() {
+        const eventId = this.value;
+        if (!eventId) return;
+
+        const event = window.pastEvents.find(e => e.id == eventId);
+        if (event && event.formation_data) {
+            const confirmed = await showConfirm(
+                'Load Formation?',
+                `Are you sure you want to load formation from "${event.title}"? This will replace all current placements on the map.`
+            );
+
+            if (confirmed) {
+                loadSavedPositions(event.formation_data);
+                // Reset select to default after loading
+                this.value = '';
+            } else {
+                this.value = '';
+            }
+        }
+    });
 }
 
 // ============================================================================
@@ -297,9 +414,18 @@ function renderMemberList() {
 
 // Render grouped view by team
 function renderGroupedView() {
-    TEAM_ORDER.forEach(teamName => {
+    // Add "Create Team" button
+    const addBtn = document.createElement('button');
+    addBtn.className = 'add-team-btn';
+    addBtn.innerHTML = '+ Create New Team';
+    addBtn.onclick = addTeam;
+    memberList.appendChild(addBtn);
+
+    teams.forEach(team => {
+        const teamId = team.id;
+
         // Get all team members first (not filtered yet)
-        const allTeamMembers = members.filter(m => m.team === teamName);
+        const allTeamMembers = members.filter(m => m.team === teamId);
 
         // Then filter out placed members and apply search/role filters
         const teamMembers = allTeamMembers.filter(m => {
@@ -311,7 +437,7 @@ function renderGroupedView() {
             const matchesSearch = !searchTerm ||
                                  m.name.toLowerCase().includes(searchTerm) ||
                                  m.role.toLowerCase().includes(searchTerm) ||
-                                 m.team.toLowerCase().includes(searchTerm);
+                                 getTeamDisplayName(m.team).toLowerCase().includes(searchTerm);
             if (!matchesSearch) return false;
 
             // Apply role filter
@@ -321,43 +447,55 @@ function renderGroupedView() {
             return true;
         });
 
-        if (teamMembers.length > 0) {
-            const groupDiv = document.createElement('div');
-            groupDiv.className = 'team-group';
+        // Always render team group if it exists in 'teams' array, even if empty (so we can drag into it)
+        const groupDiv = document.createElement('div');
+        groupDiv.className = 'team-group';
+        groupDiv.dataset.teamId = teamId;
 
-            const headerDiv = document.createElement('div');
-            headerDiv.className = 'team-group-header';
-            headerDiv.draggable = true;
-            headerDiv.dataset.teamName = teamName;
-            const displayName = getTeamDisplayName(teamName);
-            headerDiv.innerHTML = `
-                <span class="team-name-wrapper">
-                    <span class="toggle-icon">▼</span>
-                    <span class="team-name">${displayName}</span>
-                    <button class="rename-team-btn" onclick="renameTeam('${teamName}')" title="Rename team">✏️</button>
-                </span>
-                <span class="team-count">${teamMembers.length}</span>
-            `;
-            headerDiv.addEventListener('click', (e) => {
-                if (e.target === headerDiv || e.target.closest('.toggle-icon') || e.target.closest('.team-name')) {
-                    toggleTeamGroup(groupDiv);
-                }
-            });
-            headerDiv.addEventListener('dragstart', handleTeamDragStart);
-            headerDiv.addEventListener('dragend', handleDragEnd);
+        // Drag events for reordering/assigning
+        groupDiv.addEventListener('dragover', handleTeamDragOver);
+        groupDiv.addEventListener('dragleave', handleTeamDragLeave);
+        groupDiv.addEventListener('drop', handleTeamDrop);
 
-            const playersDiv = document.createElement('div');
-            playersDiv.className = 'team-group-players';
+        const headerDiv = document.createElement('div');
+        headerDiv.className = 'team-group-header';
+        headerDiv.draggable = true;
+        headerDiv.dataset.teamId = teamId;
+        const displayName = getTeamDisplayName(teamId);
 
-            teamMembers.forEach(member => {
-                const memberElement = createMemberElement(member);
-                playersDiv.appendChild(memberElement);
-            });
+        headerDiv.innerHTML = `
+            <span class="team-name-wrapper">
+                <span class="toggle-icon">▼</span>
+                <span class="team-name">${displayName}</span>
+                <button class="rename-team-btn" onclick="event.stopPropagation(); renameTeam('${teamId}')" title="Rename team">✏️</button>
+                <button class="delete-team-btn" onclick="event.stopPropagation(); deleteTeam('${teamId}')" title="Delete team">×</button>
+            </span>
+            <span class="team-count">${teamMembers.length}</span>
+        `;
+        headerDiv.addEventListener('click', (e) => {
+            if (e.target === headerDiv || e.target.closest('.toggle-icon') || e.target.closest('.team-name')) {
+                toggleTeamGroup(groupDiv);
+            }
+        });
+        headerDiv.addEventListener('dragstart', handleTeamDragStart);
+        headerDiv.addEventListener('dragend', handleDragEnd);
 
-            groupDiv.appendChild(headerDiv);
-            groupDiv.appendChild(playersDiv);
-            memberList.appendChild(groupDiv);
+        const playersDiv = document.createElement('div');
+        playersDiv.className = 'team-group-players';
+
+        teamMembers.forEach(member => {
+            const memberElement = createMemberElement(member);
+            playersDiv.appendChild(memberElement);
+        });
+
+        // Add placeholder if empty so we can drop into it
+        if (teamMembers.length === 0) {
+            playersDiv.innerHTML = '<div class="empty-team-placeholder" style="padding: 10px; text-align: center; color: #aaa; font-size: 0.8rem; font-style: italic;">Drop members here</div>';
         }
+
+        groupDiv.appendChild(headerDiv);
+        groupDiv.appendChild(playersDiv);
+        memberList.appendChild(groupDiv);
     });
 }
 
@@ -401,16 +539,30 @@ function createMemberElement(member) {
     div.draggable = true;
     div.dataset.memberId = member.id;
 
+    const team = teams.find(t => t.id === member.team);
+    const isCaptain = team && team.captainId === member.id;
+    const captainClass = isCaptain ? 'active' : '';
+    const captainIcon = isCaptain ? '👑' : '☆';
+
+    // Only show remove button if member is in a team
+    const removeBtn = member.team ? `<button class="remove-from-team-btn" onclick="event.stopPropagation(); removeMemberFromTeam(${member.id})" title="Remove from team" style="background: none; border: none; color: #e53e3e; cursor: pointer; font-weight: bold;">×</button>` : '';
+
     div.innerHTML = `
         <div class="member-info">
             <div class="member-name">${member.name}</div>
-            <div class="member-team">${member.team}</div>
+            <div class="member-team">${getTeamDisplayName(member.team)}</div>
             <div class="member-weapons">
                 <div class="weapon-item">W1: ${member.weapon1 || 'None'}</div>
                 <div class="weapon-item">W2: ${member.weapon2 || 'None'}</div>
             </div>
         </div>
-        <div class="role-badge">${member.role}</div>
+        <div class="member-controls" style="display: flex; flex-direction: column; align-items: flex-end; gap: 5px;">
+            <div class="role-badge">${member.role}</div>
+            <div style="display: flex; gap: 5px;">
+                <button class="captain-btn ${captainClass}" onclick="event.stopPropagation(); toggleCaptain(${member.id}, '${member.team}')" title="Toggle Captain">${captainIcon}</button>
+                ${removeBtn}
+            </div>
+        </div>
     `;
 
     div.addEventListener('dragstart', handleDragStart);
@@ -514,6 +666,14 @@ function setupEventListeners() {
 
     // Enemy button
     addSafeListener(addEnemiesBtn, 'click', addEnemies);
+
+    // Save Formation Button (Top)
+    const saveFormationBtn = document.getElementById('saveFormationBtn');
+    addSafeListener(saveFormationBtn, 'click', saveFormationToServer);
+
+    // Save Formation Button (Bottom)
+    const saveFormationBtnBottom = document.getElementById('saveFormationBtnBottom');
+    addSafeListener(saveFormationBtnBottom, 'click', saveFormationToServer);
 
     // Clear map button
     addSafeListener(clearMapBtn, 'click', clearAllPlacements);
@@ -707,6 +867,60 @@ function handleSplitMemberDragStart(e) {
         groupId: e.currentTarget.dataset.groupId
     };
     e.dataTransfer.setData('text/plain', JSON.stringify(dragData));
+}
+
+// Handle drag over team group
+function handleTeamDragOver(e) {
+    e.preventDefault();
+    e.currentTarget.classList.add('drag-over');
+    e.dataTransfer.dropEffect = 'move';
+}
+
+// Handle drag leave team group
+function handleTeamDragLeave(e) {
+    e.currentTarget.classList.remove('drag-over');
+}
+
+// Handle drop on team group (assign member to team)
+function handleTeamDrop(e) {
+    e.preventDefault();
+    e.currentTarget.classList.remove('drag-over');
+
+    const rawData = e.dataTransfer.getData('text/plain');
+    let dragData;
+
+    try {
+        dragData = JSON.parse(rawData);
+    } catch (err) {
+        console.warn('Drag data is not JSON', err);
+        return;
+    }
+
+    if (!dragData || dragData.type !== 'member') {
+        return;
+    }
+
+    const memberId = parseInt(dragData.data);
+    const targetTeamId = e.currentTarget.dataset.teamId;
+    const member = members.find(m => m.id === memberId);
+
+    if (member && member.team !== targetTeamId) {
+        // Update member's team
+        member.team = targetTeamId;
+
+        // If member was a captain of another team, remove that status
+        teams.forEach(t => {
+            if (t.captainId === memberId) {
+                t.captainId = null;
+            }
+        });
+
+        savePlayersToStorage();
+        renderMemberList();
+
+        // Visual feedback
+        // alert(`${member.name} moved to ${getTeamDisplayName(targetTeamId)}`);
+    }
 }
 
 // Handle team group drag
@@ -3484,9 +3698,10 @@ function handleImportFile(event) {
     reader.readAsText(file);
 }
 
-// Save positions to localStorage
-function savePositions() {
-    const data = {
+// Get formation data object
+function getFormationData() {
+    return {
+        formationName: formationNameInput ? formationNameInput.value : '',
         members: placedMembers,
         groups: placedGroups,
         objectives: placedObjectives,
@@ -3497,17 +3712,123 @@ function savePositions() {
         redTrees: placedRedTrees,
         blueGeese: placedBlueGeese,
         redGeese: placedRedGeese,
-        enemies: placedEnemies
+        enemies: placedEnemies,
+        // Add roster data
+        roster: {
+            teams: teams,
+            assignments: members.reduce((acc, m) => {
+                acc[m.id] = m.team;
+                return acc;
+            }, {})
+        }
     };
+}
+
+// Save positions to localStorage
+function savePositions() {
+    const data = getFormationData();
     localStorage.setItem('vcross-gvg-positions', JSON.stringify(data));
 }
 
+// Save formation to server
+function saveFormationToServer() {
+    if (!window.saveFormationUrl) return;
+
+    const data = getFormationData();
+    const btn = document.getElementById('saveFormationBtn');
+    if (!btn) return;
+
+    const originalContent = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+    btn.disabled = true;
+
+    fetch(window.saveFormationUrl, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': window.csrfToken
+        },
+        body: JSON.stringify({ formation_data: data })
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+             btn.innerHTML = '<i class="fas fa-check"></i> Saved';
+             btn.classList.remove('btn-success');
+             btn.classList.add('btn-primary');
+             setTimeout(() => {
+                 btn.innerHTML = originalContent;
+                 btn.disabled = false;
+                 btn.classList.remove('btn-primary');
+                 btn.classList.add('btn-success');
+             }, 2000);
+        } else {
+            alert('Failed to save formation');
+            btn.innerHTML = originalContent;
+            btn.disabled = false;
+        }
+    })
+    .catch(error => {
+        console.error('Error saving formation:', error);
+        alert('Error saving formation');
+        btn.innerHTML = originalContent;
+        btn.disabled = false;
+    });
+}
+
+// Clear all placements from map (helper for loading new data)
+function clearAllPlacements() {
+    const markers = mapArea.querySelectorAll('.member-marker, .group-marker, .objective-marker, .boss-marker, .tower-marker, .tree-marker, .goose-marker, .enemy-marker');
+    markers.forEach(marker => marker.remove());
+    placedMembers = [];
+    placedGroups = [];
+    placedObjectives = [];
+    placedBosses = [];
+    placedBlueTowers = [];
+    placedRedTowers = [];
+    placedBlueTrees = [];
+    placedRedTrees = [];
+    placedBlueGeese = [];
+    placedRedGeese = [];
+    placedEnemies = [];
+    enemiesCount = 0;
+}
+
 // Load saved positions
-function loadSavedPositions() {
-    const saved = localStorage.getItem('vcross-gvg-positions');
-    if (saved) {
+function loadSavedPositions(externalData = null) {
+    if (externalData) {
+        clearAllPlacements();
+    }
+
+    let savedData = externalData;
+
+    if (!savedData) {
+        // Prioritize server data if available (only on first load)
+        if (window.initialFormationData && typeof window.initialFormationData === 'object' && Object.keys(window.initialFormationData).length > 0) {
+            savedData = window.initialFormationData;
+            console.log('Loaded formation from server');
+        } else {
+            const localSaved = localStorage.getItem('vcross-gvg-positions');
+            if (localSaved) {
+                try {
+                    savedData = JSON.parse(localSaved);
+                    console.log('Loaded formation from localStorage');
+                } catch (e) {
+                    console.error('Error parsing localStorage data', e);
+                }
+            }
+        }
+    }
+
+    if (savedData) {
         try {
-            const data = JSON.parse(saved);
+            const data = savedData;
+            console.log('Applying saved formation data:', data);
+
+            // Load formation name
+            if (formationNameInput) {
+                formationNameInput.value = data.formationName || '';
+            }
 
             // Support old format (just array of members)
             if (Array.isArray(data)) {
@@ -3526,7 +3847,47 @@ function loadSavedPositions() {
                 placedBosses = [];
                 placedBlueTowers = [];
                 placedRedTowers = [];
+                placedBlueTrees = [];
+                placedRedTrees = [];
+                placedBlueGeese = [];
+                placedRedGeese = [];
                 placedEnemies = [];
+
+                // Load roster data if available
+                if (data.roster) {
+                    if (data.roster.teams && Array.isArray(data.roster.teams)) {
+                        teams = data.roster.teams;
+                    }
+
+                    if (data.roster.assignments) {
+                        const assignments = data.roster.assignments;
+                        members.forEach(m => {
+                            if (assignments[m.id]) {
+                                m.team = assignments[m.id];
+                            }
+                        });
+                    }
+                } else if (data.teamNames) {
+                     // Backward compatibility: load team names into default teams
+                     // If teams is empty (which is now default), we need to recreate the default teams if we are loading legacy data
+                     if (teams.length === 0) {
+                         teams = [
+                            { id: 'Team 1', name: 'Team 1', captainId: null },
+                            { id: 'Team 2', name: 'Team 2', captainId: null },
+                            { id: 'Team 3', name: 'Team 3', captainId: null },
+                            { id: 'Team 4', name: 'Team 4', captainId: null },
+                            { id: 'Team 5', name: 'Team 5', captainId: null },
+                            { id: 'Team 6', name: 'Team 6', captainId: null }
+                        ];
+                     }
+
+                     teamNameMappings = data.teamNames;
+                     teams.forEach(t => {
+                         if (teamNameMappings[t.id]) {
+                             t.name = teamNameMappings[t.id];
+                         }
+                     });
+                }
 
                 // Load individual members
                 if (data.members) {
@@ -3626,6 +3987,12 @@ function loadSavedPositions() {
             }
 
             updateEnemyCount();
+
+            // Re-render lists to reflect team changes and assignments
+            renderMemberList();
+            renderPlayerManagementList();
+            updateCounts();
+
         } catch (e) {
             console.error('Error loading saved positions:', e);
         }
@@ -3687,9 +4054,11 @@ function setupPlayerManagementHandlers() {
     });
 
     // Add new player button
-    addNewPlayerBtn.addEventListener('click', () => {
-        openPlayerEditModal();
-    });
+    if (addNewPlayerBtn) {
+        addNewPlayerBtn.addEventListener('click', () => {
+            openPlayerEditModal();
+        });
+    }
 
     // Cancel edit button
     cancelEditBtn.addEventListener('click', closePlayerEditModal);
@@ -3830,40 +4199,93 @@ function handlePlayerFormSubmit(e) {
 function renderPlayerManagementList() {
     playerManagementList.innerHTML = '';
 
-    if (members.length === 0) {
-        playerManagementList.innerHTML = '<div class="no-players">No players yet. Add your first player!</div>';
+    // Filter members that are NOT in any valid team
+    const validTeamIds = teams.map(t => t.id);
+    const unassignedMembers = members.filter(m => !m.team || !validTeamIds.includes(m.team));
+
+    if (unassignedMembers.length === 0) {
+        playerManagementList.innerHTML = '<div class="no-players">All registered players have been assigned to teams!</div>';
         return;
     }
 
-    members.forEach(member => {
-        const isPlaced = isPlayerPlaced(member.id);
-
+    unassignedMembers.forEach(member => {
         const playerItem = document.createElement('div');
         playerItem.className = 'player-management-item';
-        if (isPlaced) {
-            playerItem.classList.add('placed');
-        }
+
+        // Build team options
+        let teamOptions = '';
+        teams.forEach(t => {
+            teamOptions += `<option value="${t.id}">${t.name}</option>`;
+        });
 
         playerItem.innerHTML = `
             <div class="player-management-info">
                 <div class="player-management-name">${member.name}</div>
                 <div class="player-management-details">
                     <span class="role-badge-small role-${member.role}">${member.role}</span>
-                    <span class="team-badge-small">${member.team}</span>
-                    ${isPlaced ? '<span class="placed-badge">On Map</span>' : ''}
                 </div>
                 <div class="player-management-weapons">
                     <small>⚔️ ${member.weapon1 || 'N/A'} | ${member.weapon2 || 'N/A'}</small>
                 </div>
             </div>
-            <div class="player-management-actions">
-                <button class="btn-edit" onclick="openPlayerEditModal(${member.id})" title="Edit">✏️</button>
-                <button class="btn-delete" onclick="deletePlayer(${member.id})" title="Delete">🗑️</button>
+            <div class="player-management-actions" style="display: flex; gap: 5px; align-items: center;">
+                <select class="form-control form-control-sm team-select-${member.id}" style="width: 120px;">
+                    ${teamOptions}
+                </select>
+                <button class="btn btn-sm btn-primary" onclick="assignMemberToTeam(${member.id})">Add</button>
             </div>
         `;
 
         playerManagementList.appendChild(playerItem);
     });
+}
+
+function assignMemberToTeam(memberId) {
+    const member = members.find(m => m.id === memberId);
+    if (!member) return;
+
+    const select = document.querySelector(`.team-select-${memberId}`);
+    if (!select) return;
+
+    const teamId = select.value;
+    if (!teamId) return;
+
+    member.team = teamId;
+
+    // If this member was captain of another team (unlikely if unassigned, but safe check), handle it
+    // Actually, if they are unassigned, they shouldn't be captain.
+
+    savePositions();
+    renderMemberList();
+    renderPlayerManagementList();
+    updateCounts();
+}
+
+function removeMemberFromTeam(memberId) {
+    const member = members.find(m => m.id === memberId);
+    if (!member) return;
+
+    // Check if member is captain
+    const team = teams.find(t => t.id === member.team);
+    if (team && team.captainId === member.id) {
+        team.captainId = null;
+    }
+
+    // Remove from team
+    member.team = null;
+
+    // Save changes
+    savePositions();
+
+    // Update UI
+    renderMemberList();
+    renderPlayerManagementList();
+    updateCounts();
+
+    // If member was placed on map, update their info
+    if (isPlayerPlaced(memberId)) {
+        updatePlacedPlayerInfo(memberId);
+    }
 }
 
 function deletePlayer(playerId) {

@@ -47,6 +47,21 @@ class EventController extends Controller
         return view('admin.events.participants', compact('event', 'participants', 'skills', 'innerWays'));
     }
 
+    public function saveFormation(Request $request, Event $event)
+    {
+        if ($event->type !== 'guild_war') {
+            return response()->json(['error' => 'Invalid event type'], 400);
+        }
+
+        $validated = $request->validate([
+            'formation_data' => 'required|array',
+        ]);
+
+        $event->update(['formation_data' => $validated['formation_data']]);
+
+        return response()->json(['success' => true]);
+    }
+
     public function formation(Event $event)
     {
         if ($event->type !== 'guild_war') {
@@ -69,7 +84,15 @@ class EventController extends Controller
         $skills = Skill::all();
         $innerWays = InnerWay::all();
 
-        return view('admin.events.formation', compact('event', 'participants', 'skills', 'innerWays'));
+        // Get past events with formation data
+        $pastEvents = Event::where('type', 'guild_war')
+            ->where('id', '!=', $event->id)
+            ->whereNotNull('formation_data')
+            ->orderBy('start_time', 'desc')
+            ->take(10)
+            ->get(['id', 'title', 'start_time', 'formation_data']);
+
+        return view('admin.events.formation', compact('event', 'participants', 'skills', 'innerWays', 'pastEvents'));
     }
 
     public function create()
