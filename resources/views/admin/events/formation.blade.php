@@ -4,95 +4,7 @@
 
 @push('styles')
 <link rel="stylesheet" href="{{ asset('assets/guild_war/css/style.css') }}">
-<style>
-    /* Fix for admin layout conflict */
-    .content-wrapper {
-        background: transparent !important;
-        padding: 0 !important;
-    }
-    .container-fluid {
-        padding: 0 !important;
-    }
-
-    /* Guild War App Wrapper */
-    .guild-war-app {
-        height: calc(100vh - 60px); /* Adjust based on admin header */
-        display: flex;
-        flex-direction: column;
-        padding: 10px;
-    }
-
-    /* Modal styles */
-    .modal {
-        display: none;
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0,0,0,0.5);
-        z-index: 9999;
-        justify-content: center;
-        align-items: center;
-    }
-    .modal-content {
-        background: white;
-        padding: 20px;
-        border-radius: 8px;
-        min-width: 300px;
-    }
-
-    /* Custom Scrollbar */
-    ::-webkit-scrollbar {
-        width: 8px;
-    }
-    ::-webkit-scrollbar-track {
-        background: #f1f1f1;
-    }
-    ::-webkit-scrollbar-thumb {
-        background: #888;
-        border-radius: 4px;
-    }
-    ::-webkit-scrollbar-thumb:hover {
-        background: #555;
-    }
-
-    /* Toolbar Button Styles override */
-    .tool-btn {
-        width: 36px;
-        height: 36px;
-        border: 1px solid #ddd;
-        border-radius: 8px;
-        background: white;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        transition: all 0.2s;
-    }
-    .tool-btn:hover {
-        background: #f0f0f0;
-        transform: translateY(-2px);
-    }
-    .tool-btn.active {
-        background: #e0e0ff;
-        border-color: #667eea;
-    }
-    .tool-btn img, .tool-btn i {
-        pointer-events: none; /* Prevent image/icon from capturing drag events */
-    }
-    .tool-btn img {
-        width: 24px;
-        height: 24px;
-        object-fit: contain;
-    }
-    .tool-separator {
-        width: 1px;
-        height: 24px;
-        background: #ddd;
-        margin: 0 5px;
-    }
-</style>
+<link rel="stylesheet" href="{{ asset('assets/guild_war/css/formation.css') }}">
 @endpush
 
 @section('content')
@@ -104,6 +16,15 @@
             <small class="text-muted">Guild vs Guild Battle Map (Max 30 Players)</small>
         </div>
         <div class="header-controls d-flex align-items-center">
+            <div class="mr-3 d-flex align-items-center">
+                <input type="text" id="formationNameInput" class="form-control form-control-sm mr-2" placeholder="Formation Name" title="Name this formation strategy">
+                <select id="loadFormationSelect" class="form-control form-control-sm" style="width: 200px;" title="Load from previous event">
+                    <option value="">-- Load Previous --</option>
+                </select>
+            </div>
+            <button id="saveFormationBtn" class="btn btn-sm btn-success mr-2">
+                <i class="fas fa-save"></i> Save
+            </button>
             <a href="{{ route('admin.events.index') }}" class="btn btn-sm btn-outline-secondary mr-2">
                 <i class="fas fa-arrow-left"></i> Back
             </a>
@@ -126,8 +47,8 @@
         <div class="member-panel">
             <h2>
                 Guild Members <span id="playerCount" class="badge badge-light ml-2" style="font-size: 0.8rem;">0/30</span>
-                <button id="managePlayersBtn" class="manage-players-btn" title="Manage Players">
-                    <i class="fas fa-cog"></i>
+                <button id="managePlayersBtn" class="btn btn-sm btn-outline-primary" title="Xếp Team">
+                    Xếp Team
                 </button>
             </h2>
 
@@ -166,6 +87,9 @@
                      <button id="exportBtn" class="btn btn-primary btn-sm flex-fill mr-1"><i class="fas fa-file-export"></i> Export</button>
                      <button id="importBtn" class="btn btn-info btn-sm flex-fill ml-1"><i class="fas fa-file-import"></i> Import</button>
                      <input type="file" id="importFileInput" style="display:none">
+                </div>
+                <div class="mt-2">
+                    <button id="saveFormationBtnBottom" class="btn btn-success btn-sm btn-block"><i class="fas fa-save"></i> Save Formation</button>
                 </div>
             </div>
         </div>
@@ -242,11 +166,10 @@
     <div id="playerManagementModal" class="modal">
         <div class="modal-content" style="width: 600px;">
             <div class="modal-header">
-                <h3>Manage Players</h3>
+                <h3>Xếp Team</h3>
                 <button id="closeModalBtn" class="close">&times;</button>
             </div>
             <div class="modal-body">
-                <button id="addNewPlayerBtn" class="btn btn-success mb-3">Add New Player</button>
                 <div id="playerManagementList" style="max-height: 400px; overflow-y: auto;">
                     <!-- List of players to edit/delete -->
                 </div>
@@ -301,6 +224,10 @@
 <script>
     // Inject Laravel data
     window.initialMembers = @json($participants);
+    window.saveFormationUrl = "{{ route('admin.events.formation.save', $event) }}";
+    window.initialFormationData = @json($event->formation_data);
+    window.pastEvents = @json($pastEvents);
+    window.csrfToken = "{{ csrf_token() }}";
 </script>
 <script src="{{ asset('assets/guild_war/js/app.js') }}?v={{ time() }}"></script>
 @endpush

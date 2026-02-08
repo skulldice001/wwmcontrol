@@ -45,6 +45,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::resource('staff', StaffController::class);
         Route::get('events/{event}/participants', [EventController::class, 'participants'])->name('events.participants');
         Route::get('events/{event}/formation', [EventController::class, 'formation'])->name('events.formation');
+        Route::post('events/{event}/formation', [EventController::class, 'saveFormation'])->name('events.formation.save');
         Route::resource('events', EventController::class);
         Route::get('/users', [UserController::class, 'index'])->name('users.index');
     });
