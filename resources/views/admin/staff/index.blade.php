@@ -10,7 +10,10 @@
             <a href="{{ route('admin.staff.create') }}" class="btn btn-primary btn-sm">{{ __('messages.add_new_staff') }}</a>
         </div>
     </div>
-    <div class="card-body">
+        <div class="card-body">
+        @php
+            $currentStaff = Auth::guard('staff')->user();
+        @endphp
         @if(session('success'))
             <div class="alert alert-success">{{ session('success') }}</div>
         @endif
@@ -41,13 +44,15 @@
                         </span>
                     </td>
                     <td>
-                        <a href="{{ route('admin.staff.edit', $staff->id) }}" class="btn btn-info btn-sm">{{ __('messages.edit') }}</a>
-                        @if($staff->id !== Auth::user()->id)
-                            <form action="{{ route('admin.staff.destroy', $staff->id) }}" method="POST" style="display:inline-block;">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('{{ __('messages.are_you_sure') }}')">{{ __('messages.delete') }}</button>
-                            </form>
+                        @if($currentStaff && $currentStaff->canManage($staff))
+                            <a href="{{ route('admin.staff.edit', $staff->id) }}" class="btn btn-info btn-sm">{{ __('messages.edit') }}</a>
+                            @if($staff->id !== $currentStaff->id)
+                                <form action="{{ route('admin.staff.destroy', $staff->id) }}" method="POST" style="display:inline-block;">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('{{ __('messages.are_you_sure') }}')">{{ __('messages.delete') }}</button>
+                                </form>
+                            @endif
                         @endif
                     </td>
                 </tr>

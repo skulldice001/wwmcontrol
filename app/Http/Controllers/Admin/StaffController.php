@@ -25,6 +25,8 @@ class StaffController extends Controller
     {
         $this->authorizeAdmin($request);
 
+        $current = $request->user();
+
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'account' => ['required', 'string', 'max:255', 'unique:staffs'],
@@ -32,6 +34,10 @@ class StaffController extends Controller
             'password' => ['required', 'string', 'min:6'],
             'role' => ['required', Rule::in([Staff::ROLE_MASTER, Staff::ROLE_ADMIN, Staff::ROLE_OBSERVER])],
         ]);
+
+        if (!$current->isMaster() && $validated['role'] === Staff::ROLE_MASTER) {
+            return redirect()->back()->with('error', 'Only Master can create another Master.');
+        }
 
         $validated['password'] = Hash::make($validated['password']);
 
@@ -42,12 +48,20 @@ class StaffController extends Controller
 
     public function edit(Staff $staff)
     {
+        if (!auth('staff')->user()->canManage($staff)) {
+            abort(403);
+        }
+
         return view('admin.staff.edit', compact('staff'));
     }
 
     public function update(Request $request, Staff $staff)
     {
         $this->authorizeAdmin($request);
+
+        if (!$request->user()->canManage($staff)) {
+            abort(403);
+        }
 
         $validated = $request->validate([
             'name' => ['string', 'max:255'],
@@ -74,6 +88,10 @@ class StaffController extends Controller
 
         if ($staff->id === $request->user()->id) {
             return redirect()->back()->with('error', 'Cannot delete yourself.');
+        }
+
+        if (!$request->user()->canManage($staff)) {
+            abort(403);
         }
 
         $staff->delete();

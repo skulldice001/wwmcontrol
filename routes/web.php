@@ -31,6 +31,7 @@ Route::get('/admin', function () {
 use App\Http\Controllers\Admin\StaffController;
 use App\Http\Controllers\Admin\EventController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Admin\StaffProfileController;
 
 Route::prefix('admin')->name('admin.')->group(function () {
     Route::get('/login', [AdminLoginController::class, 'showLoginForm'])->name('login');
@@ -43,6 +44,9 @@ Route::prefix('admin')->name('admin.')->group(function () {
         })->name('dashboard');
 
         Route::resource('staff', StaffController::class);
+        Route::get('/profile', [StaffProfileController::class, 'edit'])->name('profile.edit');
+        Route::put('/profile', [StaffProfileController::class, 'update'])->name('profile.update');
+        Route::put('/profile/password', [StaffProfileController::class, 'updatePassword'])->name('profile.password.update');
         Route::get('events/{event}/participants', [EventController::class, 'participants'])->name('events.participants');
         Route::get('events/{event}/formation', [EventController::class, 'formation'])->name('events.formation');
         Route::post('events/{event}/formation', [EventController::class, 'saveFormation'])->name('events.formation.save');

@@ -55,4 +55,8 @@ return [
     'sort_formation' => 'Sort Formation',
     'back_to_events' => 'Back to Events',
     'participants' => 'Participants',
+    'change_password' => 'Change Password',
+    'current_password' => 'Current Password',
+    'new_password' => 'New Password',
+    'confirm_password' => 'Confirm Password',
 ];

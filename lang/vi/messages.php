@@ -55,4 +55,8 @@ return [
     'sort_formation' => 'Sắp xếp đội hình',
     'back_to_events' => 'Quay lại danh sách sự kiện',
     'participants' => 'Danh sách tham gia',
+    'change_password' => 'Đổi mật khẩu',
+    'current_password' => 'Mật khẩu hiện tại',
+    'new_password' => 'Mật khẩu mới',
+    'confirm_password' => 'Xác nhận mật khẩu',
 ];

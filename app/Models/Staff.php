@@ -39,6 +39,25 @@ class Staff extends Authenticatable
         return $this->role === self::ROLE_OBSERVER;
     }
 
+    public function roleRank(): int
+    {
+        return match ($this->role) {
+            self::ROLE_MASTER => 3,
+            self::ROLE_ADMIN => 2,
+            self::ROLE_OBSERVER => 1,
+            default => 0,
+        };
+    }
+
+    public function canManage(Staff $other): bool
+    {
+        if ($this->id === $other->id) {
+            return true;
+        }
+
+        return $this->roleRank() > $other->roleRank();
+    }
+
     protected $hidden = [
         'password',
         'remember_token',
