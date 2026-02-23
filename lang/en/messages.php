@@ -26,6 +26,7 @@ return [
     'discord_id' => 'Discord ID',
     'ingame_name' => 'Ingame Name',
     'country' => 'Country',
+    'online_time' => 'Online Time',
     'main_skill' => 'Main Skill',
     'sub_skill' => 'Sub Skill',
     'none' => 'None',

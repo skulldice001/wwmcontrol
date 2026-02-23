@@ -10,6 +10,7 @@ use Carbon\Carbon;
 use App\Models\User;
 use App\Models\Skill;
 use App\Models\InnerWay;
+use App\Constants\SkillRole;
 
 class EventController extends Controller
 {
@@ -74,7 +75,7 @@ class EventController extends Controller
             return [
                 'id' => $user->id,
                 'name' => $user->ingame_name ?? $user->name,
-                'role' => $user->mainSkill->name ?? 'Unknown',
+                'role' => SkillRole::getRole($user->mainSkill->slug ?? null),
                 'team' => 'Unassigned', // Default team
                 'weapon1' => $user->mainSkill->name ?? '',
                 'weapon2' => $user->subSkill->name ?? '',
@@ -97,7 +98,9 @@ class EventController extends Controller
 
     public function create()
     {
-        return view('admin.events.create');
+        $users = User::all();
+
+        return view('admin.events.create', compact('users'));
     }
 
     public function store(Request $request)
@@ -147,12 +150,20 @@ class EventController extends Controller
 
     public function edit(Event $event)
     {
+        if ($event->status === 'completed' || $event->status === 'cancelled') {
+            return redirect()->route('admin.events.index')->with('error', 'Không thể sửa sự kiện đã kết thúc hoặc đã hủy.');
+        }
+
         return view('admin.events.edit', compact('event'));
     }
 
     public function update(Request $request, Event $event)
     {
         $this->authorizeAdmin($request);
+
+        if ($event->status === 'completed' || $event->status === 'cancelled') {
+            return redirect()->route('admin.events.index')->with('error', 'Không thể sửa sự kiện đã kết thúc hoặc đã hủy.');
+        }
 
         $this->prepareGuildWarData($request, $event);
 
@@ -200,8 +211,31 @@ class EventController extends Controller
     public function destroy(Request $request, Event $event)
     {
         $this->authorizeAdmin($request);
+
+        if ($event->status === 'completed' || $event->status === 'cancelled') {
+            return redirect()->route('admin.events.index')->with('error', 'Không thể xóa sự kiện đã kết thúc hoặc đã hủy.');
+        }
+
         $event->delete();
         return redirect()->route('admin.events.index')->with('success', 'Event deleted successfully.');
+    }
+
+    public function complete(Request $request, Event $event)
+    {
+        $this->authorizeAdmin($request);
+
+        if ($event->status === 'completed' || $event->status === 'cancelled') {
+            return redirect()->route('admin.events.index')->with('error', 'Sự kiện đã kết thúc hoặc đã hủy.');
+        }
+
+        if (!$event->end_time) {
+            $event->end_time = Carbon::now();
+        }
+
+        $event->status = 'completed';
+        $event->save();
+
+        return redirect()->route('admin.events.index')->with('success', 'Đã kết thúc sự kiện.');
     }
 
     protected function authorizeAdmin(Request $request)

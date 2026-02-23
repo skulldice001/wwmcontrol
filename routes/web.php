@@ -46,6 +46,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('events/{event}/participants', [EventController::class, 'participants'])->name('events.participants');
         Route::get('events/{event}/formation', [EventController::class, 'formation'])->name('events.formation');
         Route::post('events/{event}/formation', [EventController::class, 'saveFormation'])->name('events.formation.save');
+        Route::post('events/{event}/complete', [EventController::class, 'complete'])->name('events.complete');
         Route::resource('events', EventController::class);
         Route::get('/users', [UserController::class, 'index'])->name('users.index');
     });
@@ -83,4 +84,3 @@ Route::post('/logout', function (Request $request) {
     $request->session()->regenerateToken();
     return redirect()->route('login');
 })->middleware('auth')->name('logout');
-
