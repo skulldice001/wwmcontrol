@@ -28,18 +28,18 @@
                         <b>{{ __('messages.discord_id') }}</b> <a class="float-right">{{ Auth::user()->discord_id }}</a>
                     </li>
                     <li class="list-group-item">
-                        <b>{{ __('messages.ingame_name') }}</b> <a class="float-right">{{ Auth::user()->ingame_name ?? 'N/A' }}</a>
+                        <b>{{ __('messages.ingame_name') }}</b> <a class="float-right">{{ Auth::user()->ingame_name ?? __('messages.not_available') }}</a>
                     </li>
                     <li class="list-group-item">
-                        <b>{{ __('messages.country') }}</b> <a class="float-right">{{ Auth::user()->country ?? 'N/A' }}</a>
+                        <b>{{ __('messages.country') }}</b> <a class="float-right">{{ Auth::user()->country ?? __('messages.not_available') }}</a>
                     </li>
                     <li class="list-group-item">
-                        <b>{{ __('messages.online_time') ?? 'Online Time' }}</b>
+                        <b>{{ __('messages.online_time') }}</b>
                         <a class="float-right">
                             @if(Auth::user()->online_from && Auth::user()->online_to)
                                 {{ Auth::user()->online_from }} - {{ Auth::user()->online_to }}
                             @else
-                                N/A
+                                {{ __('messages.not_available') }}
                             @endif
                         </a>
                     </li>
