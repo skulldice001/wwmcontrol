@@ -4121,12 +4121,19 @@ function openPlayerEditModal(playerId = null) {
 
     // Populate team dropdown dynamically with current team names (including renamed ones)
     editPlayerTeam.innerHTML = '';
-    TEAM_ORDER.forEach(teamName => {
+    if (teams.length > 0) {
+        teams.forEach(team => {
+            const option = document.createElement('option');
+            option.value = team.id;
+            option.textContent = getTeamDisplayName(team.id);
+            editPlayerTeam.appendChild(option);
+        });
+    } else {
         const option = document.createElement('option');
-        option.value = teamName;
-        option.textContent = getTeamDisplayName(teamName);
+        option.value = '';
+        option.textContent = 'Unassigned';
         editPlayerTeam.appendChild(option);
-    });
+    }
 
     if (playerId) {
         // Edit existing player
@@ -4146,7 +4153,7 @@ function openPlayerEditModal(playerId = null) {
         editPlayerId.value = '';
         editPlayerName.value = '';
         editPlayerRole.value = 'DPS';
-        editPlayerTeam.value = 'Team 1';
+        editPlayerTeam.value = teams.length > 0 ? teams[0].id : '';
         editPlayerWeapon1.value = 'Nameless Sword';
         editPlayerWeapon2.value = 'Nameless Spear';
     }
