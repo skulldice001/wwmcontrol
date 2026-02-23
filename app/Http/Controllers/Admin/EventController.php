@@ -41,17 +41,29 @@ class EventController extends Controller
             });
         }
 
+        if ($request->filled('role')) {
+            $role = $request->role;
+            $query->whereHas('mainSkill', function ($q) use ($role) {
+                $q->whereIn('slug', \App\Constants\SkillRole::getSlugsByRole($role));
+            });
+        }
+
+        $totalParticipants = $event->participants()->count();
         $participants = $query->get();
         $skills = Skill::all();
         $innerWays = InnerWay::all();
 
-        return view('admin.events.participants', compact('event', 'participants', 'skills', 'innerWays'));
+        return view('admin.events.participants', compact('event', 'participants', 'skills', 'innerWays', 'totalParticipants'));
     }
 
     public function saveFormation(Request $request, Event $event)
     {
         if ($event->type !== 'guild_war') {
             return response()->json(['error' => 'Invalid event type'], 400);
+        }
+
+        if (in_array($event->status, ['completed', 'cancelled'])) {
+            return response()->json(['error' => 'Cannot modify formation of a completed or cancelled event'], 400);
         }
 
         $validated = $request->validate([
@@ -67,6 +79,10 @@ class EventController extends Controller
     {
         if ($event->type !== 'guild_war') {
             return redirect()->route('admin.events.index')->with('error', 'Only Guild War events have formation.');
+        }
+
+        if (in_array($event->status, ['completed', 'cancelled'])) {
+            return redirect()->route('admin.events.index')->with('error', 'Cannot manage formation of a completed or cancelled event.');
         }
 
         $participantsRaw = $event->participants()->with(['innerWays', 'mainSkill', 'subSkill'])->get();

@@ -30,13 +30,20 @@
 </head>
 <body class="welcome-page">
 
+@php
+    $vnFlagPath = file_exists(public_path('flags/vn.jpg'))
+        ? 'flags/vn.jpg'
+        : (file_exists(public_path('flags/vn.png'))
+            ? 'flags/vn.png'
+            : 'flags/vn.svg');
+@endphp
 <div style="position: absolute; top: 20px; right: 20px;">
     <a href="{{ route('lang.switch', 'en') }}" class="{{ App::getLocale() == 'en' ? 'font-weight-bold text-dark' : 'text-muted' }} mr-2">
         <img src="{{ asset('flags/us.svg') }}" alt="EN" class="lang-flag mr-1"> EN
     </a>
     <span class="text-muted">|</span>
     <a href="{{ route('lang.switch', 'vi') }}" class="{{ App::getLocale() == 'vi' ? 'font-weight-bold text-dark' : 'text-muted' }} ml-2">
-        <img src="{{ asset('flags/vn.svg') }}" alt="VN" class="lang-flag mr-1"> VN
+        <img src="{{ asset($vnFlagPath) }}" alt="VN" class="lang-flag mr-1"> VN
     </a>
 </div>
 

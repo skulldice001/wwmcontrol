@@ -25,10 +25,18 @@
 
         <!-- Right navbar links -->
         <ul class="navbar-nav ml-auto">
+            @php
+                $vnFlagPath = file_exists(public_path('flags/vn.jpg'))
+                    ? 'flags/vn.jpg'
+                    : (file_exists(public_path('flags/vn.png'))
+                        ? 'flags/vn.png'
+                        : 'flags/vn.svg');
+                $currentFlag = App::getLocale() == 'vi' ? $vnFlagPath : 'flags/us.svg';
+            @endphp
             <!-- Language Dropdown Menu -->
             <li class="nav-item dropdown">
                 <a class="nav-link" data-toggle="dropdown" href="#">
-                    <img src="{{ asset('flags/' . (App::getLocale() == 'vi' ? 'vn' : 'us') . '.svg') }}"
+                    <img src="{{ asset($currentFlag) }}"
                          alt="{{ App::getLocale() == 'vi' ? 'Tiếng Việt' : 'English' }}"
                          class="lang-flag">
                     <span class="d-none d-md-inline ml-2">
@@ -40,7 +48,7 @@
                         <img src="{{ asset('flags/us.svg') }}" alt="English" class="lang-flag mr-2"> English
                     </a>
                     <a href="{{ route('lang.switch', 'vi') }}" class="dropdown-item {{ App::getLocale() == 'vi' ? 'active' : '' }}">
-                        <img src="{{ asset('flags/vn.svg') }}" alt="Tiếng Việt" class="lang-flag mr-2"> Tiếng Việt
+                        <img src="{{ asset($vnFlagPath) }}" alt="Tiếng Việt" class="lang-flag mr-2"> Tiếng Việt
                     </a>
                 </div>
             </li>
