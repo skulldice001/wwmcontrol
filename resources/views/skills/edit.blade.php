@@ -101,7 +101,7 @@
                             @endphp
                             <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
                                 <div class="border rounded p-3 text-center {{ $currentLevel > 0 ? 'bg-light' : '' }}">
-                                    <img src="{{ asset('icon/inner_way/' . $iw->icon) }}" alt="{{ $iw->name }}" style="width: 64px; height: 64px; object-fit: contain;" class="mb-2">
+                                    <img src="{{ asset('icon/inner_way/' . $iw->icon) }}" alt="{{ $iw->name }}" style="width: 100px; height: 100px; object-fit: contain;" class="mb-2">
                                     <h6 class="font-weight-bold text-truncate" title="{{ $iw->name }}">{{ $iw->name }}</h6>
 
                                     <div class="form-group mb-0 mt-2">
