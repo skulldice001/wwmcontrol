@@ -64,6 +64,13 @@
                     <!-- /.col -->
                 </div>
             </form>
+
+            <hr>
+            <div class="mt-3">
+                <a href="{{ route('auth.discord') }}" class="btn btn-outline-secondary btn-block">
+                    <i class="fab fa-discord mr-1"></i> {{ __('messages.login_discord') }}
+                </a>
+            </div>
         </div>
         <!-- /.login-card-body -->
     </div>
