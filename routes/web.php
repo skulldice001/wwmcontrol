@@ -40,7 +40,23 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
     Route::middleware('auth:staff')->group(function () {
         Route::get('/dashboard', function () {
-            return view('admin.dashboard');
+            $membersCount = \App\Models\User::count();
+
+            $eventsRunning = \App\Models\Event::whereIn('status', ['upcoming', 'ongoing'])->count();
+            $eventsCompleted = \App\Models\Event::where('status', 'completed')->count();
+
+            $roles = \App\Models\User::with('mainSkill')->get()
+                ->groupBy(function ($user) {
+                    return \App\Constants\SkillRole::getRole(optional($user->mainSkill)->slug);
+                })
+                ->map->count();
+
+            return view('admin.dashboard', [
+                'membersCount' => $membersCount,
+                'eventsRunning' => $eventsRunning,
+                'eventsCompleted' => $eventsCompleted,
+                'roles' => $roles,
+            ]);
         })->name('dashboard');
 
         Route::resource('staff', StaffController::class);
