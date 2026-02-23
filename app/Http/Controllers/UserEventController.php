@@ -39,6 +39,7 @@ class UserEventController extends Controller
 
                             if ($team) {
                                 $event->team_name = $team['name'] ?? null;
+                                $event->team_mission = $team['description'] ?? null;
 
                                 if (!empty($team['captainId'])) {
                                     $captain = User::find($team['captainId']);
