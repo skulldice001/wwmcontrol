@@ -7,7 +7,7 @@
     @if($events->isEmpty())
         <div class="col-12">
             <div class="alert alert-info">
-                {{ app()->getLocale() === 'vi' ? 'Hiện không có sự kiện sắp diễn ra hoặc đang diễn ra.' : 'No upcoming or ongoing events at the moment.' }}
+                {{ __('messages.no_upcoming_events') }}
             </div>
         </div>
     @endif
@@ -27,18 +27,18 @@
                 <p class="card-text">{{ Str::limit($event->description, 100) }}</p>
                 <ul class="list-group list-group-unbordered mb-3">
                     <li class="list-group-item">
-                        <b>{{ app()->getLocale() === 'vi' ? 'Thời gian bắt đầu' : 'Start Time' }}</b>
+                        <b>{{ __('messages.start_time') }}</b>
                         <span class="float-right">{{ \Carbon\Carbon::parse($event->start_time)->format('Y-m-d H:i') }}</span>
                     </li>
                     <li class="list-group-item">
-                        <b>{{ app()->getLocale() === 'vi' ? 'Thời gian kết thúc' : 'End Time' }}</b>
+                        <b>{{ __('messages.end_time') }}</b>
                         <span class="float-right">
-                            {{ $event->end_time ? \Carbon\Carbon::parse($event->end_time)->format('Y-m-d H:i') : (app()->getLocale() === 'vi' ? 'Không có' : 'N/A') }}
+                            {{ $event->end_time ? \Carbon\Carbon::parse($event->end_time)->format('Y-m-d H:i') : __('messages.not_available') }}
                         </span>
                     </li>
                     @if($event->location)
                     <li class="list-group-item">
-                        <b>{{ app()->getLocale() === 'vi' ? 'Địa điểm' : 'Location' }}</b>
+                        <b>{{ __('messages.location') }}</b>
                         <span class="float-right">{{ $event->location }}</span>
                     </li>
                     @endif
@@ -47,10 +47,10 @@
                 @if($event->is_registered)
                     <div class="alert alert-success">
                         <i class="fas fa-check"></i>
-                        {{ app()->getLocale() === 'vi' ? 'Bạn đã tham gia sự kiện này.' : 'You have joined this event.' }}
+                        {{ __('messages.you_joined_event') }}
                         @if($event->preferred_time)
                             <div class="mt-1" style="font-size: 1rem;">
-                                {{ app()->getLocale() === 'vi' ? 'Khung giờ ưu tiên:' : 'Preferred Time:' }}
+                                {{ __('messages.preferred_time_label') }}
                                 {{ $event->preferred_time }}
                             </div>
                         @endif
@@ -58,24 +58,24 @@
                             <div class="mt-1 d-flex justify-content-between align-items-center" style="font-size: 1rem;">
                                 @if(!empty($event->team_name))
                                     <span>
-                                        Đội tham gia: {{ $event->team_name }}
+                                        {{ __('messages.team_participating') }} {{ $event->team_name }}
                                         <button type="button"
                                                 class="btn btn-link p-0 ml-1"
                                                 onclick="showTeamMission({{ json_encode($event->team_mission) }})"
-                                                title="{{ app()->getLocale() === 'vi' ? 'Xem mô tả nhiệm vụ của đội' : 'View team mission description' }}">
+                                                title="{{ __('messages.view_team_mission') }}">
                                             <i class="fas fa-info-circle"></i>
                                         </button>
                                     </span>
                                     @if(!empty($event->team_captain_name))
-                                        <span><strong>Đội trưởng: {{ $event->team_captain_name }}</strong></span>
+                                        <span><strong>{{ __('messages.team_captain') }} {{ $event->team_captain_name }}</strong></span>
                                     @endif
                                 @else
                                     <span>
-                                        {{ app()->getLocale() === 'vi' ? 'Trạng thái: chờ sắp xếp đội hình' : 'Status: waiting for formation arrangement' }}
+                                        {{ __('messages.status_waiting_formation') }}
                                         <button type="button"
                                                 class="btn btn-link p-0 ml-1"
                                                 onclick="showTeamMission(null)"
-                                                title="{{ app()->getLocale() === 'vi' ? 'Xem mô tả nhiệm vụ của đội' : 'View team mission description' }}">
+                                                title="{{ __('messages.view_team_mission') }}">
                                             <i class="fas fa-info-circle"></i>
                                         </button>
                                     </span>
@@ -87,15 +87,15 @@
                         <form action="{{ route('events.unregister', $event->id) }}" method="POST" class="d-inline">
                             @csrf
                             @method('DELETE')
-                            <button type="submit" class="btn btn-danger btn-block" onclick="return confirm('{{ app()->getLocale() === 'vi' ? 'Bạn có chắc chắn muốn rời sự kiện này?' : 'Are you sure you want to leave this event?' }}')">
-                                {{ app()->getLocale() === 'vi' ? 'Rời sự kiện' : 'Leave Event' }}
+                            <button type="submit" class="btn btn-danger btn-block" onclick="return confirm('{{ __('messages.leave_event_question') }}')">
+                                {{ __('messages.leave_event') }}
                             </button>
                         </form>
                     @endif
                 @else
                     @if($event->type == 'guild_war')
                         <button type="button" class="btn btn-primary btn-block" data-toggle="modal" data-target="#joinGuildWarModal{{ $event->id }}">
-                            {{ app()->getLocale() === 'vi' ? 'Tham gia Bang chiến' : 'Join Guild War' }}
+                            {{ __('messages.join_guild_war') }}
                         </button>
 
                         <!-- Modal -->
@@ -106,7 +106,7 @@
                                         @csrf
                                         <div class="modal-header">
                                             <h5 class="modal-title">
-                                                {{ app()->getLocale() === 'vi' ? 'Tham gia Bang chiến' : 'Join Guild War' }}
+                                                {{ __('messages.join_guild_war') }}
                                             </h5>
                                             <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                                                 <span aria-hidden="true">&times;</span>
@@ -114,19 +114,19 @@
                                         </div>
                                         <div class="modal-body">
                                             <div class="form-group">
-                                                <label>{{ app()->getLocale() === 'vi' ? 'Khung giờ bạn có thể tham gia (bắt buộc)' : 'Preferred Time (Required)' }}</label>
-                                                <input type="text" name="preferred_time" class="form-control" placeholder="{{ app()->getLocale() === 'vi' ? 'VD: 20:00 - 21:00' : 'e.g. 20:00 - 21:00' }}" required>
+                                                <label>{{ __('messages.preferred_time_required') }}</label>
+                                                <input type="text" name="preferred_time" class="form-control" placeholder="{{ __('messages.preferred_time_placeholder') }}" required>
                                                 <small class="form-text text-muted">
-                                                    {{ app()->getLocale() === 'vi' ? 'Vui lòng ghi rõ khung giờ bạn có thể tham gia.' : 'Please specify when you can participate.' }}
+                                                    {{ __('messages.preferred_time_help') }}
                                                 </small>
                                             </div>
                                         </div>
                                         <div class="modal-footer">
                                             <button type="button" class="btn btn-secondary" data-dismiss="modal">
-                                                {{ app()->getLocale() === 'vi' ? 'Đóng' : 'Close' }}
+                                                {{ __('messages.close') }}
                                             </button>
                                             <button type="submit" class="btn btn-primary">
-                                                {{ app()->getLocale() === 'vi' ? 'Tham gia' : 'Join' }}
+                                                {{ __('messages.join') }}
                                             </button>
                                         </div>
                                     </form>
@@ -137,7 +137,7 @@
                         <form action="{{ route('events.register', $event->id) }}" method="POST">
                             @csrf
                             <button type="submit" class="btn btn-primary btn-block">
-                                {{ app()->getLocale() === 'vi' ? 'Tham gia sự kiện' : 'Join Event' }}
+                                {{ __('messages.join_event') }}
                             </button>
                         </form>
                     @endif
@@ -153,7 +153,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">
-                    {{ app()->getLocale() === 'vi' ? 'Mô tả nhiệm vụ của đội' : 'Team mission description' }}
+                    {{ __('messages.team_mission_description') }}
                 </h5>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
@@ -164,7 +164,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">
-                    {{ app()->getLocale() === 'vi' ? 'Đóng' : 'Close' }}
+                    {{ __('messages.close') }}
                 </button>
             </div>
         </div>
@@ -177,10 +177,7 @@
     function showTeamMission(description) {
         var message = description;
         if (!message) {
-            message = @json(app()->getLocale() === 'vi'
-                ? 'Chưa có mô tả nhiệm vụ cho đội này.'
-                : 'No mission description has been set for this team.'
-            );
+            message = @json(__('messages.no_team_mission'));
         }
 
         var contentEl = document.getElementById('teamMissionContent');
