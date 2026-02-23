@@ -28,17 +28,19 @@
             <!-- Language Dropdown Menu -->
             <li class="nav-item dropdown">
                 <a class="nav-link" data-toggle="dropdown" href="#">
-                    <i class="fas fa-globe"></i>
-                    <span class="d-none d-md-inline ml-1">
+                    <img src="{{ asset('flags/' . (App::getLocale() == 'vi' ? 'vn' : 'us') . '.svg') }}"
+                         alt="{{ App::getLocale() == 'vi' ? 'Tiếng Việt' : 'English' }}"
+                         class="lang-flag">
+                    <span class="d-none d-md-inline ml-2">
                         {{ App::getLocale() == 'vi' ? 'Tiếng Việt' : 'English' }}
                     </span>
                 </a>
                 <div class="dropdown-menu dropdown-menu-right">
                     <a href="{{ route('lang.switch', 'en') }}" class="dropdown-item {{ App::getLocale() == 'en' ? 'active' : '' }}">
-                        <i class="flag-icon flag-icon-us mr-2"></i> English
+                        <img src="{{ asset('flags/us.svg') }}" alt="English" class="lang-flag mr-2"> English
                     </a>
                     <a href="{{ route('lang.switch', 'vi') }}" class="dropdown-item {{ App::getLocale() == 'vi' ? 'active' : '' }}">
-                        <i class="flag-icon flag-icon-vn mr-2"></i> Tiếng Việt
+                        <img src="{{ asset('flags/vn.svg') }}" alt="Tiếng Việt" class="lang-flag mr-2"> Tiếng Việt
                     </a>
                 </div>
             </li>

@@ -7,7 +7,6 @@
 
     <!-- Google Font: Source Sans Pro -->
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
-    
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     
     <style>
@@ -33,11 +32,11 @@
 
 <div style="position: absolute; top: 20px; right: 20px;">
     <a href="{{ route('lang.switch', 'en') }}" class="{{ App::getLocale() == 'en' ? 'font-weight-bold text-dark' : 'text-muted' }} mr-2">
-        <span class="flag-icon flag-icon-us mr-1"></span> EN
+        <img src="{{ asset('flags/us.svg') }}" alt="EN" class="lang-flag mr-1"> EN
     </a>
     <span class="text-muted">|</span>
     <a href="{{ route('lang.switch', 'vi') }}" class="{{ App::getLocale() == 'vi' ? 'font-weight-bold text-dark' : 'text-muted' }} ml-2">
-        <span class="flag-icon flag-icon-vn mr-1"></span> VN
+        <img src="{{ asset('flags/vn.svg') }}" alt="VN" class="lang-flag mr-1"> VN
     </a>
 </div>
 
