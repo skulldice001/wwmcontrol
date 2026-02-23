@@ -39,10 +39,14 @@
         </div>
     </div>
     <div class="card-body">
+        <div class="mb-3">
+            <strong>Participants:</strong>
+            {{ $participants->count() }} / {{ $totalParticipants }}
+        </div>
         <!-- Filters -->
         <form method="GET" action="{{ route('admin.events.participants', $event->id) }}" class="mb-4" v-pre>
             <div class="row">
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <div class="form-group">
                         <label>Main Skill</label>
                         <select name="main_skill_id" class="form-control select2-icon" style="width: 100%;">
@@ -55,7 +59,7 @@
                         </select>
                     </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <div class="form-group">
                         <label>Sub Skill</label>
                         <select name="sub_skill_id" class="form-control select2-icon" style="width: 100%;">
@@ -68,7 +72,7 @@
                         </select>
                     </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <div class="form-group">
                         <label>Inner Way</label>
                         <select name="inner_way_id" class="form-control select2-icon" style="width: 100%;">
@@ -87,10 +91,23 @@
                         <input type="number" name="inner_way_level" class="form-control" placeholder="Min Level" value="{{ request('inner_way_level') }}" min="1" max="10">
                     </div>
                 </div>
-                <div class="col-md-1">
+                <div class="col-md-2">
                     <div class="form-group">
                         <label>&nbsp;</label>
                         <button type="submit" class="btn btn-primary btn-block">Filter</button>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="form-group">
+                        <label>Role</label>
+                        <select name="role" class="form-control">
+                            <option value="">All Roles</option>
+                            @foreach(\App\Constants\SkillRole::getRoles() as $role)
+                                <option value="{{ $role }}" {{ request('role') === $role ? 'selected' : '' }}>
+                                    {{ $role }}
+                                </option>
+                            @endforeach
+                        </select>
                     </div>
                 </div>
             </div>
@@ -105,6 +122,7 @@
                         <th>Name</th>
                         <th>In-game Name</th>
                         <th>Main Skill</th>
+                        <th>Role</th>
                         <th>Sub Skill</th>
                         <th>Inner Ways</th>
                         <th>Preferred Time</th>
@@ -123,6 +141,7 @@
                                 N/A
                             @endif
                         </td>
+                        <td>{{ \App\Constants\SkillRole::getRole(optional($user->mainSkill)->slug) }}</td>
                         <td>
                             @if($user->subSkill)
                                 <img src="{{ asset('icon/skill/' . $user->subSkill->icon) }}" width="24" height="24"> {{ $user->subSkill->name }}
@@ -131,12 +150,18 @@
                             @endif
                         </td>
                         <td>
-                            @foreach($user->innerWays as $iw)
-                                <div class="d-inline-block text-center mr-2 position-relative" title="{{ $iw->name }}">
-                                    <img src="{{ asset('icon/inner_way/' . $iw->icon) }}" width="32" height="32" class="img-fluid" alt="{{ $iw->name }}">
-                                    <span class="badge badge-light border" style="position: absolute; bottom: -5px; right: -5px; font-size: 10px; padding: 2px 4px;">{{ $iw->pivot->level }}</span>
-                                </div>
-                            @endforeach
+                            @php
+                                $innerWaysData = $user->innerWays->map(function ($iw) {
+                                    return [
+                                        'name' => $iw->name,
+                                        'icon' => asset('icon/inner_way/' . $iw->icon),
+                                        'level' => $iw->pivot->level,
+                                    ];
+                                });
+                            @endphp
+                            <inner-ways-cell
+                                :inner-ways='@json($innerWaysData)'
+                            ></inner-ways-cell>
                         </td>
                         <td>{{ $user->pivot->preferred_time ?? 'N/A' }}</td>
                     </tr>

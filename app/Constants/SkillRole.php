@@ -61,4 +61,23 @@ class SkillRole
             self::DPS,
         ];
     }
+
+    public static function getSlugsByRole(string $role): array
+    {
+        switch ($role) {
+            case self::HEALER:
+                return [
+                    self::PANACEA_FAN,
+                    self::SOULSHADE_UMBRELLA,
+                ];
+            case self::TANKER:
+                return [
+                    self::THUNDERCRY_BLADE,
+                    self::HEAVENQUAKER_SPEAR,
+                ];
+            case self::DPS:
+            default:
+                return [];
+        }
+    }
 }

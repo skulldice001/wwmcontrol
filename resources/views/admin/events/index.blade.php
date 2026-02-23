@@ -52,7 +52,7 @@
                         <a href="{{ route('admin.events.participants', $event->id) }}" class="btn btn-primary btn-sm mr-1">
                             <i class="fas fa-users"></i> {{ __('messages.participants') ?? 'Participants' }}
                         </a>
-                        @if($event->type == 'guild_war')
+                        @if($event->type == 'guild_war' && !in_array($event->status, ['completed', 'cancelled']))
                             <a href="{{ route('admin.events.formation', $event->id) }}" class="btn btn-warning btn-sm mr-1">
                                 <i class="fas fa-users-cog"></i> {{ __('messages.sort_formation') }}
                             </a>
