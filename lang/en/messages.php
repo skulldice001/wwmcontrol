@@ -81,6 +81,7 @@ return [
     'join_event' => 'Join Event',
     'team_mission_description' => 'Team mission description',
     'no_team_mission' => 'No mission description has been set for this team.',
+    'discord_guild_required' => 'You must be a member of the required Discord guild to sign in.',
     'guild_members_list' => 'Guild Members List',
     'filter_by_role' => 'Filter by Role:',
     'all_roles' => 'All Roles',

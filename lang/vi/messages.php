@@ -81,6 +81,7 @@ return [
     'join_event' => 'Tham gia sự kiện',
     'team_mission_description' => 'Mô tả nhiệm vụ của đội',
     'no_team_mission' => 'Chưa có mô tả nhiệm vụ cho đội này.',
+    'discord_guild_required' => 'Bạn phải thuộc đúng máy chủ Discord yêu cầu mới được đăng nhập.',
     'guild_members_list' => 'Danh sách thành viên bang hội',
     'filter_by_role' => 'Lọc theo vai trò:',
     'all_roles' => 'Tất cả vai trò',
