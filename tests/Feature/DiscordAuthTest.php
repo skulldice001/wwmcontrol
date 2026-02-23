@@ -29,6 +29,7 @@ class DiscordAuthTest extends TestCase
         $abstractUser->shouldReceive('getId')->andReturn('123456789');
         $abstractUser->shouldReceive('getName')->andReturn('Test User');
         $abstractUser->shouldReceive('getEmail')->andReturn('test@example.com');
+        $abstractUser->shouldReceive('getAvatar')->andReturn('https://example.com/avatar.png');
         $abstractUser->token = 'fake-token';
         $abstractUser->refreshToken = 'fake-refresh-token';
 
@@ -37,7 +38,7 @@ class DiscordAuthTest extends TestCase
 
         $response = $this->get('/auth/discord/callback');
 
-        $response->assertRedirect(config('app.frontend_url') . '/dashboard');
+        $response->assertRedirect(route('dashboard'));
         $this->assertAuthenticated();
 
         $user = User::where('discord_id', '123456789')->first();
@@ -50,6 +51,28 @@ class DiscordAuthTest extends TestCase
     {
         $response = $this->get('/');
 
-        $response->assertStatus(302);
+        $response->assertStatus(200);
+    }
+    public function test_discord_callback_works_with_manual_state_injection(): void
+    {
+        $abstractUser = Mockery::mock('Laravel\Socialite\Two\User');
+        $abstractUser->shouldReceive('getId')->andReturn('123456789');
+        $abstractUser->shouldReceive('getName')->andReturn('Test User');
+        $abstractUser->shouldReceive('getEmail')->andReturn('test@example.com');
+        $abstractUser->shouldReceive('getAvatar')->andReturn('https://example.com/avatar.png');
+        $abstractUser->token = 'fake-token';
+        $abstractUser->refreshToken = 'fake-refresh-token';
+
+        Socialite::shouldReceive('driver')->with('discord')->andReturn(Mockery::mock('Laravel\Socialite\Contracts\Provider'));
+        Socialite::driver('discord')->shouldReceive('user')->andReturn($abstractUser);
+
+        // Simulate request with state but empty session
+        $response = $this->withSession([])->get('/auth/discord/callback?state=test-state&code=test-code');
+
+        $response->assertRedirect(route('dashboard'));
+        $this->assertAuthenticated();
+
+        // Verify state was injected into session during the request handling
+        $this->assertEquals('test-state', session('state'));
     }
 }

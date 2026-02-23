@@ -26,6 +26,7 @@ return [
     'discord_id' => 'Discord ID',
     'ingame_name' => 'Tên trong game',
     'country' => 'Quốc gia',
+    'online_time' => 'Thời gian online',
     'main_skill' => 'Kỹ năng chính',
     'sub_skill' => 'Kỹ năng phụ',
     'none' => 'Không có',

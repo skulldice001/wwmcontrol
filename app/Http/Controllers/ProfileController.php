@@ -21,8 +21,8 @@ class ProfileController extends Controller
 
         $validated = $request->validate([
             'country' => 'nullable|string|max:255',
-            'online_from' => 'nullable|string|max:10',
-            'online_to' => 'nullable|string|max:10',
+            'online_from' => 'nullable|date_format:H:i',
+            'online_to' => 'nullable|date_format:H:i',
             'ingame_name' => 'nullable|string|max:255',
             'ingame_id' => 'nullable|string|max:255',
         ]);

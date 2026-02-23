@@ -35,14 +35,14 @@
                     <div class="row">
                         <div class="col-6">
                              <div class="form-group">
-                                <label for="online_from">Online From</label>
-                                <input type="time" class="form-control" id="online_from" name="online_from" value="{{ old('online_from', $user->online_from) }}">
+                                <label for="online_from">Online From (24h)</label>
+                                <input type="time" class="form-control" id="online_from" name="online_from" value="{{ old('online_from', $user->online_from) }}" step="60">
                             </div>
                         </div>
                         <div class="col-6">
                             <div class="form-group">
-                                <label for="online_to">Online To</label>
-                                <input type="time" class="form-control" id="online_to" name="online_to" value="{{ old('online_to', $user->online_to) }}">
+                                <label for="online_to">Online To (24h)</label>
+                                <input type="time" class="form-control" id="online_to" name="online_to" value="{{ old('online_to', $user->online_to) }}" step="60">
                             </div>
                         </div>
                     </div>

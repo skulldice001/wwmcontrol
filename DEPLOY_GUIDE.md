@@ -86,7 +86,7 @@ APP_DEBUG=false
 APP_URL=http://api.thezotopia.online
 FRONTEND_URL=http://thezotopia.online
 SANCTUM_STATEFUL_DOMAINS=thezotopia.online,api.thezotopia.online
-SESSION_DOMAIN=thezotopia.online
+SESSION_DOMAIN=.thezotopia.online
 
 DB_CONNECTION=pgsql
 DB_HOST=127.0.0.1
@@ -98,7 +98,7 @@ DB_PASSWORD=Neo@6666
 # Cấu hình Discord
 DISCORD_CLIENT_ID=your_client_id
 DISCORD_CLIENT_SECRET=your_client_secret
-DISCORD_REDIRECT_URI=http://api.thezotopia.online/auth/discord/callback
+DISCORD_REDIRECT_URI=http://thezotopia.online/auth/discord/callback
 ```
 
 Chạy các lệnh setup:

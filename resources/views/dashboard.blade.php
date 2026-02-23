@@ -34,6 +34,16 @@
                         <b>{{ __('messages.country') }}</b> <a class="float-right">{{ Auth::user()->country ?? 'N/A' }}</a>
                     </li>
                     <li class="list-group-item">
+                        <b>{{ __('messages.online_time') ?? 'Online Time' }}</b>
+                        <a class="float-right">
+                            @if(Auth::user()->online_from && Auth::user()->online_to)
+                                {{ Auth::user()->online_from }} - {{ Auth::user()->online_to }}
+                            @else
+                                N/A
+                            @endif
+                        </a>
+                    </li>
+                    <li class="list-group-item">
                         <b>{{ __('messages.main_skill') }}</b>
                         <div class="float-right">
                             @if(Auth::user()->mainSkill)

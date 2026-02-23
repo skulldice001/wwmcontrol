@@ -32,9 +32,13 @@
 <body class="welcome-page">
 
 <div style="position: absolute; top: 20px; right: 20px;">
-    <a href="{{ route('lang.switch', 'en') }}" class="{{ App::getLocale() == 'en' ? 'font-weight-bold text-dark' : 'text-muted' }} mr-2">EN</a>
+    <a href="{{ route('lang.switch', 'en') }}" class="{{ App::getLocale() == 'en' ? 'font-weight-bold text-dark' : 'text-muted' }} mr-2">
+        <span class="flag-icon flag-icon-us mr-1"></span> EN
+    </a>
     <span class="text-muted">|</span>
-    <a href="{{ route('lang.switch', 'vi') }}" class="{{ App::getLocale() == 'vi' ? 'font-weight-bold text-dark' : 'text-muted' }} ml-2">VN</a>
+    <a href="{{ route('lang.switch', 'vi') }}" class="{{ App::getLocale() == 'vi' ? 'font-weight-bold text-dark' : 'text-muted' }} ml-2">
+        <span class="flag-icon flag-icon-vn mr-1"></span> VN
+    </a>
 </div>
 
 <div class="welcome-box">

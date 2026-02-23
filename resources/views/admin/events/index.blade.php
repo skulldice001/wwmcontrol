@@ -57,21 +57,56 @@
                                 <i class="fas fa-users-cog"></i> {{ __('messages.sort_formation') }}
                             </a>
                         @endif
-                        <a href="{{ route('admin.events.edit', $event->id) }}" class="btn btn-info btn-sm mr-1">
-                            <i class="fas fa-pencil-alt"></i> Edit
-                        </a>
-                        <form action="{{ route('admin.events.destroy', $event->id) }}" method="POST" style="display:inline-block;">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure?')">
-                                <i class="fas fa-trash"></i> Delete
+                        @if(!in_array($event->status, ['completed', 'cancelled']))
+                            <button type="button"
+                                    class="btn btn-success btn-sm mr-1 btn-complete-event"
+                                    data-toggle="modal"
+                                    data-target="#confirmCompleteModal"
+                                    data-action="{{ route('admin.events.complete', $event->id) }}"
+                                    data-title="{{ $event->title }}">
+                                <i class="fas fa-flag-checkered"></i> End
                             </button>
-                        </form>
+                            <a href="{{ route('admin.events.edit', $event->id) }}" class="btn btn-info btn-sm mr-1">
+                                <i class="fas fa-pencil-alt"></i> Edit
+                            </a>
+                            <form action="{{ route('admin.events.destroy', $event->id) }}" method="POST" style="display:inline-block;">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure?')">
+                                    <i class="fas fa-trash"></i> Delete
+                                </button>
+                            </form>
+                        @endif
                     </td>
                 </tr>
                 @endforeach
             </tbody>
         </table>
+    </div>
+</div>
+
+<div class="modal fade" id="confirmCompleteModal" tabindex="-1" role="dialog" aria-labelledby="confirmCompleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <form method="POST" id="completeEventForm">
+            @csrf
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="confirmCompleteModalLabel">End Event</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to end this event:</p>
+                    <p class="font-weight-bold event-title mb-0"></p>
+                    <p class="mb-0 text-muted">After ending, players cannot register or update their registration.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success">Confirm End</button>
+                </div>
+            </div>
+        </form>
     </div>
 </div>
 
@@ -106,3 +141,18 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+    $(function () {
+        $('#confirmCompleteModal').on('show.bs.modal', function (event) {
+            var button = $(event.relatedTarget);
+            var action = button.data('action');
+            var title = button.data('title');
+            var modal = $(this);
+            modal.find('#completeEventForm').attr('action', action);
+            modal.find('.event-title').text(title);
+        });
+    });
+</script>
+@endpush

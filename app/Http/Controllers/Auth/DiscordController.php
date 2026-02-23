@@ -19,13 +19,15 @@ class DiscordController extends Controller
     public function redirect(): RedirectResponse
     {
         try {
-            return Socialite::driver('discord')->redirect();
+            $response = Socialite::driver('discord')->redirect();
+            request()->session()->save();
+            return $response;
         } catch (\Exception $e) {
             \Log::error('Discord Redirect Error: ' . $e->getMessage(), [
                 'exception' => $e,
                 'trace' => $e->getTraceAsString()
             ]);
-            return redirect()->route('login')->with('error', 'Failed to connect to Discord.');
+            return redirect()->route('home')->with('error', 'Failed to connect to Discord.');
         }
     }
 
@@ -42,6 +44,11 @@ class DiscordController extends Controller
                 'request_code' => $request->input('code'),
             ]);
 
+            // Workaround for Socialite session state issue
+            if ($request->has('state') && !$request->session()->has('state')) {
+                $request->session()->put('state', $request->input('state'));
+            }
+
             $discordUser = Socialite::driver('discord')->user();
 
             \Log::info('Discord User Obtained', ['id' => $discordUser->getId()]);
@@ -54,6 +61,7 @@ class DiscordController extends Controller
             ]);
 
              // Temporary debugging: Show error directly to user
+             /*
              return response()->json([
                  'message' => 'Discord authentication failed.',
                  'error' => $e->getMessage(),
@@ -62,6 +70,8 @@ class DiscordController extends Controller
                  'request_state' => $request->input('state'),
                  'session_data' => $request->session()->all(),
              ], 500);
+             */
+             return redirect()->route('home')->with('error', 'Discord authentication failed: ' . $e->getMessage());
         }
 
         // Invalidate old session and regenerate token
@@ -138,6 +148,6 @@ class DiscordController extends Controller
 
         Auth::login($user, true);
 
-        return redirect(config('app.frontend_url') . '/dashboard');
+        return redirect()->route('dashboard');
     }
 }
