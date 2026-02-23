@@ -67,7 +67,6 @@ class DiscordService
                 'verify' => config('services.discord.guzzle.verify', true),
             ])
             ->get("https://discord.com/api/v10/guilds/{$this->guildId}/members/{$discordUserId}");
-
             if ($response->successful()) {
                 $memberData = $response->json();
                 $userRoleIds = $memberData['roles'] ?? [];
@@ -92,6 +91,7 @@ class DiscordService
 
             Log::error("Discord API error: {$response->status()} - {$response->body()}");
         } catch (\Exception $e) {
+            dd($e);
             Log::error("Discord API exception: {$e->getMessage()}");
         }
 
