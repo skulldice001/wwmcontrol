@@ -43,7 +43,21 @@
                     <div class="alert alert-success">
                         <i class="fas fa-check"></i> You have joined this event.
                         @if($event->preferred_time)
-                            <br><small>Preferred Time: {{ $event->preferred_time }}</small>
+                            <div class="mt-1" style="font-size: 1rem;">
+                                Preferred Time: {{ $event->preferred_time }}
+                            </div>
+                        @endif
+                        @if($event->type == 'guild_war')
+                            <div class="mt-1 d-flex justify-content-between" style="font-size: 1rem;">
+                                @if(!empty($event->team_name))
+                                    <span>Đội tham gia: {{ $event->team_name }}</span>
+                                    @if(!empty($event->team_captain_name))
+                                        <span><strong>Đội trưởng: {{ $event->team_captain_name }}</strong></span>
+                                    @endif
+                                @else
+                                    <span>Trạng thái: chờ sắp xếp đội hình</span>
+                                @endif
+                            </div>
                         @endif
                     </div>
                     @if($event->status == 'upcoming')
