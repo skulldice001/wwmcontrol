@@ -151,13 +151,16 @@
                         </td>
                         <td>
                             @php
-                                $innerWaysData = $user->innerWays->map(function ($iw) {
-                                    return [
-                                        'name' => $iw->name,
-                                        'icon' => asset('icon/inner_way/' . $iw->icon),
-                                        'level' => $iw->pivot->level,
-                                    ];
-                                });
+                                $innerWaysData = $user->innerWays
+                                    ->filter(fn($iw) => $iw->pivot->level > 0)
+                                    ->values()
+                                    ->map(function ($iw) {
+                                        return [
+                                            'name' => $iw->name,
+                                            'icon' => asset('icon/inner_way/' . $iw->icon),
+                                            'level' => $iw->pivot->level,
+                                        ];
+                                    });
                             @endphp
                             <inner-ways-cell
                                 :inner-ways='@json($innerWaysData)'

@@ -96,12 +96,14 @@
                         <h5>Inner Ways</h5>
                         <div class="row">
                             @forelse($user->innerWays as $iw)
+                                @if($iw->pivot->level > 0)
                                 <div class="col-6 mb-2">
                                     <div class="border rounded p-2 text-center bg-light">
                                         <small class="font-weight-bold d-block text-truncate">{{ $iw->name }}</small>
                                         <span class="badge badge-success">Level {{ $iw->pivot->level }}</span>
                                     </div>
                                 </div>
+                                @endif
                             @empty
                                 <div class="col-12">
                                     <p class="text-muted text-center">No inner ways configured.</p>

@@ -69,7 +69,7 @@ class ProfileController extends Controller
         if ($request->has('inner_ways')) {
             $syncData = [];
             foreach ($request->input('inner_ways') as $slug => $level) {
-                if ($level > 0) {
+                if ($level >= 0) {
                     $innerWay = InnerWay::where('slug', $slug)->first();
                     if ($innerWay) {
                         $syncData[$innerWay->id] = ['level' => $level];
