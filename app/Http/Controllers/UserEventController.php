@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Event;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -10,21 +11,45 @@ class UserEventController extends Controller
 {
     public function index(Request $request)
     {
+        $userId = $request->user()->id;
+
         $events = Event::whereIn('status', ['upcoming', 'ongoing'])
-            ->with(['participants' => function ($query) use ($request) {
-                $query->where('users.id', $request->user()->id);
+            ->with(['participants' => function ($query) use ($userId) {
+                $query->where('users.id', $userId);
             }])
             ->orderBy('start_time', 'asc')
             ->get()
-            ->map(function ($event) {
+            ->map(function ($event) use ($userId) {
                 $event->is_registered = $event->participants->isNotEmpty();
                 if ($event->is_registered) {
                     $event->preferred_time = $event->participants->first()->pivot->preferred_time;
                 }
-                // Don't unset participants as we might need it for count or other logic in view, 
-                // but for this specific logic it was unsetting relation. 
-                // We can keep it or remove it. Let's keep it clean.
-                // unset($event->participants); 
+
+                if ($event->type === 'guild_war') {
+                    $formation = $event->formation_data ?? null;
+                    $roster = $formation['roster'] ?? null;
+
+                    if ($roster && !empty($roster['assignments']) && !empty($roster['teams'])) {
+                        $assignments = $roster['assignments'];
+                        $teams = $roster['teams'];
+                        $teamId = $assignments[$userId] ?? null;
+
+                        if ($teamId) {
+                            $team = collect($teams)->firstWhere('id', $teamId);
+
+                            if ($team) {
+                                $event->team_name = $team['name'] ?? null;
+                                $event->team_mission = $team['description'] ?? null;
+
+                                if (!empty($team['captainId'])) {
+                                    $captain = User::find($team['captainId']);
+                                    $event->team_captain_name = $captain ? ($captain->ingame_name ?? $captain->name) : null;
+                                }
+                            }
+                        }
+                    }
+                }
+
                 return $event;
             });
 
