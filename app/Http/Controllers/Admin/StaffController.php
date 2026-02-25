@@ -31,7 +31,7 @@ class StaffController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'account' => ['required', 'string', 'max:255', 'unique:staffs'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:staffs'],
-            'password' => ['required', 'string', 'min:6'],
+            'password' => ['required', 'string', 'min:6', 'confirmed'],
             'role' => ['required', Rule::in([Staff::ROLE_MASTER, Staff::ROLE_ADMIN, Staff::ROLE_OBSERVER])],
         ]);
 
@@ -43,7 +43,7 @@ class StaffController extends Controller
 
         Staff::create($validated);
 
-        return redirect()->route('admin.staff.index')->with('success', 'Staff member created successfully.');
+        return redirect()->route('admin.staff.create')->with('success', 'Staff member created successfully. Click button below to return to list.');
     }
 
     public function edit(Staff $staff)

@@ -7,6 +7,17 @@
     <div class="card-header">
         <h3 class="card-title">{{ __('messages.create_new_staff') }}</h3>
     </div>
+    @if(session('success'))
+        <div class="alert alert-success m-3">
+            {{ session('success') }}
+            <br>
+            <a href="{{ route('admin.staff.index') }}" class="btn btn-success mt-2">Back to List</a>
+        </div>
+    @elseif(session('error'))
+        <div class="alert alert-danger m-3">
+            {{ session('error') }}
+        </div>
+    @endif
     <form action="{{ route('admin.staff.store') }}" method="POST">
         @csrf
         <div class="card-body">
@@ -29,6 +40,10 @@
                 <label>{{ __('messages.password') }}</label>
                 <input type="password" name="password" class="form-control @error('password') is-invalid @enderror" placeholder="{{ __('messages.enter_password') }}">
                 @error('password') <span class="error invalid-feedback">{{ $message }}</span> @enderror
+            </div>
+            <div class="form-group">
+                <label>{{ __('messages.confirm_password') }}</label>
+                <input type="password" name="password_confirmation" class="form-control" placeholder="{{ __('messages.confirm_password') }}">
             </div>
             <div class="form-group">
                 <label>{{ __('messages.role') }}</label>
