@@ -80,6 +80,7 @@
             <div class="card-body">
                 <div class="row">
                     @foreach(Auth::user()->innerWays as $innerWay)
+                        @if($innerWay->pivot->level > 0)
                         <div class="col-lg-4 col-md-6 col-sm-6 text-center mb-4">
                             <div class="p-3 border rounded shadow-sm bg-light h-100">
                                 <img src="{{ asset('icon/inner_way/' . $innerWay->icon) }}"
@@ -90,6 +91,7 @@
                                 <span class="badge badge-success px-3 py-2">{{ __('messages.level') }} {{ $innerWay->pivot->level }}</span>
                             </div>
                         </div>
+                        @endif
                     @endforeach
                 </div>
             </div>
