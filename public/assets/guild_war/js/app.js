@@ -2,39 +2,39 @@
 // APPLICATION STATE & CONFIGURATION
 // ============================================================================
 
-let members = window.initialMembers || [];
+var members = window.initialMembers || [];
 
 // Placed items on map
-let placedMembers = [];
-let placedGroups = [];
-let placedObjectives = [];
-let placedBosses = [];
-let placedBlueTowers = [];
-let placedRedTowers = [];
-let placedBlueTrees = [];
-let placedRedTrees = [];
-let placedBlueGeese = [];
-let placedRedGeese = [];
-let placedEnemies = [];
+var placedMembers = [];
+var placedGroups = [];
+var placedObjectives = [];
+var placedBosses = [];
+var placedBlueTowers = [];
+var placedRedTowers = [];
+var placedBlueTrees = [];
+var placedRedTrees = [];
+var placedBlueGeese = [];
+var placedRedGeese = [];
+var placedEnemies = [];
 
 // UI State
-let filteredMembers = [...members];
-let currentFilter = 'all';
-let currentRoleFilter = 'all';
-let currentView = 'grouped'; // 'grouped' or 'list'
-let placingMode = null; // 'objective' or 'boss' or 'blue-tower' or 'red-tower' or 'blue-tree' or 'red-tree' or 'blue-goose' or 'red-goose' or null
+var filteredMembers = [...members];
+var currentFilter = 'all';
+var currentRoleFilter = 'all';
+var currentView = 'grouped'; // 'grouped' or 'list'
+var placingMode = null; // 'objective' or 'boss' or 'blue-tower' or 'red-tower' or 'blue-tree' or 'red-tree' or 'blue-goose' or 'red-goose' or null
 
 // Drawing State
-let drawingMode = false;
-let autoDeleteDrawings = false;
-let drawingPaths = [];
-let drawingDeleteTimers = [];
-let drawingHistory = [];
-let drawingRedoStack = [];
-let drawingColor = '#ff0000'; // Default red color
+var drawingMode = false;
+var autoDeleteDrawings = false;
+var drawingPaths = [];
+var drawingDeleteTimers = [];
+var drawingHistory = [];
+var drawingRedoStack = [];
+var drawingColor = '#ff0000'; // Default red color
 
 // Split UI State
-let activeSplitGroupId = null;
+var activeSplitGroupId = null;
 
 // Constants
 const MAX_PLAYERS = 30;
@@ -451,9 +451,6 @@ function renderGroupedView() {
 
         // Then filter out placed members and apply search/role filters
         const teamMembers = allTeamMembers.filter(m => {
-            // Check if member is already placed individually
-            if (isPlayerPlaced(m.id)) return false;
-
             // Apply search filter
             const searchTerm = searchInput.value.toLowerCase();
             const matchesSearch = !searchTerm ||
@@ -533,9 +530,6 @@ function renderGroupedView() {
 function renderListView() {
     // Filter members that aren't placed
     const availableMembers = members.filter(m => {
-        // Skip if member is already placed
-        if (isPlayerPlaced(m.id)) return false;
-
         // Apply search filter
         const searchTerm = searchInput.value.toLowerCase();
         const matchesSearch = !searchTerm ||
@@ -565,8 +559,9 @@ function toggleTeamGroup(groupDiv) {
 // Create member element
 function createMemberElement(member) {
     const div = document.createElement('div');
-    div.className = 'member-item';
-    div.draggable = true;
+    const isPlaced = isPlayerPlaced(member.id);
+    div.className = `member-item ${isPlaced ? 'placed-member' : ''}`;
+    div.draggable = !isPlaced;
     div.dataset.memberId = member.id;
 
     const team = teams.find(t => t.id === member.team);
@@ -595,8 +590,21 @@ function createMemberElement(member) {
         </div>
     `;
 
-    div.addEventListener('dragstart', handleDragStart);
-    div.addEventListener('dragend', handleDragEnd);
+    if (!isPlaced) {
+        div.addEventListener('dragstart', handleDragStart);
+        div.addEventListener('dragend', handleDragEnd);
+    }
+
+    div.addEventListener('click', (e) => {
+        // Remove highlight from all other items
+        document.querySelectorAll('.member-item').forEach(el => el.classList.remove('highlighted'));
+        div.classList.add('highlighted');
+
+        // Highlight on map
+        if (window.highlightMapMarker) {
+            window.highlightMapMarker(member.id);
+        }
+    });
 
     return div;
 }
@@ -960,7 +968,7 @@ function handleTeamDragStart(e) {
     e.dataTransfer.effectAllowed = 'copy';
     const dragData = {
         type: 'team',
-        data: e.currentTarget.dataset.teamName
+        data: e.currentTarget.dataset.teamId
     };
     e.dataTransfer.setData('text/plain', JSON.stringify(dragData));
 }
@@ -1180,16 +1188,13 @@ function createNewGroup(teamName, teamMembers, x, y) {
     const groupId = `group-${Date.now()}`;
     const memberIds = teamMembers.map(m => m.id);
 
-    // Adjust position to top-right of cursor
-    const adjustedX = x + 21; // 16px radius + 5px offset
-    const adjustedY = y - 21;
-
+    // Create new group
     const group = {
         id: groupId,
         teams: [teamName],
         memberIds: memberIds,
-        x: adjustedX,
-        y: adjustedY
+        x: x,
+        y: y
     };
 
     placedGroups.push(group);

@@ -98,6 +98,8 @@ return [
     'dashboard_view_members' => 'Xem thành viên',
     'dashboard_running_events' => 'Sự kiện đang/chuẩn bị diễn ra',
     'dashboard_completed_events' => 'Sự kiện đã hoàn thành',
+    'account_not_found' => 'Tài khoản không tồn tại',
+    'password_incorrect' => 'Mật khẩu không chính xác',
     'dashboard_view_events' => 'Xem sự kiện',
     'dashboard_members_by_role' => 'Thành viên theo vai trò (Healer / Tanker / DPS)',
     'events_management_title' => 'Quản lý sự kiện',
