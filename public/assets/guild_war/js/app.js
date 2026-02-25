@@ -573,6 +573,9 @@ function createMemberElement(member) {
     const isCaptain = team && team.captainId === member.id;
     const captainClass = isCaptain ? 'active' : '';
     const captainIcon = isCaptain ? '👑' : '☆';
+    
+    // Get Unknown text from translation
+    const unknownText = window.roleTranslations && window.roleTranslations['Unknown'] ? window.roleTranslations['Unknown'] : 'Unknown';
 
     // Only show remove button if member is in a team
     const removeBtn = member.team ? `<button class="remove-from-team-btn" onclick="event.stopPropagation(); removeMemberFromTeam(${member.id})" title="Remove from team" style="background: none; border: none; color: #e53e3e; cursor: pointer; font-weight: bold;">×</button>` : '';
@@ -582,12 +585,12 @@ function createMemberElement(member) {
             <div class="member-name">${member.name}</div>
             <div class="member-team">${getTeamDisplayName(member.team)}</div>
             <div class="member-weapons">
-                <div class="weapon-item">W1: ${member.weapon1 || 'None'}</div>
-                <div class="weapon-item">W2: ${member.weapon2 || 'None'}</div>
+                <div class="weapon-item">W1: ${member.weapon1 || unknownText}</div>
+                <div class="weapon-item">W2: ${member.weapon2 || unknownText}</div>
             </div>
         </div>
         <div class="member-controls" style="display: flex; flex-direction: column; align-items: flex-end; gap: 5px;">
-            <div class="role-badge">${member.role}</div>
+            <div class="role-badge">${window.roleTranslations && window.roleTranslations[member.role] ? window.roleTranslations[member.role] : member.role}</div>
             <div style="display: flex; gap: 5px;">
                 <button class="captain-btn ${captainClass}" onclick="event.stopPropagation(); toggleCaptain(${member.id}, '${member.team}')" title="Toggle Captain">${captainIcon}</button>
                 ${removeBtn}

@@ -227,6 +227,12 @@
     window.initialFormationData = @json($event->formation_data);
     window.pastEvents = @json($pastEvents);
     window.csrfToken = "{{ csrf_token() }}";
+    window.roleTranslations = {
+        'Tank': "{{ __('messages.role_tank') }}",
+        'DPS': "{{ __('messages.role_dps') }}",
+        'Healer': "{{ __('messages.role_healer') }}",
+        'Unknown': "{{ __('messages.role_unknown') }}"
+    };
 </script>
 <script src="{{ asset('assets/guild_war/js/app.js') }}?v={{ time() }}"></script>
 @endpush
