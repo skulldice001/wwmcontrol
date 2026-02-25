@@ -1,0 +1,119 @@
+services:
+    app:
+        build:
+            context: .
+            dockerfile: Dockerfile
+        image: wwmcontrol-app
+        restart: unless-stopped
+        ports:
+            - "${APP_PORT:-80}:80"
+        environment:
+            APP_ENV: ${APP_ENV:-production}
+            APP_KEY: ${APP_KEY}
+            APP_DEBUG: ${APP_DEBUG:-false}
+            APP_URL: ${APP_URL}
+            DB_CONNECTION: pgsql
+            DB_HOST: db
+            DB_PORT: 5432
+            DB_DATABASE: ${DB_DATABASE}
+            DB_USERNAME: ${DB_USERNAME}
+            DB_PASSWORD: ${DB_PASSWORD}
+            REDIS_HOST: redis
+            REDIS_PASSWORD: ${REDIS_PASSWORD:-null}
+            REDIS_PORT: 6379
+            QUEUE_CONNECTION: redis
+            SESSION_DRIVER: redis
+            CACHE_STORE: redis
+        depends_on:
+            - db
+            - redis
+        networks:
+            - app-network
+
+    queue:
+        image: wwmcontrol-app
+        restart: unless-stopped
+        command: php artisan queue:work --tries=3 --timeout=90
+        environment:
+            APP_ENV: ${APP_ENV:-production}
+            APP_KEY: ${APP_KEY}
+            APP_DEBUG: ${APP_DEBUG:-false}
+            DB_CONNECTION: pgsql
+            DB_HOST: db
+            DB_PORT: 5432
+            DB_DATABASE: ${DB_DATABASE}
+            DB_USERNAME: ${DB_USERNAME}
+            DB_PASSWORD: ${DB_PASSWORD}
+            REDIS_HOST: redis
+            REDIS_PASSWORD: ${REDIS_PASSWORD:-null}
+            REDIS_PORT: 6379
+            QUEUE_CONNECTION: redis
+            CACHE_STORE: redis
+        depends_on:
+            - db
+            - redis
+        networks:
+            - app-network
+
+    scheduler:
+        image: wwmcontrol-app
+        restart: unless-stopped
+        command: php artisan schedule:work
+        environment:
+            APP_ENV: ${APP_ENV:-production}
+            APP_KEY: ${APP_KEY}
+            APP_DEBUG: ${APP_DEBUG:-false}
+            DB_CONNECTION: pgsql
+            DB_HOST: db
+            DB_PORT: 5432
+            DB_DATABASE: ${DB_DATABASE}
+            DB_USERNAME: ${DB_USERNAME}
+            DB_PASSWORD: ${DB_PASSWORD}
+            REDIS_HOST: redis
+            REDIS_PASSWORD: ${REDIS_PASSWORD:-null}
+            REDIS_PORT: 6379
+            QUEUE_CONNECTION: redis
+            CACHE_STORE: redis
+        depends_on:
+            - db
+            - redis
+        networks:
+            - app-network
+
+    db:
+        image: postgres:14-alpine
+        restart: unless-stopped
+        environment:
+            POSTGRES_DB: ${DB_DATABASE}
+            POSTGRES_USER: ${DB_USERNAME}
+            POSTGRES_PASSWORD: ${DB_PASSWORD}
+        volumes:
+            - db-data:/var/lib/postgresql/data
+        networks:
+            - app-network
+        healthcheck:
+            test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME} -d ${DB_DATABASE}"]
+            interval: 10s
+            timeout: 5s
+            retries: 5
+
+    redis:
+        image: redis:alpine
+        restart: unless-stopped
+        volumes:
+            - redis-data:/data
+        networks:
+            - app-network
+        healthcheck:
+            test: ["CMD", "redis-cli", "ping"]
+            interval: 10s
+            timeout: 5s
+            retries: 5
+
+networks:
+    app-network:
+        driver: bridge
+
+volumes:
+    db-data:
+    redis-data:

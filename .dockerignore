@@ -1,0 +1,15 @@
+.git
+.github
+.env
+node_modules
+vendor
+storage/framework/cache/data/*
+storage/framework/sessions/*
+storage/framework/views/*
+storage/logs/*
+docker-compose.yml
+docker-compose.override.yml
+tests
+phpunit.xml
+.idea
+.vscode
