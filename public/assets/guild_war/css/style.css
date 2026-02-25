@@ -74,6 +74,18 @@ header h1 {
     transition: grid-template-columns 0.3s ease;
 }
 
+@media (max-width: 992px) {
+    .main-content {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto 600px;
+        height: auto;
+    }
+    
+    .member-panel {
+        height: 500px; /* Fixed height for scrollable list on mobile */
+    }
+}
+
 .main-content.panel-collapsed {
     grid-template-columns: 50px 1fr;
 }

@@ -24,7 +24,7 @@ class SkillRole
     public static function getRole(?string $slug): string
     {
         if (!$slug) {
-            return self::DPS; // Default or maybe 'Unknown' but user said "còn lại là DPS"
+            return self::UNKNOWN;
         }
 
         $healers = [
@@ -59,6 +59,7 @@ class SkillRole
             self::HEALER,
             self::TANKER,
             self::DPS,
+            self::UNKNOWN,
         ];
     }
 

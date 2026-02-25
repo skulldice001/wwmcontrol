@@ -9,13 +9,13 @@
 
 @section('content')
 <div class="guild-war-app">
-    <div class="app-header d-flex justify-content-between align-items-center mb-3 p-3 bg-white shadow-sm rounded">
-        <div>
+    <div class="app-header d-flex flex-column flex-lg-row justify-content-between align-items-center mb-3 p-3 bg-white shadow-sm rounded">
+        <div class="mb-2 mb-lg-0 text-center text-lg-left">
             <h1 class="h4 mb-0 font-weight-bold" style="color: #4a5568;">{{ __('messages.guild_war_strategy_title') }}</h1>
             <small class="text-muted">{{ __('messages.guild_war_strategy_subtitle') }}</small>
         </div>
-        <div class="header-controls d-flex align-items-center">
-            <div class="mr-3 d-flex align-items-center">
+        <div class="header-controls d-flex flex-wrap justify-content-center align-items-center">
+            <div class="mr-3 d-flex align-items-center mb-2 mb-md-0">
                 <input type="text" id="formationNameInput" class="form-control form-control-sm mr-2" placeholder="{{ __('messages.formation_name_placeholder') }}" title="{{ __('messages.formation_name_tooltip') }}">
                 <select id="loadFormationSelect" class="form-control form-control-sm" style="width: 200px;" title="{{ __('messages.load_formation_tooltip') }}">
                     <option value="">{{ __('messages.load_formation_placeholder') }}</option>
@@ -71,6 +71,7 @@
                 <button class="role-filter-btn" data-role="Tank">{{ __('messages.role_tank') }}</button>
                 <button class="role-filter-btn" data-role="DPS">{{ __('messages.role_dps') }}</button>
                 <button class="role-filter-btn" data-role="Healer">{{ __('messages.role_healer') }}</button>
+                <button class="role-filter-btn" data-role="Unknown">{{ __('messages.role_unknown') }}</button>
             </div>
 
             <div id="memberList" class="member-list">

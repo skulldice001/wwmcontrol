@@ -182,6 +182,7 @@ return [
     'role_tank' => 'Tank',
     'role_dps' => 'DPS',
     'role_healer' => 'Healer',
+    'role_unknown' => 'Unknown',
     'placed_label' => 'Placed:',
     'export' => 'Export',
     'import' => 'Import',
