@@ -25,6 +25,19 @@ class LoginController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
+        $staff = \App\Models\Staff::where('account', $request->account)->first();
+
+        if (! $staff) {
+            if ($request->wantsJson()) {
+                throw ValidationException::withMessages([
+                    'account' => [__('messages.account_not_found')],
+                ]);
+            }
+            throw ValidationException::withMessages([
+                'account' => __('messages.account_not_found'),
+            ]);
+        }
+
         if (Auth::guard('staff')->attempt($credentials, $request->boolean('remember'))) {
             $request->session()->regenerate();
 
@@ -37,12 +50,12 @@ class LoginController extends Controller
 
         if ($request->wantsJson()) {
             throw ValidationException::withMessages([
-                'account' => [trans('auth.failed')],
+                'password' => [__('messages.password_incorrect')],
             ]);
         }
 
         throw ValidationException::withMessages([
-            'account' => trans('auth.failed'),
+            'password' => __('messages.password_incorrect'),
         ]);
     }
 

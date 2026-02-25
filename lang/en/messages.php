@@ -98,6 +98,8 @@ return [
     'dashboard_view_members' => 'View members',
     'dashboard_running_events' => 'Running / Upcoming Events',
     'dashboard_completed_events' => 'Completed Events',
+    'account_not_found' => 'Account not found',
+    'password_incorrect' => 'Incorrect password',
     'dashboard_view_events' => 'View events',
     'dashboard_members_by_role' => 'Members by Role (Healer / Tanker / DPS)',
     'events_management_title' => 'Events Management',

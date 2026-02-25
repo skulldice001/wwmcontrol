@@ -5,6 +5,7 @@
 @push('styles')
 <link rel="stylesheet" href="{{ asset('assets/guild_war/css/style.css') }}">
 <link rel="stylesheet" href="{{ asset('assets/guild_war/css/formation.css') }}">
+<link rel="stylesheet" href="{{ asset('assets/leaflet/leaflet.css') }}">
 @endpush
 
 @section('content')
@@ -95,9 +96,11 @@
 
         <!-- Map Area -->
         <div class="map-container">
-            <div id="mapArea" class="map-area" style="flex: 1; width: 100%; position: relative; overflow: hidden; border-radius: 8px; border: 1px solid #eee;">
-                <canvas id="drawingCanvas" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10;"></canvas>
+            <div id="mapArea" class="map-area" style="flex: 1; width: 100%; height: 100%; position: relative; overflow: hidden; border-radius: 8px; border: 1px solid #eee;">
+                <!-- Leaflet Map will be initialized here -->
             </div>
+            <!-- Hidden canvas for app.js compatibility -->
+            <canvas id="drawingCanvas" style="display: none;"></canvas>
 
             <!-- Bottom Toolbar -->
             <div class="map-toolbar mt-3">
@@ -198,34 +201,25 @@
                     <button type="submit" class="btn btn-primary">{{ __('messages.save') }}</button>
                 </div>
             </form>
-            <button id="closeEditModalBtn" class="close" style="position:absolute; top:10px; right:10px;">&times;</button>
         </div>
     </div>
 
-    <div id="hotkeyHelpModal" class="modal">
-        <div class="modal-content">
-            <h3>{{ __('messages.hotkey_title') }}</h3>
-            <button id="closeHotkeyModalBtn" class="close">&times;</button>
-            <ul>
-                <li>{{ __('messages.shortcut_show_help') }}</li>
-                <li>{{ __('messages.shortcut_esc_cancel_tool') }}</li>
-                <li>{{ __('messages.shortcut_undo_drawing') }}</li>
-                <li>{{ __('messages.shortcut_redo_drawing') }}</li>
-                <li>{{ __('messages.shortcut_toggle_drawing') }}</li>
-            </ul>
-        </div>
-    </div>
-</div>
 @endsection
 
 @push('scripts')
-<script>
-    // Inject Laravel data
-    window.initialMembers = @json($participants);
-    window.saveFormationUrl = "{{ route('admin.events.formation.save', $event) }}";
-    window.initialFormationData = @json($event->formation_data);
-    window.pastEvents = @json($pastEvents);
-    window.csrfToken = "{{ csrf_token() }}";
-</script>
-<script src="{{ asset('assets/guild_war/js/app.js') }}?v={{ time() }}"></script>
+    <!-- Leaflet JS -->
+    <script src="{{ asset('assets/leaflet/leaflet.js') }}"></script>
+
+    <script>
+        // Inject Laravel data
+        window.initialMembers = @json($participants);
+        window.saveFormationUrl = "{{ route('admin.events.formation.save', $event) }}";
+        window.initialFormationData = @json($event->formation_data);
+        window.pastEvents = @json($pastEvents);
+        window.csrfToken = "{{ csrf_token() }}";
+        // Map Image URL
+        window.mapImageUrl = "{{ asset('assets/guild_war/images/map.png') }}";
+    </script>
+    <script src="{{ asset('assets/guild_war/js/app.js') }}?v={{ time() }}"></script>
+    <script src="{{ asset('assets/guild_war/js/leaflet_map.js') }}?v={{ time() }}"></script>
 @endpush

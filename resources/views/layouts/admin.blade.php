@@ -25,6 +25,13 @@
 
         <!-- Right navbar links -->
         <ul class="navbar-nav ml-auto">
+            <!-- User Name -->
+            <li class="nav-item d-none d-sm-inline-block">
+                <a href="#" class="nav-link font-weight-bold">
+                    {{ Auth::user()->name ?? Auth::guard('staff')->user()->name ?? 'Guest' }}
+                </a>
+            </li>
+
             @php
                 $vnFlagPath = file_exists(public_path('flags/vn.jpg'))
                     ? 'flags/vn.jpg'
