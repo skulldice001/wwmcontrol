@@ -10,6 +10,7 @@
 /* Guild War App Wrapper */
 .guild-war-app {
     height: calc(100vh - 60px); /* Adjust based on admin header */
+    min-height: 800px;
     display: flex;
     flex-direction: column;
     padding: 10px;
@@ -19,10 +20,24 @@
     .guild-war-app {
         height: auto;
         min-height: calc(100vh - 60px);
+        padding: 0;
+    }
+    
+    .main-content {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto 1fr;
+        height: auto;
+        min-height: 100vh;
+    }
+
+    .member-panel {
+        height: auto;
+        min-height: 780px;
     }
     
     .map-container {
-        height: 600px;
+        height: auto; /* Responsive height for map */
+        min-height: 780px;
         display: flex;
         flex-direction: column;
     }

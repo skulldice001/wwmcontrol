@@ -8,6 +8,7 @@ class SkillRole
     public const HEALER = 'Healer';
     public const TANKER = 'Tanker';
     public const DPS = 'DPS';
+    public const UNKNOWN = 'Unknown';
 
     // Skill Slugs
     public const PANACEA_FAN = 'panacea-fan';

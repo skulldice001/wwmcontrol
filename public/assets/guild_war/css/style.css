@@ -72,22 +72,26 @@ header h1 {
     gap: 20px;
     height: calc(100vh - 150px);
     transition: grid-template-columns 0.3s ease;
+    min-height: 650px;
 }
 
 @media (max-width: 992px) {
     .main-content {
         grid-template-columns: 1fr;
-        grid-template-rows: auto 600px;
+        grid-template-rows: auto 1fr; /* Flexible rows */
         height: auto;
+        min-height: 100vh;
     }
     
     .member-panel {
-        height: 500px; /* Fixed height for scrollable list on mobile */
+        height: 40vh; /* Responsive height for list */
+        min-height: 300px;
     }
 }
 
 .main-content.panel-collapsed {
     grid-template-columns: 50px 1fr;
+    
 }
 
 /* Member Panel */
@@ -370,6 +374,7 @@ body.dark-theme .role-filter-btn.active {
     flex-direction: column;
     gap: 8px;
     padding-left: 5px;
+    min-height: 10px; /* Ensure drop target exists */
 }
 
 .team-group.collapsed .team-group-players {
@@ -394,11 +399,13 @@ body.dark-theme .role-filter-btn.active {
     box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: flex-start; /* Align top for multi-line content */
+    gap: 10px;
 }
 
 .member-item .member-info {
     flex: 1;
+    min-width: 0; /* Prevent text overflow */
 }
 
 .member-item .role-badge {
@@ -423,6 +430,9 @@ body.dark-theme .role-filter-btn.active {
     font-weight: bold;
     font-size: 15px;
     margin-bottom: 3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .member-role {
