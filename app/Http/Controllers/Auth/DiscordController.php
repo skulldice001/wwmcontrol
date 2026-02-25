@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\InnerWay;
+use App\Services\DiscordService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\File;
@@ -31,10 +32,7 @@ class DiscordController extends Controller
         }
     }
 
-    /**
-     * Obtain the user information from Discord.
-     */
-    public function callback(\Illuminate\Http\Request $request)
+    public function callback(\Illuminate\Http\Request $request, DiscordService $discordService)
     {
         try {
             \Log::info('Discord Callback Received', [
@@ -77,6 +75,14 @@ class DiscordController extends Controller
         // Invalidate old session and regenerate token
         $request->session()->invalidate();
         $request->session()->regenerateToken();
+
+        $roles = $discordService->getRoles($discordUser->getId());
+        if (empty($roles)) {
+            \Log::warning('Discord user is not in required guild', [
+                'discord_id' => $discordUser->getId(),
+            ]);
+            return redirect()->route('home')->with('error', __('messages.discord_guild_required'));
+        }
 
         $user = User::where('discord_id', $discordUser->getId())->first();
 

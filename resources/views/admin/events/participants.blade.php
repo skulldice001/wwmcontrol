@@ -1,6 +1,6 @@
 @extends('layouts.admin')
 
-@section('title', 'Event Participants')
+@section('title', __('messages.event_participants_title'))
 
 @section('content')
 @push('styles')
@@ -33,14 +33,14 @@
 @endpush
 <div class="card">
     <div class="card-header">
-        <h3 class="card-title">Participants for: {{ $event->title }}</h3>
+        <h3 class="card-title">{{ __('messages.participants_for') }} {{ $event->title }}</h3>
         <div class="card-tools">
-            <a href="{{ route('admin.events.index') }}" class="btn btn-default btn-sm">Back to Events</a>
+            <a href="{{ route('admin.events.index') }}" class="btn btn-default btn-sm">{{ __('messages.back_to_events_admin') }}</a>
         </div>
     </div>
     <div class="card-body">
         <div class="mb-3">
-            <strong>Participants:</strong>
+            <strong>{{ __('messages.participants_label') }}</strong>
             {{ $participants->count() }} / {{ $totalParticipants }}
         </div>
         <!-- Filters -->
@@ -48,9 +48,9 @@
             <div class="row">
                 <div class="col-md-2">
                     <div class="form-group">
-                        <label>Main Skill</label>
+                        <label>{{ __('messages.main_skill_filter') }}</label>
                         <select name="main_skill_id" class="form-control select2-icon" style="width: 100%;">
-                            <option value="">All Main Skills</option>
+                            <option value="">{{ __('messages.all_main_skills') }}</option>
                             @foreach($skills as $skill)
                                 <option value="{{ $skill->id }}" data-icon="{{ asset('icon/skill/' . $skill->icon) }}" {{ request('main_skill_id') == $skill->id ? 'selected' : '' }}>
                                     {{ $skill->name }}
@@ -61,9 +61,9 @@
                 </div>
                 <div class="col-md-2">
                     <div class="form-group">
-                        <label>Sub Skill</label>
+                        <label>{{ __('messages.sub_skill_filter') }}</label>
                         <select name="sub_skill_id" class="form-control select2-icon" style="width: 100%;">
-                            <option value="">All Sub Skills</option>
+                            <option value="">{{ __('messages.all_sub_skills') }}</option>
                             @foreach($skills as $skill)
                                 <option value="{{ $skill->id }}" data-icon="{{ asset('icon/skill/' . $skill->icon) }}" {{ request('sub_skill_id') == $skill->id ? 'selected' : '' }}>
                                     {{ $skill->name }}
@@ -74,9 +74,9 @@
                 </div>
                 <div class="col-md-2">
                     <div class="form-group">
-                        <label>Inner Way</label>
+                        <label>{{ __('messages.inner_way_filter') }}</label>
                         <select name="inner_way_id" class="form-control select2-icon" style="width: 100%;">
-                            <option value="">All Inner Ways</option>
+                            <option value="">{{ __('messages.all_inner_ways') }}</option>
                             @foreach($innerWays as $iw)
                                 <option value="{{ $iw->id }}" data-icon="{{ asset('icon/inner_way/' . $iw->icon) }}" {{ request('inner_way_id') == $iw->id ? 'selected' : '' }}>
                                     {{ $iw->name }}
@@ -87,21 +87,21 @@
                 </div>
                 <div class="col-md-2">
                     <div class="form-group">
-                        <label>Min Level</label>
-                        <input type="number" name="inner_way_level" class="form-control" placeholder="Min Level" value="{{ request('inner_way_level') }}" min="1" max="10">
+                        <label>{{ __('messages.min_level') }}</label>
+                        <input type="number" name="inner_way_level" class="form-control" placeholder="{{ __('messages.min_level') }}" value="{{ request('inner_way_level') }}" min="1" max="10">
                     </div>
                 </div>
                 <div class="col-md-2">
                     <div class="form-group">
                         <label>&nbsp;</label>
-                        <button type="submit" class="btn btn-primary btn-block">Filter</button>
+                        <button type="submit" class="btn btn-primary btn-block">{{ __('messages.filter') }}</button>
                     </div>
                 </div>
                 <div class="col-md-2">
                     <div class="form-group">
-                        <label>Role</label>
+                        <label>{{ __('messages.role_filter') }}</label>
                         <select name="role" class="form-control">
-                            <option value="">All Roles</option>
+                            <option value="">{{ __('messages.all_roles_filter') }}</option>
                             @foreach(\App\Constants\SkillRole::getRoles() as $role)
                                 <option value="{{ $role }}" {{ request('role') === $role ? 'selected' : '' }}>
                                     {{ $role }}
@@ -118,14 +118,14 @@
             <table class="table table-bordered table-striped">
                 <thead>
                     <tr>
-                        <th>ID</th>
-                        <th>Name</th>
-                        <th>In-game Name</th>
-                        <th>Main Skill</th>
-                        <th>Role</th>
-                        <th>Sub Skill</th>
-                        <th>Inner Ways</th>
-                        <th>Preferred Time</th>
+                        <th>{{ __('messages.event_id') }}</th>
+                        <th>{{ __('messages.name') }}</th>
+                        <th>{{ __('messages.in_game_name') }}</th>
+                        <th>{{ __('messages.main_skill') }}</th>
+                        <th>{{ __('messages.role') }}</th>
+                        <th>{{ __('messages.sub_skill') }}</th>
+                        <th>{{ __('messages.inner_ways_column') }}</th>
+                        <th>{{ __('messages.preferred_time') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -133,12 +133,12 @@
                     <tr>
                         <td>{{ $user->id }}</td>
                         <td>{{ $user->name }}</td>
-                        <td>{{ $user->ingame_name ?? 'N/A' }}</td>
+                        <td>{{ $user->ingame_name ?? __('messages.not_available') }}</td>
                         <td>
                             @if($user->mainSkill)
                                 <img src="{{ asset('icon/skill/' . $user->mainSkill->icon) }}" width="24" height="24"> {{ $user->mainSkill->name }}
                             @else
-                                N/A
+                                {{ __('messages.not_available') }}
                             @endif
                         </td>
                         <td>{{ \App\Constants\SkillRole::getRole(optional($user->mainSkill)->slug) }}</td>
@@ -146,7 +146,7 @@
                             @if($user->subSkill)
                                 <img src="{{ asset('icon/skill/' . $user->subSkill->icon) }}" width="24" height="24"> {{ $user->subSkill->name }}
                             @else
-                                N/A
+                                {{ __('messages.not_available') }}
                             @endif
                         </td>
                         <td>
@@ -166,11 +166,11 @@
                                 :inner-ways='@json($innerWaysData)'
                             ></inner-ways-cell>
                         </td>
-                        <td>{{ $user->pivot->preferred_time ?? 'N/A' }}</td>
+                        <td>{{ $user->pivot->preferred_time ?? __('messages.not_available') }}</td>
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="7" class="text-center">No participants found matching your criteria.</td>
+                        <td colspan="7" class="text-center">{{ __('messages.no_participants_found') }}</td>
                     </tr>
                     @endforelse
                 </tbody>

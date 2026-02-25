@@ -1,11 +1,11 @@
 @extends('layouts.admin')
 
-@section('title', 'Create Event')
+@section('title', __('messages.create_event_title'))
 
 @section('content')
 <div class="card card-primary">
     <div class="card-header">
-        <h3 class="card-title">Create New Event</h3>
+        <h3 class="card-title">{{ __('messages.create_event_header') }}</h3>
     </div>
 
     <create-event-form

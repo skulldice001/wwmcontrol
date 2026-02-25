@@ -107,7 +107,8 @@ async function addTeam() {
         teams.push({
             id: id,
             name: name,
-            captainId: null
+            captainId: null,
+            description: ''
         });
         savePositions(); // Save structure
         renderMemberList();
@@ -157,6 +158,27 @@ async function renameTeam(teamId) {
             saveTeamNames();
             renderMemberList();
         }
+    }
+}
+
+// Edit team mission/description
+async function editTeamDescription(teamId) {
+    const team = teams.find(t => t.id === teamId);
+    if (!team) {
+        return;
+    }
+
+    const currentDescription = team.description || '';
+    const newDescription = await showPrompt(
+        'Team Mission',
+        `Enter mission/role description for team "${team.name}":`,
+        currentDescription
+    );
+
+    if (newDescription !== null) {
+        team.description = newDescription;
+        savePositions();
+        renderMemberList();
     }
 }
 
@@ -462,15 +484,23 @@ function renderGroupedView() {
         headerDiv.draggable = true;
         headerDiv.dataset.teamId = teamId;
         const displayName = getTeamDisplayName(teamId);
+        const teamObj = teams.find(t => t.id === teamId) || {};
+        const description = teamObj.description || '';
 
         headerDiv.innerHTML = `
-            <span class="team-name-wrapper">
-                <span class="toggle-icon">▼</span>
-                <span class="team-name">${displayName}</span>
-                <button class="rename-team-btn" onclick="event.stopPropagation(); renameTeam('${teamId}')" title="Rename team">✏️</button>
-                <button class="delete-team-btn" onclick="event.stopPropagation(); deleteTeam('${teamId}')" title="Delete team">×</button>
-            </span>
-            <span class="team-count">${teamMembers.length}</span>
+            <div class="team-header-main">
+                <span class="team-name-wrapper">
+                    <span class="toggle-icon">▼</span>
+                    <span class="team-name">${displayName}</span>
+                    <button class="rename-team-btn" onclick="event.stopPropagation(); renameTeam('${teamId}')" title="Rename team">✏️</button>
+                    <button class="delete-team-btn" onclick="event.stopPropagation(); deleteTeam('${teamId}')" title="Delete team">×</button>
+                </span>
+                <span class="team-count">${teamMembers.length}</span>
+            </div>
+            <div class="team-description ${description ? '' : 'team-description-empty'}"
+                 onclick="event.stopPropagation(); editTeamDescription('${teamId}')">
+                ${description || 'Add mission/role description for this team'}
+            </div>
         `;
         headerDiv.addEventListener('click', (e) => {
             if (e.target === headerDiv || e.target.closest('.toggle-icon') || e.target.closest('.team-name')) {
@@ -3872,12 +3902,12 @@ function loadSavedPositions(externalData = null) {
                      // If teams is empty (which is now default), we need to recreate the default teams if we are loading legacy data
                      if (teams.length === 0) {
                          teams = [
-                            { id: 'Team 1', name: 'Team 1', captainId: null },
-                            { id: 'Team 2', name: 'Team 2', captainId: null },
-                            { id: 'Team 3', name: 'Team 3', captainId: null },
-                            { id: 'Team 4', name: 'Team 4', captainId: null },
-                            { id: 'Team 5', name: 'Team 5', captainId: null },
-                            { id: 'Team 6', name: 'Team 6', captainId: null }
+                            { id: 'Team 1', name: 'Team 1', captainId: null, description: '' },
+                            { id: 'Team 2', name: 'Team 2', captainId: null, description: '' },
+                            { id: 'Team 3', name: 'Team 3', captainId: null, description: '' },
+                            { id: 'Team 4', name: 'Team 4', captainId: null, description: '' },
+                            { id: 'Team 5', name: 'Team 5', captainId: null, description: '' },
+                            { id: 'Team 6', name: 'Team 6', captainId: null, description: '' }
                         ];
                      }
 
@@ -4091,12 +4121,19 @@ function openPlayerEditModal(playerId = null) {
 
     // Populate team dropdown dynamically with current team names (including renamed ones)
     editPlayerTeam.innerHTML = '';
-    TEAM_ORDER.forEach(teamName => {
+    if (teams.length > 0) {
+        teams.forEach(team => {
+            const option = document.createElement('option');
+            option.value = team.id;
+            option.textContent = getTeamDisplayName(team.id);
+            editPlayerTeam.appendChild(option);
+        });
+    } else {
         const option = document.createElement('option');
-        option.value = teamName;
-        option.textContent = getTeamDisplayName(teamName);
+        option.value = '';
+        option.textContent = 'Unassigned';
         editPlayerTeam.appendChild(option);
-    });
+    }
 
     if (playerId) {
         // Edit existing player
@@ -4116,7 +4153,7 @@ function openPlayerEditModal(playerId = null) {
         editPlayerId.value = '';
         editPlayerName.value = '';
         editPlayerRole.value = 'DPS';
-        editPlayerTeam.value = 'Team 1';
+        editPlayerTeam.value = teams.length > 0 ? teams[0].id : '';
         editPlayerWeapon1.value = 'Nameless Sword';
         editPlayerWeapon2.value = 'Nameless Spear';
     }

@@ -9,33 +9,32 @@
 
 @section('content')
 <div class="guild-war-app">
-    <!-- Custom Header within the app area -->
     <div class="app-header d-flex justify-content-between align-items-center mb-3 p-3 bg-white shadow-sm rounded">
         <div>
-            <h1 class="h4 mb-0 font-weight-bold" style="color: #4a5568;">Where Winds Meet - Guild War Strategy</h1>
-            <small class="text-muted">Guild vs Guild Battle Map (Max 30 Players)</small>
+            <h1 class="h4 mb-0 font-weight-bold" style="color: #4a5568;">{{ __('messages.guild_war_strategy_title') }}</h1>
+            <small class="text-muted">{{ __('messages.guild_war_strategy_subtitle') }}</small>
         </div>
         <div class="header-controls d-flex align-items-center">
             <div class="mr-3 d-flex align-items-center">
-                <input type="text" id="formationNameInput" class="form-control form-control-sm mr-2" placeholder="Formation Name" title="Name this formation strategy">
-                <select id="loadFormationSelect" class="form-control form-control-sm" style="width: 200px;" title="Load from previous event">
-                    <option value="">-- Load Previous --</option>
+                <input type="text" id="formationNameInput" class="form-control form-control-sm mr-2" placeholder="{{ __('messages.formation_name_placeholder') }}" title="{{ __('messages.formation_name_tooltip') }}">
+                <select id="loadFormationSelect" class="form-control form-control-sm" style="width: 200px;" title="{{ __('messages.load_formation_tooltip') }}">
+                    <option value="">{{ __('messages.load_formation_placeholder') }}</option>
                 </select>
             </div>
             <button id="saveFormationBtn" class="btn btn-sm btn-success mr-2">
-                <i class="fas fa-save"></i> Save
+                <i class="fas fa-save"></i> {{ __('messages.save') }}
             </button>
             <a href="{{ route('admin.events.index') }}" class="btn btn-sm btn-outline-secondary mr-2">
-                <i class="fas fa-arrow-left"></i> Back
+                <i class="fas fa-arrow-left"></i> {{ __('messages.back_to_events') }}
             </a>
             <div class="menu-dropdown position-relative">
                 <button id="menuBtn" class="btn btn-outline-primary btn-sm rounded-circle" style="width: 32px; height: 32px; padding: 0;"><i class="fas fa-bars"></i></button>
                 <div id="menuContent" class="menu-content position-absolute bg-white shadow rounded p-2 mt-1" style="display: none; right: 0; min-width: 200px; z-index: 1000;">
                     <button id="themeToggleBtn" class="btn btn-block btn-sm btn-light text-left mb-1">
-                        <i class="fas fa-adjust"></i> Toggle Theme
+                        <i class="fas fa-adjust"></i> {{ __('messages.toggle_theme') }}
                     </button>
                     <button id="hotKeyBtn" class="btn btn-block btn-sm btn-light text-left">
-                        <i class="fas fa-keyboard"></i> Keyboard Shortcuts
+                        <i class="fas fa-keyboard"></i> {{ __('messages.keyboard_shortcuts') }}
                     </button>
                 </div>
             </div>
@@ -46,32 +45,32 @@
         <!-- Member Panel -->
         <div class="member-panel">
             <h2>
-                Guild Members <span id="playerCount" class="badge badge-light ml-2" style="font-size: 0.8rem;">0/30</span>
+                {{ __('messages.guild_members') }} <span id="playerCount" class="badge badge-light ml-2" style="font-size: 0.8rem;">0/30</span>
                 <button id="managePlayersBtn" class="btn btn-sm btn-outline-primary" title="Xếp Team">
-                    Xếp Team
+                    {{ __('messages.assign_team') }}
                 </button>
             </h2>
 
             <div class="enemy-section mb-3">
                 <button id="addEnemiesBtn" class="add-enemies-btn">
-                    <i class="fas fa-swords"></i> Add 5 Enemies (<span id="enemyCount">0</span>/30)
+                    <i class="fas fa-swords"></i> {{ __('messages.add_enemies') }} (<span id="enemyCount">0</span>/30)
                 </button>
             </div>
 
             <div class="search-box">
-                <input type="text" id="searchInput" placeholder="Search players...">
+                <input type="text" id="searchInput" placeholder="{{ __('messages.search_players') }}">
             </div>
 
             <div class="view-toggle">
-                <button class="view-toggle-btn active" data-view="grouped">Grouped by Team</button>
-                <button class="view-toggle-btn" data-view="list">All Players</button>
+                <button class="view-toggle-btn active" data-view="grouped">{{ __('messages.view_grouped_by_team') }}</button>
+                <button class="view-toggle-btn" data-view="list">{{ __('messages.view_all_players') }}</button>
             </div>
 
             <div class="role-filters">
-                <button class="role-filter-btn active" data-role="all">All Roles</button>
-                <button class="role-filter-btn" data-role="Tank">Tank</button>
-                <button class="role-filter-btn" data-role="DPS">DPS</button>
-                <button class="role-filter-btn" data-role="Healer">Healer</button>
+                <button class="role-filter-btn active" data-role="all">{{ __('messages.all_roles') }}</button>
+                <button class="role-filter-btn" data-role="Tank">{{ __('messages.role_tank') }}</button>
+                <button class="role-filter-btn" data-role="DPS">{{ __('messages.role_dps') }}</button>
+                <button class="role-filter-btn" data-role="Healer">{{ __('messages.role_healer') }}</button>
             </div>
 
             <div id="memberList" class="member-list">
@@ -81,15 +80,15 @@
             <!-- Footer Stats/Export -->
             <div class="panel-footer mt-auto pt-3 border-top">
                 <div class="d-flex justify-content-between mb-2">
-                    <small>Placed: <span id="placedCount">0</span></small>
+                    <small>{{ __('messages.placed_label') }} <span id="placedCount">0</span></small>
                 </div>
                 <div class="d-flex gap-2">
-                     <button id="exportBtn" class="btn btn-primary btn-sm flex-fill mr-1"><i class="fas fa-file-export"></i> Export</button>
-                     <button id="importBtn" class="btn btn-info btn-sm flex-fill ml-1"><i class="fas fa-file-import"></i> Import</button>
+                     <button id="exportBtn" class="btn btn-primary btn-sm flex-fill mr-1"><i class="fas fa-file-export"></i> {{ __('messages.export') }}</button>
+                     <button id="importBtn" class="btn btn-info btn-sm flex-fill ml-1"><i class="fas fa-file-import"></i> {{ __('messages.import') }}</button>
                      <input type="file" id="importFileInput" style="display:none">
                 </div>
                 <div class="mt-2">
-                    <button id="saveFormationBtnBottom" class="btn btn-success btn-sm btn-block"><i class="fas fa-save"></i> Save Formation</button>
+                    <button id="saveFormationBtnBottom" class="btn btn-success btn-sm btn-block"><i class="fas fa-save"></i> {{ __('messages.save_formation') }}</button>
                 </div>
             </div>
         </div>
@@ -102,38 +101,38 @@
 
             <!-- Bottom Toolbar -->
             <div class="map-toolbar mt-3">
-                <button id="addObjectiveBtn" class="toolbar-btn" title="Objective" draggable="true" data-type="objective"><i class="fas fa-bullseye" style="color: #e74c3c;"></i></button>
+                <button id="addObjectiveBtn" class="toolbar-btn" title="{{ __('messages.objective') }}" draggable="true" data-type="objective"><i class="fas fa-bullseye" style="color: #e74c3c;"></i></button>
                 <div class="toolbar-divider"></div>
 
-                <button id="addBossBtn" class="toolbar-btn" title="Boss" draggable="true" data-type="boss"><img src="{{ asset('assets/guild_war/images/boss.png') }}" alt="Boss" class="btn-icon-img"></button>
+                <button id="addBossBtn" class="toolbar-btn" title="{{ __('messages.boss') }}" draggable="true" data-type="boss"><img src="{{ asset('assets/guild_war/images/boss.png') }}" alt="{{ __('messages.boss') }}" class="btn-icon-img"></button>
                 <div class="toolbar-divider"></div>
 
-                <button id="addBlueTowerBtn" class="toolbar-btn" title="Blue Tower" draggable="true" data-type="blue-tower"><img src="{{ asset('assets/guild_war/images/tower_blue.png') }}" alt="Blue Tower" class="btn-icon-img"></button>
-                <button id="addRedTowerBtn" class="toolbar-btn" title="Red Tower" draggable="true" data-type="red-tower"><img src="{{ asset('assets/guild_war/images/tower_red.png') }}" alt="Red Tower" class="btn-icon-img"></button>
+                <button id="addBlueTowerBtn" class="toolbar-btn" title="{{ __('messages.blue_tower') }}" draggable="true" data-type="blue-tower"><img src="{{ asset('assets/guild_war/images/tower_blue.png') }}" alt="{{ __('messages.blue_tower') }}" class="btn-icon-img"></button>
+                <button id="addRedTowerBtn" class="toolbar-btn" title="{{ __('messages.red_tower') }}" draggable="true" data-type="red-tower"><img src="{{ asset('assets/guild_war/images/tower_red.png') }}" alt="{{ __('messages.red_tower') }}" class="btn-icon-img"></button>
 
-                <button id="addBlueTreeBtn" class="toolbar-btn" title="Blue Tree" draggable="true" data-type="blue-tree"><img src="{{ asset('assets/guild_war/images/tree_blue.png') }}" alt="Blue Tree" class="btn-icon-img"></button>
-                <button id="addRedTreeBtn" class="toolbar-btn" title="Red Tree" draggable="true" data-type="red-tree"><img src="{{ asset('assets/guild_war/images/tree_red.png') }}" alt="Red Tree" class="btn-icon-img"></button>
+                <button id="addBlueTreeBtn" class="toolbar-btn" title="{{ __('messages.blue_tree') }}" draggable="true" data-type="blue-tree"><img src="{{ asset('assets/guild_war/images/tree_blue.png') }}" alt="{{ __('messages.blue_tree') }}" class="btn-icon-img"></button>
+                <button id="addRedTreeBtn" class="toolbar-btn" title="{{ __('messages.red_tree') }}" draggable="true" data-type="red-tree"><img src="{{ asset('assets/guild_war/images/tree_red.png') }}" alt="{{ __('messages.red_tree') }}" class="btn-icon-img"></button>
 
-                <button id="addBlueGooseBtn" class="toolbar-btn" title="Blue Goose" draggable="true" data-type="blue-goose"><img src="{{ asset('assets/guild_war/images/goose_blue.png') }}" alt="Blue Goose" class="btn-icon-img"></button>
-                <button id="addRedGooseBtn" class="toolbar-btn" title="Red Goose" draggable="true" data-type="red-goose"><img src="{{ asset('assets/guild_war/images/goose_red.png') }}" alt="Red Goose" class="btn-icon-img"></button>
+                <button id="addBlueGooseBtn" class="toolbar-btn" title="{{ __('messages.blue_goose') }}" draggable="true" data-type="blue-goose"><img src="{{ asset('assets/guild_war/images/goose_blue.png') }}" alt="{{ __('messages.blue_goose') }}" class="btn-icon-img"></button>
+                <button id="addRedGooseBtn" class="toolbar-btn" title="{{ __('messages.red_goose') }}" draggable="true" data-type="red-goose"><img src="{{ asset('assets/guild_war/images/goose_red.png') }}" alt="{{ __('messages.red_goose') }}" class="btn-icon-img"></button>
 
                 <div class="toolbar-divider"></div>
 
                 <!-- Drawing Tools -->
-                <button id="drawBtn" class="toolbar-btn" title="Draw"><i class="fas fa-pencil-alt"></i></button>
+                <button id="drawBtn" class="toolbar-btn" title="{{ __('messages.draw') }}"><i class="fas fa-pencil-alt"></i></button>
                 <input type="color" id="drawColorPicker" value="#ff0000" style="width: 30px; height: 30px; border: none; background: none; padding: 0;">
-                <button id="undoDrawBtn" class="toolbar-btn" title="Undo"><i class="fas fa-undo"></i></button>
-                <button id="redoDrawBtn" class="toolbar-btn" title="Redo"><i class="fas fa-redo"></i></button>
-                <button id="clearDrawBtn" class="toolbar-btn" title="Clear Drawings"><i class="fas fa-eraser"></i></button>
+                <button id="undoDrawBtn" class="toolbar-btn" title="{{ __('messages.undo') }}"><i class="fas fa-undo"></i></button>
+                <button id="redoDrawBtn" class="toolbar-btn" title="{{ __('messages.redo') }}"><i class="fas fa-redo"></i></button>
+                <button id="clearDrawBtn" class="toolbar-btn" title="{{ __('messages.clear_drawings') }}"><i class="fas fa-eraser"></i></button>
 
                 <div class="ml-2 d-flex align-items-center">
                     <div class="custom-control custom-switch">
                         <input type="checkbox" class="custom-control-input" id="autoDeleteToggle">
-                        <label class="custom-control-label small" for="autoDeleteToggle">Auto-delete</label>
+                        <label class="custom-control-label small" for="autoDeleteToggle">{{ __('messages.auto_delete') }}</label>
                     </div>
                 </div>
 
-                <button id="clearMapBtn" class="toolbar-btn ml-auto text-danger" title="Clear Map"><i class="fas fa-times"></i></button>
+                <button id="clearMapBtn" class="toolbar-btn ml-auto text-danger" title="{{ __('messages.clear_map') }}"><i class="fas fa-times"></i></button>
             </div>
         </div>
     </div>
@@ -142,23 +141,23 @@
     <!-- Modals -->
     <div id="confirmModal" class="modal">
         <div class="modal-content">
-            <h3 id="confirmModalTitle">Confirm</h3>
-            <p id="confirmModalMessage">Are you sure?</p>
+            <h3 id="confirmModalTitle">{{ __('messages.confirm_title') }}</h3>
+            <p id="confirmModalMessage">{{ __('messages.are_you_sure') }}</p>
             <div class="modal-actions text-right">
-                <button id="confirmCancelBtn" class="btn btn-secondary">Cancel</button>
-                <button id="confirmOkBtn" class="btn btn-primary">OK</button>
+                <button id="confirmCancelBtn" class="btn btn-secondary">{{ __('messages.cancel') }}</button>
+                <button id="confirmOkBtn" class="btn btn-primary">{{ __('messages.ok') }}</button>
             </div>
         </div>
     </div>
 
     <div id="promptModal" class="modal">
         <div class="modal-content">
-            <h3 id="promptModalTitle">Prompt</h3>
-            <p id="promptModalMessage">Enter value:</p>
+            <h3 id="promptModalTitle">{{ __('messages.prompt_title') }}</h3>
+            <p id="promptModalMessage">{{ __('messages.prompt_message_default') }}</p>
             <input type="text" id="promptModalInput" class="form-control mb-3">
             <div class="modal-actions text-right">
-                <button id="promptCancelBtn" class="btn btn-secondary">Cancel</button>
-                <button id="promptOkBtn" class="btn btn-primary">OK</button>
+                <button id="promptCancelBtn" class="btn btn-secondary">{{ __('messages.cancel') }}</button>
+                <button id="promptOkBtn" class="btn btn-primary">{{ __('messages.ok') }}</button>
             </div>
         </div>
     </div>
@@ -166,7 +165,7 @@
     <div id="playerManagementModal" class="modal">
         <div class="modal-content" style="width: 600px;">
             <div class="modal-header">
-                <h3>Xếp Team</h3>
+                <h3>{{ __('messages.player_management_title') }}</h3>
                 <button id="closeModalBtn" class="close">&times;</button>
             </div>
             <div class="modal-body">
@@ -179,14 +178,14 @@
 
     <div id="playerEditModal" class="modal">
         <div class="modal-content">
-            <h3>Edit Player</h3>
+            <h3>{{ __('messages.edit_player_title') }}</h3>
             <form id="playerEditForm">
                 <div class="form-group">
-                    <label>Name</label>
+                    <label>{{ __('messages.name') }}</label>
                     <input type="text" id="editPlayerName" class="form-control" required>
                 </div>
                 <div class="form-group">
-                    <label>Role</label>
+                    <label>{{ __('messages.role') }}</label>
                     <select id="editPlayerRole" class="form-control">
                         @foreach($skills as $skill)
                         <option value="{{ $skill->name }}">{{ $skill->name }}</option>
@@ -195,8 +194,8 @@
                 </div>
                 <!-- Add Team if needed -->
                 <div class="form-group text-right">
-                    <button type="button" id="cancelEditBtn" class="btn btn-secondary">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Save</button>
+                    <button type="button" id="cancelEditBtn" class="btn btn-secondary">{{ __('messages.cancel') }}</button>
+                    <button type="submit" class="btn btn-primary">{{ __('messages.save') }}</button>
                 </div>
             </form>
             <button id="closeEditModalBtn" class="close" style="position:absolute; top:10px; right:10px;">&times;</button>
@@ -205,15 +204,14 @@
 
     <div id="hotkeyHelpModal" class="modal">
         <div class="modal-content">
-            <h3>Keyboard Shortcuts</h3>
+            <h3>{{ __('messages.hotkey_title') }}</h3>
             <button id="closeHotkeyModalBtn" class="close">&times;</button>
             <ul>
-                <li><strong>Shift + ?</strong>: Show this help</li>
-                <li><strong>Esc</strong>: Cancel tool</li>
-                <li><strong>Ctrl + Z</strong>: Undo drawing</li>
-                <li><strong>Ctrl + Y</strong>: Redo drawing</li>
-                <li><strong>D</strong>: Toggle Drawing</li>
-                <!-- Add more as per app.js -->
+                <li>{{ __('messages.shortcut_show_help') }}</li>
+                <li>{{ __('messages.shortcut_esc_cancel_tool') }}</li>
+                <li>{{ __('messages.shortcut_undo_drawing') }}</li>
+                <li>{{ __('messages.shortcut_redo_drawing') }}</li>
+                <li>{{ __('messages.shortcut_toggle_drawing') }}</li>
             </ul>
         </div>
     </div>
