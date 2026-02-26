@@ -206,6 +206,22 @@ class UserEventController extends Controller
         $userPosition['weapon1'] = $user->mainSkill->name ?? '';
         $userPosition['weapon2'] = $user->subSkill->name ?? '';
 
-        return view('events.map', compact('event', 'userPosition', 'staticMarkers', 'teamInfo'));
+        // Filter drawings for this user
+        $allDrawings = $formation['drawings'] ?? [];
+        $userDrawings = [];
+        if (!empty($allDrawings)) {
+            foreach ($allDrawings as $drawing) {
+                // If drawing has memberId, only show if it matches user
+                if (isset($drawing['memberId'])) {
+                    if ($drawing['memberId'] == $userId) {
+                        $userDrawings[] = $drawing;
+                    }
+                }
+                // Optional: Include global drawings (no memberId)?
+                // For now, let's stick to user-specific as requested "chỉ hiển thị đường đã được vẽ" for the user
+            }
+        }
+
+        return view('events.map', compact('event', 'userPosition', 'staticMarkers', 'teamInfo', 'userDrawings'));
     }
 }

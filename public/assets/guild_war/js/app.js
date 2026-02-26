@@ -3854,7 +3854,9 @@ function getFormationData() {
                 acc[m.id] = m.team;
                 return acc;
             }, {})
-        }
+        },
+        // Add drawings
+        drawings: window.drawingPaths || []
     };
 }
 
@@ -4117,6 +4119,14 @@ function loadSavedPositions(externalData = null) {
                     data.enemies.forEach(enemy => {
                         placeEnemyGroup(enemy.x, enemy.y);
                     });
+                }
+
+                // Load drawings
+                if (data.drawings && Array.isArray(data.drawings)) {
+                    window.drawingPaths = data.drawings;
+                    if (window.redrawAllPaths) {
+                        window.redrawAllPaths();
+                    }
                 }
             }
 
