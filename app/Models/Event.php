@@ -11,6 +11,7 @@ class Event extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
+        'discord_id',
         'title',
         'description',
         'type',

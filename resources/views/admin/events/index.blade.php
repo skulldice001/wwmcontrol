@@ -22,19 +22,18 @@
         <table class="table table-bordered table-striped">
             <thead>
                 <tr>
-                    <th>{{ __('messages.event_id') }}</th>
                     <th>{{ __('messages.event_title') }}</th>
                     <th>{{ __('messages.event_type') }}</th>
                     <th>{{ __('messages.event_status') }}</th>
                     <th>{{ __('messages.event_start_time') }}</th>
                     <th>{{ __('messages.event_created_by') }}</th>
+                    <th>{{ __('messages.participants_count') }}</th>
                     <th>{{ __('messages.actions') }}</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach($events as $event)
                 <tr>
-                    <td>{{ $event->id }}</td>
                     <td>{{ $event->title }}</td>
                     <td>
                         <span class="badge badge-{{ $event->type == 'guild_war' ? 'danger' : 'success' }}">
@@ -68,6 +67,7 @@
                         </small>
                     </td>
                     <td>{{ $event->creator ? $event->creator->name : __('messages.not_available') }}</td>
+                    <td>{{ $event->participants_count }}</td>
                     <td>
                         <a href="{{ route('admin.events.participants', $event->id) }}" class="btn btn-primary btn-sm mr-1">
                             <i class="fas fa-users"></i> {{ __('messages.participants') ?? 'Participants' }}

@@ -16,7 +16,7 @@ class EventController extends Controller
 {
     public function index()
     {
-        $events = Event::with(['creator'])->get();
+        $events = Event::with(['creator'])->withCount('participants')->get();
         return view('admin.events.index', compact('events'));
     }
 
@@ -90,6 +90,7 @@ class EventController extends Controller
         $participants = $participantsRaw->map(function ($user) {
             return [
                 'id' => $user->id,
+                'discord_id' => $user->discord_id,
                 'name' => $user->ingame_name ?? $user->name,
                 'role' => SkillRole::getRole($user->mainSkill->slug ?? null),
                 'team' => 'Unassigned', // Default team
@@ -128,6 +129,7 @@ class EventController extends Controller
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
+            'discord_id' => ['nullable', 'string'],
             'type' => ['required', Rule::in(['casual', 'guild_war'])],
             'rules' => ['nullable', 'string'],
             'rewards' => ['nullable', 'string'],
@@ -216,6 +218,7 @@ class EventController extends Controller
         $validated = $request->validate([
             'title' => ['string', 'max:255'],
             'description' => ['nullable', 'string'],
+            'discord_id' => ['nullable', 'string'],
             'type' => [Rule::in(['casual', 'guild_war'])],
             'rules' => ['nullable', 'string'],
             'rewards' => ['nullable', 'string'],

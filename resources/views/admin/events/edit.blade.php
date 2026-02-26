@@ -12,6 +12,10 @@
         @method('PUT')
         <div class="card-body">
             <div class="form-group">
+                <label>{{ __('messages.discord_id') }}</label>
+                <input type="text" name="discord_id" class="form-control" value="{{ old('discord_id', $event->discord_id) }}" placeholder="Discord Message ID">
+            </div>
+            <div class="form-group">
                 <label>{{ __('messages.event_field_title') }}</label>
                 <input type="text" name="title" class="form-control @error('title') is-invalid @enderror" value="{{ old('title', $event->title) }}" placeholder="{{ __('messages.event_placeholder_title') }}">
                 @error('title') <span class="error invalid-feedback">{{ $message }}</span> @enderror
