@@ -134,7 +134,7 @@
 @endsection
 
 @push('scripts')
-<script>
+<script type="module">
     $(function () {
         var table = $('#users-table').DataTable({
             "paging": true,
