@@ -3,8 +3,8 @@
 @section('title', __('messages.sort_formation') . ' - ' . $event->name)
 
 @push('styles')
-<link rel="stylesheet" href="{{ asset('assets/guild_war/css/style.css') }}">
-<link rel="stylesheet" href="{{ asset('assets/guild_war/css/formation.css') }}">
+<link rel="stylesheet" href="{{ asset('assets/guild_war/css/style.css') }}?v={{ time() }}">
+<link rel="stylesheet" href="{{ asset('assets/guild_war/css/formation.css') }}?v={{ time() }}">
 <link rel="stylesheet" href="{{ asset('assets/leaflet/leaflet.css') }}">
 @endpush
 
