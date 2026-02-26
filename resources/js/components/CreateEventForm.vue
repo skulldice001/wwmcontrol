@@ -1,13 +1,20 @@
 <template>
   <form :action="routeStore" method="POST">
     <input type="hidden" name="_token" :value="csrfToken">
-    
+
     <div class="card-body">
         <div class="form-group">
+            <label>Discord ID</label>
+            <input type="text" name="discord_id" class="form-control"
+                   v-model="form.discord_id"
+                   placeholder="Enter Discord Message ID">
+        </div>
+
+        <div class="form-group">
             <label>Title</label>
-            <input type="text" name="title" class="form-control" 
-                   :class="{'is-invalid': errors.title}" 
-                   v-model="form.title" 
+            <input type="text" name="title" class="form-control"
+                   :class="{'is-invalid': errors.title}"
+                   v-model="form.title"
                    :readonly="isGuildWar"
                    placeholder="Enter event title">
             <span v-if="errors.title" class="error invalid-feedback">{{ errors.title }}</span>
@@ -20,9 +27,9 @@
 
         <div class="form-group">
             <label>Type</label>
-            <select name="type" class="form-control" 
-                    :class="{'is-invalid': errors.type}" 
-                    v-model="form.type" 
+            <select name="type" class="form-control"
+                    :class="{'is-invalid': errors.type}"
+                    v-model="form.type"
                     :disabled="initialType !== ''"
                     @change="handleTypeChange"
                     :style="initialType !== '' ? 'pointer-events:none;background-color:#e9ecef;' : ''">
@@ -36,8 +43,8 @@
 
         <div class="form-group">
             <label>Start Time</label>
-            <input type="datetime-local" name="start_time" class="form-control" 
-                   :class="{'is-invalid': errors.start_time}" 
+            <input type="datetime-local" name="start_time" class="form-control"
+                   :class="{'is-invalid': errors.start_time}"
                    v-model="form.start_time"
                    :readonly="isGuildWar">
             <span v-if="errors.start_time" class="error invalid-feedback">{{ errors.start_time }}</span>
@@ -45,8 +52,8 @@
 
         <div class="form-group">
             <label>End Time</label>
-            <input type="datetime-local" name="end_time" class="form-control" 
-                   :class="{'is-invalid': errors.end_time}" 
+            <input type="datetime-local" name="end_time" class="form-control"
+                   :class="{'is-invalid': errors.end_time}"
                    v-model="form.end_time"
                    :readonly="isGuildWar">
             <span v-if="errors.end_time" class="error invalid-feedback">{{ errors.end_time }}</span>
@@ -98,6 +105,7 @@ export default {
     },
     setup(props) {
         const form = ref({
+            discord_id: props.oldInput.discord_id || '',
             title: props.oldInput.title || '',
             description: props.oldInput.description || '',
             type: props.initialType || props.oldInput.type || 'casual',
@@ -112,7 +120,7 @@ export default {
         const calculateGuildWarTimes = () => {
             const now = new Date();
             let nextSat = new Date();
-            
+
             const day = now.getDay();
             const hour = now.getHours();
             const minute = now.getMinutes();
@@ -127,7 +135,7 @@ export default {
             } else {
                 addDays = (6 - day + 7) % 7;
             }
-            
+
             nextSat.setDate(now.getDate() + addDays);
 
             const startTime = new Date(nextSat);
@@ -149,14 +157,14 @@ export default {
             const sunDate = endTime.getDate();
             const month = startTime.getMonth() + 1;
             const endMonth = endTime.getMonth() + 1;
-            
+
             let title = '';
             if (month !== endMonth) {
                  title = `Guild war ngày ${satDate}/${month} - ${sunDate}/${endMonth}`;
             } else {
                  title = `Guild war ngày ${satDate} - ${sunDate} tháng ${month}`;
             }
-            
+
             form.value.title = title;
         };
 

@@ -98,6 +98,7 @@ return [
     'dashboard_view_members' => 'View members',
     'dashboard_running_events' => 'Running / Upcoming Events',
     'dashboard_completed_events' => 'Completed Events',
+    'participants_count' => 'Participants Count',
     'account_not_found' => 'Account not found',
     'password_incorrect' => 'Incorrect password',
     'dashboard_view_events' => 'View events',
