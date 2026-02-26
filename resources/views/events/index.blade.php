@@ -180,8 +180,8 @@
 @endsection
 
 @push('scripts')
-<script>
-    function showTeamMission(description) {
+<script type="module">
+    window.showTeamMission = function(description) {
         var message = description;
         if (!message) {
             message = @json(__('messages.no_team_mission'));
