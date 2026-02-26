@@ -28,7 +28,7 @@ class DiscordController extends Controller
                 'exception' => $e,
                 'trace' => $e->getTraceAsString()
             ]);
-            return redirect()->route('home')->with('error', 'Failed to connect to Discord.');
+            return redirect()->route('home')->with('error', 'Kết nối Discord thất bại: ' . $e->getMessage());
         }
     }
 
