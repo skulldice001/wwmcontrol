@@ -139,7 +139,8 @@ function setupLeafletEvents() {
                 points: [...leafletDrawingPoints],
                 timestamp: Date.now(),
                 color: drawingColor || '#ff0000',
-                width: 3
+                width: 3,
+                memberId: window.selectedMemberId
             };
 
             drawingPaths.push(pathData);
@@ -482,6 +483,12 @@ function overrideAppFunctions() {
                 map.getContainer().style.cursor = '';
             }
         } else {
+            // Check if member is selected
+            if (!window.selectedMemberId) {
+                alert('Vui lòng chọn thành viên cần vẽ đường!');
+                return;
+            }
+
             if (window.polyLineDrawingMode) window.togglePolyLineDrawingMode();
             drawingMode = true;
             placingMode = null;
@@ -551,22 +558,39 @@ function overrideAppFunctions() {
 
     window.clearAllDrawings = async function() {
         if (drawingPaths.length === 0) return;
-        const confirmed = await showConfirm('Clear All Drawings', 'Are you sure you want to clear all drawings?');
+
+        let message = 'Are you sure you want to clear all drawings?';
+        let targetMemberId = null;
+
+        if (window.selectedMemberId) {
+             const memberDrawings = drawingPaths.filter(p => p.memberId === window.selectedMemberId);
+             if (memberDrawings.length === 0) {
+                 alert('No drawings for selected member.');
+                 return;
+             }
+             message = 'Clear drawings for selected member?';
+             targetMemberId = window.selectedMemberId;
+        }
+
+        const confirmed = await showConfirm('Clear Drawings', message);
         if (confirmed) {
             if (!autoDeleteDrawings && drawingPaths.length > 0) {
-                const stateCopy = drawingPaths.map(path => ({
-                    points: [...path.points],
-                    timestamp: path.timestamp,
-                    color: path.color,
-                    width: path.width
-                }));
+                // Deep copy
+                const stateCopy = JSON.parse(JSON.stringify(drawingPaths));
                 drawingHistory.push(stateCopy);
             }
-            drawingPaths = [];
-            drawingDeleteTimers.forEach(timer => clearTimeout(timer));
-            drawingDeleteTimers = [];
+
+            if (targetMemberId) {
+                drawingPaths = drawingPaths.filter(p => p.memberId !== targetMemberId);
+            } else {
+                drawingPaths = [];
+                drawingDeleteTimers.forEach(timer => clearTimeout(timer));
+                drawingDeleteTimers = [];
+            }
+
             window.redrawAllPaths();
             updateUndoRedoButtons();
+            if (window.savePositions) window.savePositions();
         }
     };
 
@@ -610,6 +634,41 @@ function overrideAppFunctions() {
             map.getContainer().style.cursor = 'crosshair';
 
             polyLinePoints = [];
+
+            // Initialize start point from user position or last path
+            let startPoint = null;
+
+            // 1. Check for existing paths for this member
+            const memberPaths = drawingPaths.filter(p => p.memberId === window.selectedMemberId);
+            if (memberPaths.length > 0) {
+                const lastPath = memberPaths[memberPaths.length - 1];
+                if (lastPath.points.length > 0) {
+                    startPoint = lastPath.points[lastPath.points.length - 1];
+                }
+            }
+
+            // 2. If no existing path, use member's current position
+            if (!startPoint) {
+                // Find marker for selected member
+                const markerId = `member-${window.selectedMemberId}`;
+                const marker = leafletMarkers[markerId];
+                if (marker) {
+                    const latlng = marker.getLatLng();
+                    startPoint = latLngToStore(latlng);
+                } else if (window.placedMembers) {
+                    // Fallback to data array if marker not found
+                    const member = window.placedMembers.find(m => m.memberId === window.selectedMemberId);
+                    if (member) {
+                        startPoint = { x: member.x, y: member.y };
+                    }
+                }
+            }
+
+            if (startPoint) {
+                polyLinePoints.push(startPoint);
+                // Note: We don't create polyLineLayer yet because a single point isn't visible.
+                // onPolyLineMove will use this point to draw the elastic line immediately.
+            }
 
             map.on('click', onPolyLineClick);
             map.on('mousemove', onPolyLineMove);
@@ -671,14 +730,8 @@ function overrideAppFunctions() {
             drawingPaths.push(pathData);
 
             if (!autoDeleteDrawings) {
-                const stateCopy = drawingPaths.map(path => ({
-                    points: [...path.points],
-                    timestamp: path.timestamp,
-                    color: path.color,
-                    width: path.width,
-                    type: path.type,
-                    memberId: path.memberId
-                }));
+                // Deep copy
+                const stateCopy = JSON.parse(JSON.stringify(drawingPaths));
                 drawingHistory.push(stateCopy);
                 drawingRedoStack = [];
                 updateUndoRedoButtons();
@@ -689,13 +742,24 @@ function overrideAppFunctions() {
             }
         }
 
-        // Reset current drawing but keep mode active? Or finish mode?
-        // Usually better to keep mode active for multiple paths.
-        // But need to clear current points.
+        // Reset current drawing but keep mode active?
+        // For connected drawing experience, we might want to start the next segment where this one ended.
+        // But the user requested "start from the last position of the path".
+        // If we clear polyLinePoints here, the next time user clicks (or moves?), what happens?
+
+        // If we keep the mode active, the user can draw another line.
+        // We need to re-initialize the start point for the NEXT line immediately if we want continuous drawing feel.
+
+        const lastPoint = polyLinePoints.length > 0 ? polyLinePoints[polyLinePoints.length - 1] : null;
 
         polyLinePoints = [];
         if (polyLineLayer) { map.removeLayer(polyLineLayer); polyLineLayer = null; }
         if (polyLineElastic) { map.removeLayer(polyLineElastic); polyLineElastic = null; }
+
+        // Re-initialize start point for next segment if we had a valid path
+        if (lastPoint) {
+            polyLinePoints.push(lastPoint);
+        }
 
         window.redrawAllPaths();
     }

@@ -193,7 +193,47 @@
         });
     }
 
-    // Render User Route
+    // Render User Drawings
+    const userDrawings = @json($userDrawings ?? []);
+    if (userDrawings && userDrawings.length > 0) {
+         userDrawings.forEach(pathData => {
+            const latlngs = pathData.points.map(p => storeToLatLng(p.x, p.y));
+            L.polyline(latlngs, {
+                color: pathData.color || '#ff0000',
+                weight: pathData.width || 3,
+                lineCap: 'round',
+                lineJoin: 'round'
+            }).addTo(map);
+
+            // Add arrow head if type is arrow
+            if (pathData.type === 'arrow' && latlngs.length > 1) {
+                const last = latlngs[latlngs.length - 1];
+                const prev = latlngs[latlngs.length - 2];
+                // latlngs are arrays [lat, lng]
+                const dy = last[0] - prev[0];
+                const dx = last[1] - prev[1];
+                const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+                const rotation = -angle;
+                const size = 16;
+                const color = pathData.color || '#ff0000';
+
+                const arrowIcon = L.divIcon({
+                    className: 'arrow-icon',
+                    html: `<div style="transform: rotate(${rotation}deg); transform-origin: center;">
+                        <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" style="display: block;">
+                            <path d="M2,2 L${size},${size/2} L2,${size-2} z" fill="${color}" />
+                        </svg>
+                    </div>`,
+                    iconSize: [size, size],
+                    iconAnchor: [size/2, size/2]
+                });
+
+                L.marker(last, {icon: arrowIcon, interactive: false}).addTo(map);
+            }
+         });
+    }
+
+    // Render User Route (Legacy?)
     if (userPosition && userPosition.route && userPosition.route.length > 1) {
         // Convert route points to LatLngs
         const routeLatLngs = userPosition.route.map(p => storeToLatLng(p.x, p.y));
