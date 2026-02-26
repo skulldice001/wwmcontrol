@@ -847,12 +847,12 @@ body.dark-theme .toggle-text {
 }
 
 .member-marker.role-Tank::before {
-    background: rgb(52, 152, 219);
+    background: rgb(139, 69, 19);
     border-color: rgba(255, 255, 255, 0.9);
 }
 
 .member-marker.role-DPS::before {
-    background: rgb(231, 76, 60);
+    background: rgb(30, 144, 255);
     border-color: rgba(255, 255, 255, 0.9);
 }
 
@@ -929,7 +929,15 @@ body.dark-theme .toggle-text {
     opacity: 0.9;
 }
 
-.member-marker .remove-btn {
+/* Unified Remove Button Style for all markers */
+.member-marker .remove-btn,
+.boss-marker .remove-btn,
+.objective-marker .remove-btn,
+.tower-marker .remove-btn,
+.tree-marker .remove-btn,
+.goose-marker .remove-btn,
+.group-marker .remove-btn,
+.enemy-group .remove-btn {
     position: absolute;
     top: -10px;
     right: -10px;
@@ -942,27 +950,22 @@ body.dark-theme .toggle-text {
     cursor: pointer;
     font-size: 14px;
     font-weight: 600;
-    display: none;
+    display: none !important; /* Hidden by default */
     align-items: center;
     justify-content: center;
     z-index: 1001;
     box-shadow: 0 2px 8px rgba(0,0,0,0.4);
 }
 
-.member-marker:hover .remove-btn {
-    display: flex;
-}
-
-.tower-marker .remove-btn,
-.tree-marker .remove-btn,
-.goose-marker .remove-btn {
-    display: none;
-}
-
+.member-marker:hover .remove-btn,
+.boss-marker:hover .remove-btn,
+.objective-marker:hover .remove-btn,
 .tower-marker:hover .remove-btn,
 .tree-marker:hover .remove-btn,
-.goose-marker:hover .remove-btn {
-    display: block;
+.goose-marker:hover .remove-btn,
+.group-marker:hover .remove-btn,
+.enemy-group:hover .remove-btn {
+    display: flex !important;
 }
 
 .member-marker.enemy {
@@ -1018,8 +1021,8 @@ body.dark-theme .toggle-text {
 
 .boss-marker {
     position: absolute;
-    width: 56px;
-    height: 56px;
+    width: 32px;
+    height: 32px;
     cursor: move;
     z-index: 100;
     transition: all 0.2s ease;
@@ -1028,4 +1031,17 @@ body.dark-theme .toggle-text {
 .boss-marker:hover {
     transform: scale(1.1);
     z-index: 200;
+}
+
+.boss-marker img,
+.tower-marker img,
+.tree-marker img,
+.goose-marker img {
+    width: 100%;
+    height: 100%;
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    display: block;
+    pointer-events: none;
 }

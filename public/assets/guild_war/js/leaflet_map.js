@@ -234,6 +234,123 @@ function createLeafletMarker(id, x, y, options) {
 // ============================================================================
 
 function overrideAppFunctions() {
+    // Marker undo/redo stacks
+    window.markerHistory = window.markerHistory || [];
+    window.markerRedoStack = window.markerRedoStack || [];
+
+    window.recordMarkerAction = function(entry) {
+        window.markerHistory.push(entry);
+        window.markerRedoStack = [];
+        updateUndoRedoButtons();
+    };
+
+    window.isUndoRedo = false;
+
+    function undoLastMarker() {
+        if (window.isUndoRedo) return;
+        const entry = window.markerHistory.pop();
+        if (!entry) return;
+
+        window.isUndoRedo = true;
+        try {
+            const { kind, action, id, x, y, extra } = entry;
+            if (action === 'place') {
+                if (kind === 'objective') window.removeObjectiveMarker(id);
+                else if (kind === 'boss') window.removeBossMarker(id);
+                else if (kind === 'blue-tower') window.removeBlueTowerMarker(id);
+                else if (kind === 'red-tower') window.removeRedTowerMarker(id);
+                else if (kind === 'blue-tree') window.removeBlueTreeMarker(id);
+                else if (kind === 'red-tree') window.removeRedTreeMarker(id);
+                else if (kind === 'blue-goose') window.removeBlueGooseMarker(id);
+                else if (kind === 'red-goose') window.removeRedGooseMarker(id);
+                else if (kind === 'enemy-group') window.removeEnemyGroup(id);
+                window.markerRedoStack.push({ kind, action: 'remove', id, x, y, extra });
+            } else if (action === 'remove') {
+                if (kind === 'objective') window.placeObjectiveMarker(x, y, id);
+                else if (kind === 'boss') window.placeBossMarker(x, y, id);
+                else if (kind === 'blue-tower') window.placeBlueTowerMarker(x, y, id);
+                else if (kind === 'red-tower') window.placeRedTowerMarker(x, y, id);
+                else if (kind === 'blue-tree') window.placeBlueTreeMarker(x, y, id);
+                else if (kind === 'red-tree') window.placeRedTreeMarker(x, y, id);
+                else if (kind === 'blue-goose') window.placeBlueGooseMarker(x, y, id);
+                else if (kind === 'red-goose') window.placeRedGooseMarker(x, y, id);
+                else if (kind === 'enemy-group') window.placeEnemyGroup(x, y, id);
+                window.markerRedoStack.push({ kind, action: 'place', id, x, y, extra });
+            }
+        } finally {
+            window.isUndoRedo = false;
+            updateUndoRedoButtons();
+        }
+    }
+
+    function redoLastMarker() {
+        if (window.isUndoRedo) return;
+        const entry = window.markerRedoStack.pop();
+        if (!entry) return;
+
+        window.isUndoRedo = true;
+        try {
+            const { kind, action, id, x, y, extra } = entry;
+            if (action === 'remove') {
+                if (kind === 'objective') window.removeObjectiveMarker(id);
+                else if (kind === 'boss') window.removeBossMarker(id);
+                else if (kind === 'blue-tower') window.removeBlueTowerMarker(id);
+                else if (kind === 'red-tower') window.removeRedTowerMarker(id);
+                else if (kind === 'blue-tree') window.removeBlueTreeMarker(id);
+                else if (kind === 'red-tree') window.removeRedTreeMarker(id);
+                else if (kind === 'blue-goose') window.removeBlueGooseMarker(id);
+                else if (kind === 'red-goose') window.removeRedGooseMarker(id);
+                else if (kind === 'enemy-group') window.removeEnemyGroup(id);
+                window.markerHistory.push({ kind, action: 'place', id, x, y, extra });
+            } else if (action === 'place') {
+                if (kind === 'objective') window.placeObjectiveMarker(x, y, id);
+                else if (kind === 'boss') window.placeBossMarker(x, y, id);
+                else if (kind === 'blue-tower') window.placeBlueTowerMarker(x, y, id);
+                else if (kind === 'red-tower') window.placeRedTowerMarker(x, y, id);
+                else if (kind === 'blue-tree') window.placeBlueTreeMarker(x, y, id);
+                else if (kind === 'red-tree') window.placeRedTreeMarker(x, y, id);
+                else if (kind === 'blue-goose') window.placeBlueGooseMarker(x, y, id);
+                else if (kind === 'red-goose') window.placeRedGooseMarker(x, y, id);
+                else if (kind === 'enemy-group') window.placeEnemyGroup(x, y, id);
+                window.markerHistory.push({ kind, action: 'remove', id, x, y, extra });
+            }
+        } finally {
+            window.isUndoRedo = false;
+            updateUndoRedoButtons();
+        }
+    }
+
+    // Override Undo/Redo to fallback to marker stacks when no drawing history
+    const originalUndoDrawing = window.undoDrawing;
+    const originalRedoDrawing = window.redoDrawing;
+    window.undoDrawing = function() {
+        const canUndoDrawing = !autoDeleteDrawings && Array.isArray(drawingHistory) && drawingHistory.length > 0;
+        if (canUndoDrawing && typeof originalUndoDrawing === 'function') {
+            originalUndoDrawing();
+        } else {
+            undoLastMarker();
+        }
+    };
+    window.redoDrawing = function() {
+        const canRedoDrawing = !autoDeleteDrawings && Array.isArray(drawingRedoStack) && drawingRedoStack.length > 0;
+        if (canRedoDrawing && typeof originalRedoDrawing === 'function') {
+            originalRedoDrawing();
+        } else {
+            redoLastMarker();
+        }
+    };
+
+    // Override button state updater
+    window.updateUndoRedoButtons = function() {
+        const undoBtn = document.getElementById('undoDrawBtn');
+        const redoBtn = document.getElementById('redoDrawBtn');
+        const hasDrawingUndo = !autoDeleteDrawings && drawingHistory && drawingHistory.length > 0;
+        const hasDrawingRedo = !autoDeleteDrawings && drawingRedoStack && drawingRedoStack.length > 0;
+        const hasMarkerUndo = window.markerHistory && window.markerHistory.length > 0;
+        const hasMarkerRedo = window.markerRedoStack && window.markerRedoStack.length > 0;
+        if (undoBtn) undoBtn.disabled = !(hasDrawingUndo || hasMarkerUndo);
+        if (redoBtn) redoBtn.disabled = !(hasDrawingRedo || hasMarkerRedo);
+    };
 
     // --- Drag & Drop Overrides ---
     window.handleDragOver = function(e) {
@@ -437,8 +554,8 @@ function overrideAppFunctions() {
         createLeafletMarker(id, x, y, {
             className: 'boss-marker',
             html: `<img src="/assets/guild_war/images/boss.png" alt="Boss" draggable="false"><button class="remove-btn" onclick="removeBossMarker('${id}')">×</button>`,
-            iconSize: [56, 56],
-            iconAnchor: [28, 28],
+            iconSize: [32, 32],
+            iconAnchor: [16, 16],
             onDragEnd: (nx, ny) => {
                 const item = placedBosses.find(b => b.id === id);
                 if (item) { item.x = nx; item.y = ny; savePositions(); }
@@ -448,13 +565,16 @@ function overrideAppFunctions() {
             placedBosses.push({ id: id, x: x, y: y });
             savePositions();
             updatePlaceholder();
+            recordMarkerAction({ kind: 'boss', action: 'place', id, x, y });
         }
     };
     window.removeBossMarker = function(id) {
+        const item = placedBosses.find(b => b.id === id);
         if (leafletMarkers[id]) { map.removeLayer(leafletMarkers[id]); delete leafletMarkers[id]; }
         placedBosses = placedBosses.filter(b => b.id !== id);
         savePositions();
         updatePlaceholder();
+        if (item) recordMarkerAction({ kind: 'boss', action: 'remove', id, x: item.x, y: item.y });
     };
 
     // Objective
@@ -474,13 +594,16 @@ function overrideAppFunctions() {
             placedObjectives.push({ id: id, x: x, y: y });
             savePositions();
             updatePlaceholder();
+            recordMarkerAction({ kind: 'objective', action: 'place', id, x, y });
         }
     };
     window.removeObjectiveMarker = function(id) {
+        const item = placedObjectives.find(o => o.id === id);
         if (leafletMarkers[id]) { map.removeLayer(leafletMarkers[id]); delete leafletMarkers[id]; }
         placedObjectives = placedObjectives.filter(o => o.id !== id);
         savePositions();
         updatePlaceholder();
+        if (item) recordMarkerAction({ kind: 'objective', action: 'remove', id, x: item.x, y: item.y });
     };
 
     // Towers/Trees/Geese Helper
@@ -506,37 +629,47 @@ function overrideAppFunctions() {
             array.push({ id: id, x: x, y: y });
             savePositions();
             updatePlaceholder();
+            recordMarkerAction({ kind: type, action: 'place', id, x, y });
         }
     };
 
-    window.placeBlueTowerMarker = (x, y, id) => placeGeneric(x, y, 'blue-tower', placedBlueTowers, 'removeTowerMarker', id, 40, 60);
-    window.placeRedTowerMarker = (x, y, id) => placeGeneric(x, y, 'red-tower', placedRedTowers, 'removeTowerMarker', id, 40, 60);
+    window.placeBlueTowerMarker = (x, y, id) => placeGeneric(x, y, 'blue-tower', placedBlueTowers, 'removeTowerMarker', id, 32, 32);
+    window.placeRedTowerMarker = (x, y, id) => placeGeneric(x, y, 'red-tower', placedRedTowers, 'removeTowerMarker', id, 32, 32);
     window.removeTowerMarker = function(id) {
+        const arr = id.includes('blue') ? placedBlueTowers : placedRedTowers;
+        const item = arr.find(t => t.id === id);
         if (leafletMarkers[id]) { map.removeLayer(leafletMarkers[id]); delete leafletMarkers[id]; }
         if (id.includes('blue')) placedBlueTowers = placedBlueTowers.filter(t => t.id !== id);
         else placedRedTowers = placedRedTowers.filter(t => t.id !== id);
         savePositions();
         updatePlaceholder();
+        if (item) recordMarkerAction({ kind: id.includes('blue') ? 'blue-tower' : 'red-tower', action: 'remove', id, x: item.x, y: item.y });
     };
 
-    window.placeBlueTreeMarker = (x, y, id) => placeGeneric(x, y, 'blue-tree', placedBlueTrees, 'removeTreeMarker', id, 40, 50);
-    window.placeRedTreeMarker = (x, y, id) => placeGeneric(x, y, 'red-tree', placedRedTrees, 'removeTreeMarker', id, 40, 50);
+    window.placeBlueTreeMarker = (x, y, id) => placeGeneric(x, y, 'blue-tree', placedBlueTrees, 'removeTreeMarker', id, 32, 32);
+    window.placeRedTreeMarker = (x, y, id) => placeGeneric(x, y, 'red-tree', placedRedTrees, 'removeTreeMarker', id, 32, 32);
     window.removeTreeMarker = function(id) {
+        const arr = id.includes('blue') ? placedBlueTrees : placedRedTrees;
+        const item = arr.find(t => t.id === id);
         if (leafletMarkers[id]) { map.removeLayer(leafletMarkers[id]); delete leafletMarkers[id]; }
         if (id.includes('blue')) placedBlueTrees = placedBlueTrees.filter(t => t.id !== id);
         else placedRedTrees = placedRedTrees.filter(t => t.id !== id);
         savePositions();
         updatePlaceholder();
+        if (item) recordMarkerAction({ kind: id.includes('blue') ? 'blue-tree' : 'red-tree', action: 'remove', id, x: item.x, y: item.y });
     };
 
-    window.placeBlueGooseMarker = (x, y, id) => placeGeneric(x, y, 'blue-goose', placedBlueGeese, 'removeGooseMarker', id, 40, 40);
-    window.placeRedGooseMarker = (x, y, id) => placeGeneric(x, y, 'red-goose', placedRedGeese, 'removeGooseMarker', id, 40, 40);
+    window.placeBlueGooseMarker = (x, y, id) => placeGeneric(x, y, 'blue-goose', placedBlueGeese, 'removeGooseMarker', id, 32, 32);
+    window.placeRedGooseMarker = (x, y, id) => placeGeneric(x, y, 'red-goose', placedRedGeese, 'removeGooseMarker', id, 32, 32);
     window.removeGooseMarker = function(id) {
+        const arr = id.includes('blue') ? placedBlueGeese : placedRedGeese;
+        const item = arr.find(t => t.id === id);
         if (leafletMarkers[id]) { map.removeLayer(leafletMarkers[id]); delete leafletMarkers[id]; }
         if (id.includes('blue')) placedBlueGeese = placedBlueGeese.filter(t => t.id !== id);
         else placedRedGeese = placedRedGeese.filter(t => t.id !== id);
         savePositions();
         updatePlaceholder();
+        if (item) recordMarkerAction({ kind: id.includes('blue') ? 'blue-goose' : 'red-goose', action: 'remove', id, x: item.x, y: item.y });
     };
 
     // Enemy Group
@@ -565,14 +698,17 @@ function overrideAppFunctions() {
             savePositions();
             updatePlaceholder();
             if (window.updateEnemyCount) window.updateEnemyCount();
+            recordMarkerAction({ kind: 'enemy-group', action: 'place', id, x, y, extra: { count } });
         }
     };
     window.removeEnemyGroup = function(id) {
+        const item = placedEnemies.find(e => e.id === id);
         if (leafletMarkers[id]) { map.removeLayer(leafletMarkers[id]); delete leafletMarkers[id]; }
         placedEnemies = placedEnemies.filter(e => e.id !== id);
         savePositions();
         updatePlaceholder();
         if (window.updateEnemyCount) window.updateEnemyCount();
+        if (item) recordMarkerAction({ kind: 'enemy-group', action: 'remove', id, x: item.x, y: item.y, extra: { count: item.count } });
     };
 
     // Member Marker
