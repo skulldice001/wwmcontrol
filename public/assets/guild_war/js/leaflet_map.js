@@ -233,6 +233,12 @@ function createLeafletMarker(id, x, y, options) {
         }
     });
 
+    if (options.onClick) {
+        marker.on('click', function(e) {
+            options.onClick(e);
+        });
+    }
+
     return marker;
 }
 
@@ -1169,6 +1175,35 @@ function overrideAppFunctions() {
                     }
 
                     savePositions();
+                }
+            },
+            onClick: (e) => {
+                // Remove highlight from all other items in the list
+                document.querySelectorAll('.member-item').forEach(el => el.classList.remove('highlighted'));
+
+                // Highlight this member in the list
+                // Use data-member-id if available, or try to find by other means if not set (but it should be set)
+                let listItem = null;
+                if (member.id) {
+                    listItem = document.querySelector(`.member-item[data-member-id="${member.id}"]`);
+                }
+
+                if (listItem) {
+                    listItem.classList.add('highlighted');
+                    listItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }
+
+                // Update selected member ID
+                window.selectedMemberId = member.id;
+
+                // Highlight on map
+                if (window.highlightMapMarker) {
+                    window.highlightMapMarker(member.id);
+                }
+
+                // Redraw paths
+                if (window.redrawAllPaths) {
+                    window.redrawAllPaths();
                 }
             }
         });

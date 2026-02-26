@@ -142,17 +142,47 @@ class EventController extends Controller
         $validated['created_by'] = $request->user()->id;
 
         if ($validated['type'] === 'guild_war') {
-            $startTime = Carbon::parse($validated['start_time']);
-            $startOfWeek = $startTime->copy()->startOfWeek();
-            $endOfWeek = $startTime->copy()->endOfWeek();
+            $baseTime = Carbon::parse($validated['start_time']);
 
-            $exists = Event::where('type', 'guild_war')
-                ->whereBetween('start_time', [$startOfWeek, $endOfWeek])
-                ->exists();
+            // Create Saturday Event
+            $satTime = $baseTime->copy()->startOfWeek(Carbon::MONDAY)->addDays(5);
+            // Preserve time from input
+            $satTime->setTime($baseTime->hour, $baseTime->minute, $baseTime->second);
 
-            if ($exists) {
-                return redirect()->back()->withErrors(['start_time' => 'Đã có sự kiện Bang chiến trong tuần này.'])->withInput();
+            $satData = $validated;
+            $satData['title'] = $validated['title'] . ' - Thứ 7';
+            $satData['start_time'] = $satTime;
+            // Handle end_time if present - assume same duration
+            if (!empty($validated['end_time'])) {
+                $endTime = Carbon::parse($validated['end_time']);
+                $duration = $baseTime->diffInMinutes($endTime);
+                $satData['end_time'] = $satTime->copy()->addMinutes($duration);
             }
+
+            $eventSat = Event::create($satData);
+            if (!empty($validated['participant_ids'])) {
+                $eventSat->participants()->sync($validated['participant_ids']);
+            }
+
+            // Create Sunday Event
+            $sunTime = $baseTime->copy()->startOfWeek(Carbon::MONDAY)->addDays(6);
+            $sunTime->setTime($baseTime->hour, $baseTime->minute, $baseTime->second);
+
+            $sunData = $validated;
+            $sunData['title'] = $validated['title'] . ' - Chủ Nhật (' . $sunTime->format('d/m') . ')';
+            $sunData['start_time'] = $sunTime;
+             if (!empty($validated['end_time'])) {
+                $endTime = Carbon::parse($validated['end_time']);
+                $duration = $baseTime->diffInMinutes($endTime);
+                $sunData['end_time'] = $sunTime->copy()->addMinutes($duration);
+            }
+
+            $eventSun = Event::create($sunData);
+            if (!empty($validated['participant_ids'])) {
+                $eventSun->participants()->sync($validated['participant_ids']);
+            }
+
+            return redirect()->route('admin.events.index')->with('success', 'Đã tạo sự kiện Bang chiến cho Thứ 7 và Chủ Nhật thành công.');
         }
 
         $event = Event::create($validated);
@@ -201,18 +231,7 @@ class EventController extends Controller
         $startTimeStr = $validated['start_time'] ?? $event->start_time;
 
         if ($type === 'guild_war') {
-            $startTime = Carbon::parse($startTimeStr);
-            $startOfWeek = $startTime->copy()->startOfWeek();
-            $endOfWeek = $startTime->copy()->endOfWeek();
-
-            $exists = Event::where('type', 'guild_war')
-                ->where('id', '!=', $event->id)
-                ->whereBetween('start_time', [$startOfWeek, $endOfWeek])
-                ->exists();
-
-            if ($exists) {
-                return redirect()->back()->withErrors(['start_time' => 'Đã có sự kiện Bang chiến trong tuần này.'])->withInput();
-            }
+            // No longer checking for uniqueness per week
         }
 
         $event->update($validated);
