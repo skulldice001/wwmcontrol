@@ -8,7 +8,7 @@
     <!-- Google Font: Source Sans Pro -->
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    
+
     <style>
         .welcome-page {
             height: 100vh;
@@ -50,7 +50,13 @@
 <div class="welcome-box">
     <h1 class="mb-4">{{ config('app.name') }}</h1>
     <p class="mb-4">{{ __('messages.welcome_message') }}</p>
-    
+    @if(session('error'))
+        <div class="alert alert-danger">{{ session('error') }}</div>
+    @endif
+    @if(session('success'))
+        <div class="alert alert-success">{{ session('success') }}</div>
+    @endif
+
     @if(Auth::check())
         <a href="{{ route('dashboard') }}" class="btn btn-primary btn-lg btn-block">
             <i class="fas fa-tachometer-alt mr-2"></i> {{ __('messages.go_to_dashboard') }}

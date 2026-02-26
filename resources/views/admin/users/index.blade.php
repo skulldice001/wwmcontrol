@@ -43,8 +43,6 @@
                     </td>
                     <td>
                         {{ $user->name }}
-                        <br>
-                        <small class="text-muted">{{ $user->email }}</small>
                     </td>
                     <td>{{ $user->ingame_name ?? __('messages.not_available') }}</td>
                     <td>
