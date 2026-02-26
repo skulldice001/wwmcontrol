@@ -205,7 +205,7 @@ let memberList, mapArea, searchInput, roleFilterButtons, viewToggleButtons;
 let clearMapBtn, exportBtn, importBtn, importFileInput, playerCount, placedCount;
 let addObjectiveBtn, addBossBtn, addBlueTowerBtn, addRedTowerBtn;
 let addBlueTreeBtn, addRedTreeBtn, addBlueGooseBtn, addRedGooseBtn;
-let drawBtn, clearDrawBtn, undoDrawBtn, redoDrawBtn, autoDeleteToggle, drawColorPicker;
+let drawBtn, drawPathBtn, clearDrawBtn, undoDrawBtn, redoDrawBtn, autoDeleteToggle, drawColorPicker;
 let drawingCanvas, ctx, addEnemiesBtn, enemyCount;
 let managePlayersBtn, playerManagementModal, playerEditModal, closeModalBtn;
 let closeEditModalBtn, addNewPlayerBtn, playerManagementList, playerEditForm;
@@ -333,6 +333,7 @@ function initializeDOM() {
     addBlueGooseBtn = document.getElementById('addBlueGooseBtn');
     addRedGooseBtn = document.getElementById('addRedGooseBtn');
     drawBtn = document.getElementById('drawBtn');
+    drawPathBtn = document.getElementById('drawPathBtn');
     clearDrawBtn = document.getElementById('clearDrawBtn');
     undoDrawBtn = document.getElementById('undoDrawBtn');
     redoDrawBtn = document.getElementById('redoDrawBtn');
@@ -600,9 +601,17 @@ function createMemberElement(member) {
         document.querySelectorAll('.member-item').forEach(el => el.classList.remove('highlighted'));
         div.classList.add('highlighted');
 
+        // Update selected member ID
+        window.selectedMemberId = member.id;
+
         // Highlight on map
         if (window.highlightMapMarker) {
             window.highlightMapMarker(member.id);
+        }
+
+        // Redraw paths to show only this member's path
+        if (window.redrawAllPaths) {
+            window.redrawAllPaths();
         }
     });
 
@@ -692,6 +701,7 @@ function setupEventListeners() {
 
     // Drawing buttons
     addSafeListener(drawBtn, 'click', toggleDrawingMode);
+    addSafeListener(drawPathBtn, 'click', () => { if (window.togglePolyLineDrawingMode) window.togglePolyLineDrawingMode(); });
     addSafeListener(clearDrawBtn, 'click', clearAllDrawings);
     addSafeListener(undoDrawBtn, 'click', () => { if (window.undoDrawing) window.undoDrawing(); });
     addSafeListener(redoDrawBtn, 'click', () => { if (window.redoDrawing) window.redoDrawing(); });
@@ -1399,6 +1409,7 @@ function toggleObjectiveMode() {
         // Activate objective mode
         placingMode = 'objective';
         drawingMode = false;
+        if (typeof window.polyLineDrawingMode !== 'undefined' && window.polyLineDrawingMode) window.togglePolyLineDrawingMode();
         addObjectiveBtn.classList.add('active');
         addBossBtn.classList.remove('active');
         addBlueTowerBtn.classList.remove('active');
@@ -1425,6 +1436,7 @@ function toggleBossMode() {
         // Activate boss mode
         placingMode = 'boss';
         drawingMode = false;
+        if (typeof window.polyLineDrawingMode !== 'undefined' && window.polyLineDrawingMode) window.togglePolyLineDrawingMode();
         addBossBtn.classList.add('active');
         addObjectiveBtn.classList.remove('active');
         addBlueTowerBtn.classList.remove('active');
@@ -1452,6 +1464,7 @@ function toggleBlueTowerMode() {
         // Activate blue tower mode
         placingMode = 'blue-tower';
         drawingMode = false;
+        if (typeof window.polyLineDrawingMode !== 'undefined' && window.polyLineDrawingMode) window.togglePolyLineDrawingMode();
         addBlueTowerBtn.classList.add('active');
         addObjectiveBtn.classList.remove('active');
         addBossBtn.classList.remove('active');
@@ -1478,6 +1491,7 @@ function toggleRedTowerMode() {
         // Activate red tower mode
         placingMode = 'red-tower';
         drawingMode = false;
+        if (typeof window.polyLineDrawingMode !== 'undefined' && window.polyLineDrawingMode) window.togglePolyLineDrawingMode();
         addRedTowerBtn.classList.add('active');
         addObjectiveBtn.classList.remove('active');
         addBossBtn.classList.remove('active');
@@ -1504,6 +1518,7 @@ function toggleBlueTreeMode() {
         // Activate blue tree mode
         placingMode = 'blue-tree';
         drawingMode = false;
+        if (typeof window.polyLineDrawingMode !== 'undefined' && window.polyLineDrawingMode) window.togglePolyLineDrawingMode();
         addBlueTreeBtn.classList.add('active');
         addObjectiveBtn.classList.remove('active');
         addBossBtn.classList.remove('active');
@@ -1530,6 +1545,7 @@ function toggleRedTreeMode() {
         // Activate red tree mode
         placingMode = 'red-tree';
         drawingMode = false;
+        if (typeof window.polyLineDrawingMode !== 'undefined' && window.polyLineDrawingMode) window.togglePolyLineDrawingMode();
         addRedTreeBtn.classList.add('active');
         addObjectiveBtn.classList.remove('active');
         addBossBtn.classList.remove('active');
@@ -2063,6 +2079,7 @@ function toggleBlueGooseMode() {
     } else {
         placingMode = 'blue-goose';
         drawingMode = false;
+        if (typeof window.polyLineDrawingMode !== 'undefined' && window.polyLineDrawingMode) window.togglePolyLineDrawingMode();
         addBlueGooseBtn.classList.add('active');
         addObjectiveBtn.classList.remove('active');
         addBossBtn.classList.remove('active');
@@ -2087,6 +2104,7 @@ function toggleRedGooseMode() {
     } else {
         placingMode = 'red-goose';
         drawingMode = false;
+        if (typeof window.polyLineDrawingMode !== 'undefined' && window.polyLineDrawingMode) window.togglePolyLineDrawingMode();
         addRedGooseBtn.classList.add('active');
         addObjectiveBtn.classList.remove('active');
         addBossBtn.classList.remove('active');
