@@ -34,7 +34,12 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->redirectUsersTo('/dashboard');
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        $exceptions->render(function (\Illuminate\Session\TokenMismatchException $e, Request $request) {
+            if ($request->is('admin/*')) {
+                return redirect()->route('admin.login')->with('error', 'Phiên làm việc đã hết hạn. Vui lòng đăng nhập lại.');
+            }
+            return redirect()->route('login')->with('error', 'Phiên làm việc đã hết hạn. Vui lòng đăng nhập lại.');
+        });
     })
     ->withSchedule(function (Schedule $schedule): void {
         $schedule->command('events:close-expired')->dailyAt('00:00');

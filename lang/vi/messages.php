@@ -197,6 +197,7 @@ return [
     'blue_goose' => 'Ngỗng xanh',
     'red_goose' => 'Ngỗng đỏ',
     'draw' => 'Vẽ',
+    'draw_path' => 'Vẽ đường',
     'undo' => 'Hoàn tác',
     'redo' => 'Làm lại',
     'clear_drawings' => 'Xóa nét vẽ',

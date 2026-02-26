@@ -81,6 +81,13 @@
                                     </span>
                                 @endif
                             </div>
+                            @if($event->is_placed)
+                                <div class="mt-2">
+                                    <a href="{{ route('events.map', $event->id) }}" class="btn btn-success btn-block">
+                                        <i class="fas fa-map-marked-alt mr-2"></i> Vị trí xuất phát
+                                    </a>
+                                </div>
+                            @endif
                         @endif
                     </div>
                     @if($event->status == 'upcoming')

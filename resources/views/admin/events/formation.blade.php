@@ -127,6 +127,7 @@
                 <button id="undoDrawBtn" class="toolbar-btn" title="{{ __('messages.undo') }}"><i class="fas fa-undo"></i></button>
                 <button id="redoDrawBtn" class="toolbar-btn" title="{{ __('messages.redo') }}"><i class="fas fa-redo"></i></button>
                 <button id="clearDrawBtn" class="toolbar-btn" title="{{ __('messages.clear_drawings') }}"><i class="fas fa-eraser"></i></button>
+                <button id="drawPathBtn" class="toolbar-btn" title="{{ __('messages.draw_path') }}"><img src="{{ asset('assets/guild_war/images/draw_poly_arrow.png') }}" alt="{{ __('messages.draw_path') }}" class="btn-icon-img" style="filter: invert(0.4);"></button>
 
                 <div class="ml-2 d-flex align-items-center">
                     <div class="custom-control custom-switch">

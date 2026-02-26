@@ -25,8 +25,32 @@ class UserEventController extends Controller
                     $event->preferred_time = $event->participants->first()->pivot->preferred_time;
                 }
 
+                $event->is_placed = false;
+
                 if ($event->type === 'guild_war') {
                     $formation = $event->formation_data ?? null;
+
+                    // Check if user is placed on map
+                    if ($formation) {
+                        $members = $formation['members'] ?? [];
+                        $groups = $formation['groups'] ?? [];
+
+                        // Check placed members
+                        if (collect($members)->contains('memberId', $userId)) {
+                            $event->is_placed = true;
+                        }
+
+                        // Check placed groups if not found in members
+                        if (!$event->is_placed) {
+                            foreach ($groups as $group) {
+                                if (in_array($userId, $group['memberIds'] ?? [])) {
+                                    $event->is_placed = true;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+
                     $roster = $formation['roster'] ?? null;
 
                     if ($roster && !empty($roster['assignments']) && !empty($roster['teams'])) {
@@ -97,5 +121,91 @@ class UserEventController extends Controller
         $event->participants()->detach($request->user()->id);
 
         return redirect()->back()->with('success', 'Đã hủy báo danh.');
+    }
+
+    public function map(Request $request, Event $event)
+    {
+        if ($event->type !== 'guild_war') {
+            return redirect()->route('events.index')->with('error', 'Chỉ có Bang chiến mới có bản đồ.');
+        }
+
+        $userId = $request->user()->id;
+        $formation = $event->formation_data ?? null;
+
+        if (!$formation) {
+            return redirect()->route('events.index')->with('error', 'Chưa có đội hình.');
+        }
+
+        $members = $formation['members'] ?? [];
+        $groups = $formation['groups'] ?? [];
+        $userPosition = null;
+
+        // Check members
+        $placedMember = collect($members)->firstWhere('memberId', $userId);
+        if ($placedMember) {
+            $userPosition = $placedMember;
+        }
+
+        // Check groups
+        if (!$userPosition) {
+            foreach ($groups as $group) {
+                if (in_array($userId, $group['memberIds'] ?? [])) {
+                    $userPosition = $group;
+                    $userPosition['is_group'] = true;
+                    break;
+                }
+            }
+        }
+
+        if (!$userPosition) {
+            return redirect()->route('events.index')->with('error', 'Bạn chưa được xếp vị trí trên bản đồ.');
+        }
+
+        // Prepare static markers
+        $staticMarkers = [
+            'objectives' => $formation['objectives'] ?? [],
+            'bosses' => $formation['bosses'] ?? [],
+            'blueTowers' => $formation['blueTowers'] ?? [],
+            'redTowers' => $formation['redTowers'] ?? [],
+            'blueTrees' => $formation['blueTrees'] ?? [],
+            'redTrees' => $formation['redTrees'] ?? [],
+            'blueGeese' => $formation['blueGeese'] ?? [],
+            'redGeese' => $formation['redGeese'] ?? [],
+            'enemies' => $formation['enemies'] ?? [],
+        ];
+
+        // Team info
+        $teamInfo = [
+            'name' => 'Chưa có đội',
+            'captain' => 'Chưa có',
+        ];
+
+        $roster = $formation['roster'] ?? null;
+        if ($roster) {
+            $assignments = $roster['assignments'] ?? [];
+            $teams = $roster['teams'] ?? [];
+            $teamId = $assignments[$userId] ?? null;
+
+            if ($teamId) {
+                $team = collect($teams)->firstWhere('id', $teamId);
+                if ($team) {
+                    $teamInfo['name'] = $team['name'];
+                    if (!empty($team['captainId'])) {
+                        $captain = User::find($team['captainId']);
+                        $teamInfo['captain'] = $captain ? ($captain->ingame_name ?? $captain->name) : 'Chưa có';
+                    }
+                }
+            }
+        }
+
+        // Pass user details for marker rendering
+        $user = $request->user();
+        $userPosition['name'] = $user->ingame_name ?? $user->name;
+        // Check if mainSkill exists before accessing slug
+        $userPosition['role'] = $user->mainSkill ? \App\Constants\SkillRole::getRole($user->mainSkill->slug) : 'Unknown';
+        $userPosition['weapon1'] = $user->mainSkill->name ?? '';
+        $userPosition['weapon2'] = $user->subSkill->name ?? '';
+
+        return view('events.map', compact('event', 'userPosition', 'staticMarkers', 'teamInfo'));
     }
 }

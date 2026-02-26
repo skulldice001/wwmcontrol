@@ -968,6 +968,60 @@ body.dark-theme .toggle-text {
     display: flex !important;
 }
 
+/* Route Buttons */
+.member-marker .route-btn,
+.member-marker .clear-route-btn {
+    position: absolute;
+    width: 22px;
+    height: 22px;
+    background: white;
+    color: #333;
+    border: 2px solid white;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    display: none !important;
+    align-items: center;
+    justify-content: center;
+    z-index: 1001;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+    transition: all 0.2s;
+}
+
+.member-marker .route-btn {
+    top: -10px;
+    left: -10px;
+    background: #3498db;
+    color: white;
+}
+
+.member-marker .clear-route-btn {
+    top: 15px;
+    left: -10px;
+    background: #f1c40f;
+    color: white;
+}
+
+.member-marker:hover .route-btn,
+.member-marker:hover .clear-route-btn {
+    display: flex !important;
+}
+
+.member-marker .route-btn:hover,
+.member-marker .clear-route-btn:hover {
+    transform: scale(1.1);
+}
+
+.route-arrow {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
 .member-marker.enemy {
     background: rgb(231, 76, 60);
     border-color: rgba(192, 57, 43, 0.9);

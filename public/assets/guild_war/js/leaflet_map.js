@@ -9,6 +9,10 @@ var leafletMarkers = {}; // Map of ID -> Leaflet Layer
 var drawingMode = false;
 var leafletDrawingPoints = [];
 var leafletDrawingPolyline = null;
+window.polyLineDrawingMode = false;
+var polyLinePoints = [];
+var polyLineLayer = null;
+var polyLineElastic = null;
 
 // Map constants
 const MAP_WIDTH = 1024;
@@ -145,7 +149,9 @@ function setupLeafletEvents() {
                     points: [...path.points],
                     timestamp: path.timestamp,
                     color: path.color,
-                    width: path.width
+                    width: path.width,
+                    type: path.type,
+                    memberId: path.memberId
                 }));
                 drawingHistory.push(stateCopy);
                 drawingRedoStack = [];
@@ -476,12 +482,15 @@ function overrideAppFunctions() {
                 map.getContainer().style.cursor = '';
             }
         } else {
+            if (window.polyLineDrawingMode) window.togglePolyLineDrawingMode();
             drawingMode = true;
             placingMode = null;
             drawBtn.classList.add('active');
 
             // Deactivate other toolbar buttons
             document.querySelectorAll('.toolbar-btn').forEach(b => b.classList.remove('active'));
+            // Re-activate drawBtn because querySelectorAll removed it
+            drawBtn.classList.add('active');
 
             document.getElementById('mapArea').classList.remove('placing-mode');
             document.getElementById('mapArea').classList.add('drawing-mode');
@@ -498,6 +507,14 @@ function overrideAppFunctions() {
 
         drawingPaths.forEach(pathData => {
             if (!pathData) return;
+
+            // Filter: if path has memberId, it must match selectedMemberId
+            if (pathData.memberId && pathData.memberId !== window.selectedMemberId) return;
+            // Also if no member selected, we might want to hide member-specific paths?
+            // "vẽ đường chỉ hiển thị khi đang chọn 1 người chơi" -> Draw path only shows when selecting 1 player.
+            // If pathData.memberId exists but window.selectedMemberId is null, hide it.
+            if (pathData.memberId && !window.selectedMemberId) return;
+
             const latlngs = pathData.points.map(p => storeToLatLng(p.x, p.y));
             L.polyline(latlngs, {
                 color: pathData.color,
@@ -505,6 +522,30 @@ function overrideAppFunctions() {
                 lineCap: 'round',
                 lineJoin: 'round'
             }).addTo(window.drawingLayerGroup);
+
+            // Add arrow head if type is arrow
+            if (pathData.type === 'arrow' && latlngs.length > 1) {
+                const last = latlngs[latlngs.length - 1];
+                const prev = latlngs[latlngs.length - 2];
+                const dy = last.lat - prev.lat;
+                const dx = last.lng - prev.lng;
+                const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+                const rotation = -angle;
+                const size = 16;
+
+                const arrowIcon = L.divIcon({
+                    className: 'arrow-icon',
+                    html: `<div style="transform: rotate(${rotation}deg); transform-origin: center;">
+                        <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" style="display: block;">
+                            <path d="M2,2 L${size},${size/2} L2,${size-2} z" fill="${pathData.color}" />
+                        </svg>
+                    </div>`,
+                    iconSize: [size, size],
+                    iconAnchor: [size/2, size/2]
+                });
+
+                L.marker(last, {icon: arrowIcon, interactive: false}).addTo(window.drawingLayerGroup);
+            }
         });
     };
 
@@ -529,8 +570,286 @@ function overrideAppFunctions() {
         }
     };
 
+    // --- Polyline Drawing System ---
+    window.togglePolyLineDrawingMode = function() {
+        if (polyLineDrawingMode) {
+            // Deactivate
+            polyLineDrawingMode = false;
+            if (document.getElementById('drawPathBtn')) document.getElementById('drawPathBtn').classList.remove('active');
+            map.getContainer().style.cursor = '';
+            map.off('click', onPolyLineClick);
+            map.off('mousemove', onPolyLineMove);
+            map.off('contextmenu', finishPolyLineDrawing);
+
+            if (polyLineLayer) { map.removeLayer(polyLineLayer); polyLineLayer = null; }
+            if (polyLineElastic) { map.removeLayer(polyLineElastic); polyLineElastic = null; }
+            polyLinePoints = [];
+        } else {
+            // Check if member is selected
+            if (!window.selectedMemberId) {
+                alert('Vui lòng chọn thành viên cần vẽ đường!');
+                return;
+            }
+
+            // Activate
+            polyLineDrawingMode = true;
+            window.placingMode = null;
+            window.drawingMode = false; // Disable freehand
+
+            // UI Updates
+            if (document.getElementById('drawPathBtn')) document.getElementById('drawPathBtn').classList.add('active');
+            if (document.getElementById('drawBtn')) document.getElementById('drawBtn').classList.remove('active');
+            document.querySelectorAll('.toolbar-btn').forEach(b => {
+                if (b.id !== 'drawPathBtn') b.classList.remove('active');
+            });
+
+            document.getElementById('mapArea').classList.remove('placing-mode');
+            document.getElementById('mapArea').classList.remove('drawing-mode');
+
+            map.dragging.disable();
+            map.getContainer().style.cursor = 'crosshair';
+
+            polyLinePoints = [];
+
+            map.on('click', onPolyLineClick);
+            map.on('mousemove', onPolyLineMove);
+            map.on('contextmenu', finishPolyLineDrawing);
+        }
+    };
+
+    function onPolyLineClick(e) {
+        if (!polyLineDrawingMode) return;
+        const latlng = e.latlng;
+        const storePos = latLngToStore(latlng);
+        polyLinePoints.push(storePos);
+
+        const latlngs = polyLinePoints.map(p => storeToLatLng(p.x, p.y));
+
+        if (!polyLineLayer) {
+            polyLineLayer = L.polyline(latlngs, {
+                color: drawingColor || '#ff0000',
+                weight: 3,
+                lineCap: 'round',
+                lineJoin: 'round'
+            }).addTo(map);
+        } else {
+            polyLineLayer.setLatLngs(latlngs);
+        }
+    }
+
+    function onPolyLineMove(e) {
+        if (!polyLineDrawingMode || polyLinePoints.length === 0) return;
+        const lastPoint = polyLinePoints[polyLinePoints.length - 1];
+        const lastLatLng = storeToLatLng(lastPoint.x, lastPoint.y);
+        const currentLatLng = e.latlng;
+
+        if (!polyLineElastic) {
+            polyLineElastic = L.polyline([lastLatLng, currentLatLng], {
+                color: drawingColor || '#ff0000',
+                weight: 1,
+                dashArray: '5, 5',
+                opacity: 0.6
+            }).addTo(map);
+        } else {
+            polyLineElastic.setLatLngs([lastLatLng, currentLatLng]);
+        }
+    }
+
+    function finishPolyLineDrawing() {
+        if (!polyLineDrawingMode) return;
+
+        if (polyLinePoints.length > 1) {
+            const pathData = {
+                points: [...polyLinePoints],
+                timestamp: Date.now(),
+                color: drawingColor || '#ff0000',
+                width: 3,
+                type: 'arrow',
+                memberId: window.selectedMemberId
+            };
+
+            drawingPaths.push(pathData);
+
+            if (!autoDeleteDrawings) {
+                const stateCopy = drawingPaths.map(path => ({
+                    points: [...path.points],
+                    timestamp: path.timestamp,
+                    color: path.color,
+                    width: path.width,
+                    type: path.type,
+                    memberId: path.memberId
+                }));
+                drawingHistory.push(stateCopy);
+                drawingRedoStack = [];
+                updateUndoRedoButtons();
+            }
+
+            if (autoDeleteDrawings) {
+                schedulePathDeletion(drawingPaths.length - 1);
+            }
+        }
+
+        // Reset current drawing but keep mode active? Or finish mode?
+        // Usually better to keep mode active for multiple paths.
+        // But need to clear current points.
+
+        polyLinePoints = [];
+        if (polyLineLayer) { map.removeLayer(polyLineLayer); polyLineLayer = null; }
+        if (polyLineElastic) { map.removeLayer(polyLineElastic); polyLineElastic = null; }
+
+        window.redrawAllPaths();
+    }
+
     window.resizeCanvas = function() {
         if (map) map.invalidateSize();
+    };
+
+    // --- Route Drawing System ---
+    let isDrawingRoute = false;
+    let routeMemberId = null;
+    let currentRoutePoints = [];
+    let tempRouteLayer = null;
+
+    window.startDrawingMemberRoute = function(memberId) {
+        if (isDrawingRoute) return;
+
+        // Find placement
+        const placement = placedMembers.find(p => p.memberId === memberId);
+        if (!placement) return;
+
+        isDrawingRoute = true;
+        routeMemberId = memberId;
+        currentRoutePoints = [];
+
+        // Start point is current position
+        currentRoutePoints.push({x: placement.x, y: placement.y});
+
+        // Visual feedback
+        document.getElementById('mapArea').style.cursor = 'crosshair';
+
+        // Temp layer
+        const latlngs = currentRoutePoints.map(p => storeToLatLng(p.x, p.y));
+        tempRouteLayer = L.polyline(latlngs, {color: '#f39c12', weight: 3, dashArray: '5, 10'}).addTo(map);
+
+        // Events
+        map.on('click', onRouteClick);
+        map.on('contextmenu', finishRouteDrawing); // Right click to finish
+
+        // Alert/Toast (Optional)
+        console.log("Started drawing route. Click to add points, right click to finish.");
+    };
+
+    function onRouteClick(e) {
+        if (!isDrawingRoute) return;
+        const storePos = latLngToStore(e.latlng);
+        currentRoutePoints.push({x: storePos.x, y: storePos.y});
+
+        const latlngs = currentRoutePoints.map(p => storeToLatLng(p.x, p.y));
+        tempRouteLayer.setLatLngs(latlngs);
+    }
+
+    function finishRouteDrawing() {
+        if (!isDrawingRoute) return;
+
+        isDrawingRoute = false;
+        document.getElementById('mapArea').style.cursor = '';
+
+        map.off('click', onRouteClick);
+        map.off('contextmenu', finishRouteDrawing);
+
+        if (tempRouteLayer) {
+            map.removeLayer(tempRouteLayer);
+            tempRouteLayer = null;
+        }
+
+        if (currentRoutePoints.length > 1) {
+            const placement = placedMembers.find(p => p.memberId === routeMemberId);
+            if (placement) {
+                placement.route = currentRoutePoints;
+                savePositions();
+                window.renderMemberRoute(routeMemberId);
+            }
+        }
+
+        routeMemberId = null;
+        currentRoutePoints = [];
+    }
+
+    window.clearMemberRoute = function(memberId) {
+        // Remove from placement
+        const placement = placedMembers.find(p => p.memberId === memberId);
+        if (placement) {
+            delete placement.route;
+            savePositions();
+        }
+
+        // Remove layers
+        if (window.routeLayers && window.routeLayers[memberId]) {
+            window.routeLayers[memberId].forEach(l => map.removeLayer(l));
+            delete window.routeLayers[memberId];
+        }
+    };
+
+    window.renderMemberRoute = function(memberId) {
+        if (!window.routeLayers) window.routeLayers = {};
+
+        // Clear existing
+        if (window.routeLayers[memberId]) {
+            window.routeLayers[memberId].forEach(l => map.removeLayer(l));
+        }
+        window.routeLayers[memberId] = [];
+
+        const placement = placedMembers.find(p => p.memberId === memberId);
+        if (!placement || !placement.route || placement.route.length < 2) return;
+
+        const latlngs = placement.route.map(p => storeToLatLng(p.x, p.y));
+
+        // Draw Polyline
+        const polyline = L.polyline(latlngs, {color: '#f39c12', weight: 3, opacity: 0.8}).addTo(map);
+        window.routeLayers[memberId].push(polyline);
+
+        // Draw Arrows
+        // Draw arrow at end of each segment
+        for (let i = 0; i < latlngs.length - 1; i++) {
+            const p1 = latlngs[i];
+            const p2 = latlngs[i+1];
+
+            // Vector calculation for angle
+            // Leaflet LatLng: Lat is Y (up), Lng is X (right)
+            // But we used storeToLatLng: Lat = MAP_HEIGHT - y.
+            // So visual Y on screen increases UP (Lat increases).
+            // Visual X on screen increases RIGHT (Lng increases).
+
+            const dLat = p2.lat - p1.lat;
+            const dLng = p2.lng - p1.lng;
+
+            // Angle from X axis (Right) counter-clockwise
+            // Math.atan2(y, x)
+            let angle = Math.atan2(dLat, dLng) * 180 / Math.PI;
+
+            // CSS rotate is Clockwise. 0 is pointing up? No, usually 0 is default orientation.
+            // If arrow points Right by default:
+            // CSS rotate(90deg) -> Points Down.
+            // Math angle 90deg -> Points Up.
+            // So rotation = -angle.
+
+            // Let's assume arrow icon points Right (>) by default.
+
+            const arrowIcon = L.divIcon({
+                className: 'route-arrow',
+                html: `<div style="transform: rotate(${-angle}deg); color: #e67e22; font-size: 20px; text-shadow: 1px 1px 2px black;">➤</div>`,
+                iconSize: [20, 20],
+                iconAnchor: [10, 10]
+            });
+
+            // Place arrow at midpoint? or end?
+            // Midpoint
+            const midLat = (p1.lat + p2.lat) / 2;
+            const midLng = (p1.lng + p2.lng) / 2;
+
+            const arrow = L.marker([midLat, midLng], {icon: arrowIcon, interactive: false}).addTo(map);
+            window.routeLayers[memberId].push(arrow);
+        }
     };
 
     // --- Map Rendering Override ---
@@ -545,7 +864,11 @@ function overrideAppFunctions() {
         if (typeof placedMembers !== 'undefined') {
             placedMembers.forEach(p => {
                 const member = members.find(m => m.id === p.memberId);
-                if (member) window.placeMemberOnMap(member, p.x, p.y, true);
+                if (member) {
+                    window.placeMemberOnMap(member, p.x, p.y, true);
+                    // Render Route
+                    window.renderMemberRoute(p.memberId);
+                }
             });
         }
 
@@ -741,6 +1064,15 @@ function overrideAppFunctions() {
         if (leafletMarkers[markerId]) map.removeLayer(leafletMarkers[markerId]);
 
         const displayTeamName = getTeamDisplayName(member.team);
+
+        let extraBtns = '';
+        if (!isRenderOnly) {
+            extraBtns = `
+                <div class="route-btn" onclick="startDrawingMemberRoute(${member.id})" title="Draw Path">➚</div>
+                <div class="clear-route-btn" onclick="clearMemberRoute(${member.id})" title="Clear Path">🗑️</div>
+            `;
+        }
+
         const html = `
             <div class="marker-tooltip">
                 <div class="tooltip-name">${member.name}</div>
@@ -750,6 +1082,7 @@ function overrideAppFunctions() {
                 </div>
                 <div class="tooltip-info">${member.role} | ${displayTeamName}</div>
             </div>
+            ${extraBtns}
             <button class="remove-btn" onclick="removeMemberMarker(${member.id})">×</button>
         `;
 
@@ -763,6 +1096,14 @@ function overrideAppFunctions() {
                 if (placement) {
                     placement.x = nx;
                     placement.y = ny;
+
+                    // Update route start point if exists
+                    if (placement.route && placement.route.length > 0) {
+                        placement.route[0].x = nx;
+                        placement.route[0].y = ny;
+                        window.renderMemberRoute(member.id);
+                    }
+
                     savePositions();
                 }
             }
@@ -780,6 +1121,9 @@ function overrideAppFunctions() {
             updateCounts();
             updatePlaceholder();
             renderMemberList();
+
+            // Render route if exists
+            window.renderMemberRoute(member.id);
         }
     };
 

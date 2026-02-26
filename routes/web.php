@@ -88,6 +88,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/events', [UserEventController::class, 'index'])->name('events.index');
     Route::post('/events/{event}/register', [UserEventController::class, 'register'])->name('events.register');
     Route::delete('/events/{event}/unregister', [UserEventController::class, 'unregister'])->name('events.unregister');
+    Route::get('/events/{event}/map', [UserEventController::class, 'map'])->name('events.map');
 });
 
 
