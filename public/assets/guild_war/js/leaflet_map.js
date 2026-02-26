@@ -264,7 +264,10 @@ function overrideAppFunctions() {
                 else if (kind === 'blue-goose') window.removeBlueGooseMarker(id);
                 else if (kind === 'red-goose') window.removeRedGooseMarker(id);
                 else if (kind === 'enemy-group') window.removeEnemyGroup(id);
-                window.markerRedoStack.push({ kind, action: 'remove', id, x, y, extra });
+                else if (kind === 'member') window.removeMemberMarker(id);
+                else if (kind === 'group') window.removeGroupMarker(id);
+
+                window.markerRedoStack.push(entry);
             } else if (action === 'remove') {
                 if (kind === 'objective') window.placeObjectiveMarker(x, y, id);
                 else if (kind === 'boss') window.placeBossMarker(x, y, id);
@@ -275,7 +278,16 @@ function overrideAppFunctions() {
                 else if (kind === 'blue-goose') window.placeBlueGooseMarker(x, y, id);
                 else if (kind === 'red-goose') window.placeRedGooseMarker(x, y, id);
                 else if (kind === 'enemy-group') window.placeEnemyGroup(x, y, id);
-                window.markerRedoStack.push({ kind, action: 'place', id, x, y, extra });
+                else if (kind === 'member') {
+                    const member = members.find(m => m.id === id);
+                    if (member) window.placeMemberOnMap(member, x, y);
+                }
+                else if (kind === 'group') {
+                    const teamMembers = extra.memberIds.map(mid => members.find(m => m.id === mid)).filter(Boolean);
+                    window.createNewGroup(extra.teamName, teamMembers, x, y, id);
+                }
+
+                window.markerRedoStack.push(entry);
             }
         } finally {
             window.isUndoRedo = false;
@@ -291,18 +303,7 @@ function overrideAppFunctions() {
         window.isUndoRedo = true;
         try {
             const { kind, action, id, x, y, extra } = entry;
-            if (action === 'remove') {
-                if (kind === 'objective') window.removeObjectiveMarker(id);
-                else if (kind === 'boss') window.removeBossMarker(id);
-                else if (kind === 'blue-tower') window.removeBlueTowerMarker(id);
-                else if (kind === 'red-tower') window.removeRedTowerMarker(id);
-                else if (kind === 'blue-tree') window.removeBlueTreeMarker(id);
-                else if (kind === 'red-tree') window.removeRedTreeMarker(id);
-                else if (kind === 'blue-goose') window.removeBlueGooseMarker(id);
-                else if (kind === 'red-goose') window.removeRedGooseMarker(id);
-                else if (kind === 'enemy-group') window.removeEnemyGroup(id);
-                window.markerHistory.push({ kind, action: 'place', id, x, y, extra });
-            } else if (action === 'place') {
+            if (action === 'place') {
                 if (kind === 'objective') window.placeObjectiveMarker(x, y, id);
                 else if (kind === 'boss') window.placeBossMarker(x, y, id);
                 else if (kind === 'blue-tower') window.placeBlueTowerMarker(x, y, id);
@@ -312,7 +313,30 @@ function overrideAppFunctions() {
                 else if (kind === 'blue-goose') window.placeBlueGooseMarker(x, y, id);
                 else if (kind === 'red-goose') window.placeRedGooseMarker(x, y, id);
                 else if (kind === 'enemy-group') window.placeEnemyGroup(x, y, id);
-                window.markerHistory.push({ kind, action: 'remove', id, x, y, extra });
+                else if (kind === 'member') {
+                    const member = members.find(m => m.id === id);
+                    if (member) window.placeMemberOnMap(member, x, y);
+                }
+                else if (kind === 'group') {
+                    const teamMembers = extra.memberIds.map(mid => members.find(m => m.id === mid)).filter(Boolean);
+                    window.createNewGroup(extra.teamName, teamMembers, x, y, id);
+                }
+
+                window.markerHistory.push(entry);
+            } else if (action === 'remove') {
+                if (kind === 'objective') window.removeObjectiveMarker(id);
+                else if (kind === 'boss') window.removeBossMarker(id);
+                else if (kind === 'blue-tower') window.removeBlueTowerMarker(id);
+                else if (kind === 'red-tower') window.removeRedTowerMarker(id);
+                else if (kind === 'blue-tree') window.removeBlueTreeMarker(id);
+                else if (kind === 'red-tree') window.removeRedTreeMarker(id);
+                else if (kind === 'blue-goose') window.removeBlueGooseMarker(id);
+                else if (kind === 'red-goose') window.removeRedGooseMarker(id);
+                else if (kind === 'enemy-group') window.removeEnemyGroup(id);
+                else if (kind === 'member') window.removeMemberMarker(id);
+                else if (kind === 'group') window.removeGroupMarker(id);
+
+                window.markerHistory.push(entry);
             }
         } finally {
             window.isUndoRedo = false;
@@ -748,6 +772,9 @@ function overrideAppFunctions() {
             if (!placedMembers.find(p => p.memberId === member.id)) {
                 placedMembers.push({ memberId: member.id, x: x, y: y });
             }
+            if (window.recordMarkerAction && !window.isUndoRedo) {
+                window.recordMarkerAction({ kind: 'member', action: 'place', id: member.id, x, y });
+            }
             updateGroupsAfterMemberPlacement(member.id);
             savePositions();
             updateCounts();
@@ -801,6 +828,10 @@ function overrideAppFunctions() {
     document.head.appendChild(style);
     window.removeMemberMarker = function(memberId) {
         const markerId = `member-${memberId}`;
+        const member = placedMembers.find(p => p.memberId === memberId);
+        if (member && window.recordMarkerAction && !window.isUndoRedo) {
+            window.recordMarkerAction({ kind: 'member', action: 'remove', id: memberId, x: member.x, y: member.y });
+        }
         if (leafletMarkers[markerId]) { map.removeLayer(leafletMarkers[markerId]); delete leafletMarkers[markerId]; }
         placedMembers = placedMembers.filter(p => p.memberId !== memberId);
         savePositions();
@@ -833,6 +864,10 @@ function overrideAppFunctions() {
         if (element) element.innerHTML = tempDiv.innerHTML;
     };
     window.removeGroupMarker = function(groupId) {
+        const group = placedGroups.find(g => g.id === groupId);
+        if (group && window.recordMarkerAction && !window.isUndoRedo) {
+            window.recordMarkerAction({ kind: 'group', action: 'remove', id: groupId, x: group.x, y: group.y, extra: { teamName: group.teams[0], memberIds: group.memberIds } });
+        }
         const markerId = `group-${groupId}`;
         if (leafletMarkers[markerId]) { map.removeLayer(leafletMarkers[markerId]); delete leafletMarkers[markerId]; }
         placedGroups = placedGroups.filter(g => g.id !== groupId);
@@ -875,8 +910,8 @@ function overrideAppFunctions() {
         updateCounts();
     };
 
-    window.createNewGroup = function(teamName, teamMembers, x, y) {
-        const groupId = `group-${Date.now()}`;
+    window.createNewGroup = function(teamName, teamMembers, x, y, existingId = null) {
+        const groupId = existingId || `group-${Date.now()}`;
         const memberIds = teamMembers.map(m => m.id);
         const group = {
             id: groupId,
@@ -887,6 +922,11 @@ function overrideAppFunctions() {
         };
         placedGroups.push(group);
         window.renderGroupMarker(group);
+
+        if (window.recordMarkerAction && !window.isUndoRedo) {
+            window.recordMarkerAction({ kind: 'group', action: 'place', id: groupId, x, y, extra: { teamName, memberIds } });
+        }
+
         savePositions();
         updateCounts();
         updatePlaceholder();
