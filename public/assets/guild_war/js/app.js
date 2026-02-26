@@ -2564,6 +2564,26 @@ function resizeCanvas() {
 // DRAWING SYSTEM
 // ============================================================================
 
+// Draw arrow head
+function drawArrow(ctx, fromx, fromy, tox, toy, color, width) {
+    const headlen = 15; // length of head in pixels
+    const dx = tox - fromx;
+    const dy = toy - fromy;
+    const angle = Math.atan2(dy, dx);
+
+    ctx.beginPath();
+    ctx.moveTo(tox, toy);
+    ctx.lineTo(tox - headlen * Math.cos(angle - Math.PI / 6), toy - headlen * Math.sin(angle - Math.PI / 6));
+    ctx.moveTo(tox, toy);
+    ctx.lineTo(tox - headlen * Math.cos(angle + Math.PI / 6), toy - headlen * Math.sin(angle + Math.PI / 6));
+
+    ctx.strokeStyle = color;
+    ctx.lineWidth = width;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.stroke();
+}
+
 // Draw a single path
 function drawPath(points, color, width) {
     if (points.length < 2) return;
@@ -2581,6 +2601,24 @@ function drawPath(points, color, width) {
     }
 
     ctx.stroke();
+
+    // Draw arrow at the end
+    if (points.length >= 2) {
+        // Find a point that is far enough from the end to calculate a stable angle
+        // Simple approach: use the point 5 steps back or the start point
+        let prevIndex = Math.max(0, points.length - 5);
+        const lastPoint = points[points.length - 1];
+        const prevPoint = points[prevIndex];
+
+        // If the path is very short, just use the previous point
+        if (prevIndex === points.length - 1) {
+             prevIndex = points.length - 2;
+        }
+
+        const effectivePrevPoint = points[prevIndex];
+
+        drawArrow(ctx, effectivePrevPoint.x, effectivePrevPoint.y, lastPoint.x, lastPoint.y, color, width);
+    }
 }
 
 // Redraw all paths

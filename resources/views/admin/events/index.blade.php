@@ -61,7 +61,12 @@
                             @endswitch
                         </span>
                     </td>
-                    <td>{{ \Carbon\Carbon::parse($event->start_time)->format('Y-m-d H:i') }}</td>
+                    <td>
+                        <div>{{ \Carbon\Carbon::parse($event->start_time)->format('H:i d/m/Y') }}</div>
+                        <small class="text-muted">
+                            {{ \Carbon\Carbon::parse($event->start_time)->locale('vi')->isoFormat('dddd') }}
+                        </small>
+                    </td>
                     <td>{{ $event->creator ? $event->creator->name : __('messages.not_available') }}</td>
                     <td>
                         <a href="{{ route('admin.events.participants', $event->id) }}" class="btn btn-primary btn-sm mr-1">

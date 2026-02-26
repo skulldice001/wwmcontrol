@@ -9,10 +9,12 @@
 
 /* Guild War App Wrapper */
 .guild-war-app {
-    height: calc(100vh - 60px); /* Adjust based on admin header */
+    height: calc(100vh - 114px); /* Adjust based on admin header + footer */
     display: flex;
     flex-direction: column;
-    padding: 10px;
+    padding: 1rem;
+    overflow: hidden; /* Prevent body scroll */
+    background-color: #f4f6f9; /* AdminLTE default background */
 }
 
 /* Modal styles */

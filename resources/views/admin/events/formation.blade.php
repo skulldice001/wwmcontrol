@@ -167,7 +167,7 @@
     </div>
 
     <div id="playerManagementModal" class="modal">
-        <div class="modal-content" style="width: 600px;">
+        <div class="modal-content" style="width: 90%; max-width: 1200px;">
             <div class="modal-header">
                 <h3>{{ __('messages.player_management_title') }}</h3>
                 <button id="closeModalBtn" class="close">&times;</button>
