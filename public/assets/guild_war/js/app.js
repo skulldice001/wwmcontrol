@@ -693,8 +693,8 @@ function setupEventListeners() {
     // Drawing buttons
     addSafeListener(drawBtn, 'click', toggleDrawingMode);
     addSafeListener(clearDrawBtn, 'click', clearAllDrawings);
-    addSafeListener(undoDrawBtn, 'click', undoDrawing);
-    addSafeListener(redoDrawBtn, 'click', redoDrawing);
+    addSafeListener(undoDrawBtn, 'click', () => { if (window.undoDrawing) window.undoDrawing(); });
+    addSafeListener(redoDrawBtn, 'click', () => { if (window.redoDrawing) window.redoDrawing(); });
     addSafeListener(autoDeleteToggle, 'change', handleAutoDeleteToggle);
     if (drawColorPicker) {
         drawColorPicker.addEventListener('change', (e) => {
@@ -1582,9 +1582,9 @@ function handleMapClick(e) {
 // ============================================================================
 
 // Place objective marker
-function placeObjectiveMarker(x, y) {
+function placeObjectiveMarker(x, y, existingId = null) {
     console.log('Placing objective marker at:', x, y);
-    const objectiveId = `objective-${Date.now()}`;
+    const objectiveId = existingId || `objective-${Date.now()}`;
 
     const marker = document.createElement('div');
     marker.className = 'objective-marker';
@@ -1608,13 +1608,17 @@ function placeObjectiveMarker(x, y) {
         y: y
     });
 
+    if (window.recordMarkerAction && !window.isUndoRedo) {
+        window.recordMarkerAction({ kind: 'objective', action: 'place', id: objectiveId, x, y });
+    }
+
     savePositions();
     updatePlaceholder();
 }
 
 // Place boss marker
-function placeBossMarker(x, y) {
-    const bossId = `boss-${Date.now()}`;
+function placeBossMarker(x, y, existingId = null) {
+    const bossId = existingId || `boss-${Date.now()}`;
 
     const marker = document.createElement('div');
     marker.className = 'boss-marker';
@@ -1638,6 +1642,10 @@ function placeBossMarker(x, y) {
         x: x,
         y: y
     });
+
+    if (window.recordMarkerAction && !window.isUndoRedo) {
+        window.recordMarkerAction({ kind: 'boss', action: 'place', id: bossId, x, y });
+    }
 
     savePositions();
     updatePlaceholder();
@@ -1697,6 +1705,11 @@ function handleBossDragEnd(e) {
 
 // Remove objective marker
 function removeObjectiveMarker(objectiveId) {
+    const obj = placedObjectives.find(o => o.id === objectiveId);
+    if (obj && window.recordMarkerAction && !window.isUndoRedo) {
+        window.recordMarkerAction({ kind: 'objective', action: 'remove', id: objectiveId, x: obj.x, y: obj.y });
+    }
+
     const marker = mapArea.querySelector(`[data-objective-id="${objectiveId}"]`);
     if (marker) {
         marker.remove();
@@ -1708,6 +1721,11 @@ function removeObjectiveMarker(objectiveId) {
 
 // Remove boss marker
 function removeBossMarker(bossId) {
+    const boss = placedBosses.find(b => b.id === bossId);
+    if (boss && window.recordMarkerAction && !window.isUndoRedo) {
+        window.recordMarkerAction({ kind: 'boss', action: 'remove', id: bossId, x: boss.x, y: boss.y });
+    }
+
     const marker = mapArea.querySelector(`[data-boss-id="${bossId}"]`);
     if (marker) {
         marker.remove();
@@ -1718,8 +1736,8 @@ function removeBossMarker(bossId) {
 }
 
 // Place blue tower marker
-function placeBlueTowerMarker(x, y) {
-    const towerId = `blue-tower-${Date.now()}`;
+function placeBlueTowerMarker(x, y, existingId = null) {
+    const towerId = existingId || `blue-tower-${Date.now()}`;
 
     const marker = document.createElement('div');
     marker.className = 'tower-marker blue-tower';
@@ -1744,6 +1762,10 @@ function placeBlueTowerMarker(x, y) {
         x: x,
         y: y
     });
+
+    if (window.recordMarkerAction && !window.isUndoRedo) {
+        window.recordMarkerAction({ kind: 'blue-tower', action: 'place', id: towerId, x, y });
+    }
 
     savePositions();
     updatePlaceholder();
@@ -1777,6 +1799,11 @@ function handleBlueTowerDragEnd(e) {
 
 // Remove blue tower marker
 function removeBlueTowerMarker(towerId) {
+    const tower = placedBlueTowers.find(t => t.id === towerId);
+    if (tower && window.recordMarkerAction && !window.isUndoRedo) {
+        window.recordMarkerAction({ kind: 'blue-tower', action: 'remove', id: towerId, x: tower.x, y: tower.y });
+    }
+
     const marker = mapArea.querySelector(`[data-tower-id="${towerId}"]`);
     if (marker) {
         marker.remove();
@@ -1787,8 +1814,8 @@ function removeBlueTowerMarker(towerId) {
 }
 
 // Place red tower marker
-function placeRedTowerMarker(x, y) {
-    const towerId = `red-tower-${Date.now()}`;
+function placeRedTowerMarker(x, y, existingId = null) {
+    const towerId = existingId || `red-tower-${Date.now()}`;
 
     const marker = document.createElement('div');
     marker.className = 'tower-marker red-tower';
@@ -1813,6 +1840,10 @@ function placeRedTowerMarker(x, y) {
         x: x,
         y: y
     });
+
+    if (window.recordMarkerAction && !window.isUndoRedo) {
+        window.recordMarkerAction({ kind: 'red-tower', action: 'place', id: towerId, x, y });
+    }
 
     savePositions();
     updatePlaceholder();
@@ -1846,6 +1877,11 @@ function handleRedTowerDragEnd(e) {
 
 // Remove red tower marker
 function removeRedTowerMarker(towerId) {
+    const tower = placedRedTowers.find(t => t.id === towerId);
+    if (tower && window.recordMarkerAction && !window.isUndoRedo) {
+        window.recordMarkerAction({ kind: 'red-tower', action: 'remove', id: towerId, x: tower.x, y: tower.y });
+    }
+
     const marker = mapArea.querySelector(`[data-tower-id="${towerId}"]`);
     if (marker) {
         marker.remove();
@@ -1857,8 +1893,8 @@ function removeRedTowerMarker(towerId) {
 
 // Place tree marker
 // Place blue tree marker
-function placeBlueTreeMarker(x, y) {
-    const treeId = `blue-tree-${Date.now()}`;
+function placeBlueTreeMarker(x, y, existingId = null) {
+    const treeId = existingId || `blue-tree-${Date.now()}`;
 
     const marker = document.createElement('div');
     marker.className = 'tree-marker blue-tree';
@@ -1883,6 +1919,10 @@ function placeBlueTreeMarker(x, y) {
         x: x,
         y: y
     });
+
+    if (window.recordMarkerAction && !window.isUndoRedo) {
+        window.recordMarkerAction({ kind: 'blue-tree', action: 'place', id: treeId, x, y });
+    }
 
     savePositions();
     updatePlaceholder();
@@ -1916,6 +1956,11 @@ function handleBlueTreeDragEnd(e) {
 
 // Remove blue tree marker
 function removeBlueTreeMarker(treeId) {
+    const tree = placedBlueTrees.find(t => t.id === treeId);
+    if (tree && window.recordMarkerAction && !window.isUndoRedo) {
+        window.recordMarkerAction({ kind: 'blue-tree', action: 'remove', id: treeId, x: tree.x, y: tree.y });
+    }
+
     const marker = mapArea.querySelector(`[data-tree-id="${treeId}"]`);
     if (marker) {
         marker.remove();
@@ -1926,8 +1971,8 @@ function removeBlueTreeMarker(treeId) {
 }
 
 // Place red tree marker
-function placeRedTreeMarker(x, y) {
-    const treeId = `red-tree-${Date.now()}`;
+function placeRedTreeMarker(x, y, existingId = null) {
+    const treeId = existingId || `red-tree-${Date.now()}`;
 
     const marker = document.createElement('div');
     marker.className = 'tree-marker red-tree';
@@ -1952,6 +1997,10 @@ function placeRedTreeMarker(x, y) {
         x: x,
         y: y
     });
+
+    if (window.recordMarkerAction && !window.isUndoRedo) {
+        window.recordMarkerAction({ kind: 'red-tree', action: 'place', id: treeId, x, y });
+    }
 
     savePositions();
     updatePlaceholder();
@@ -1985,6 +2034,11 @@ function handleRedTreeDragEnd(e) {
 
 // Remove red tree marker
 function removeRedTreeMarker(treeId) {
+    const tree = placedRedTrees.find(t => t.id === treeId);
+    if (tree && window.recordMarkerAction && !window.isUndoRedo) {
+        window.recordMarkerAction({ kind: 'red-tree', action: 'remove', id: treeId, x: tree.x, y: tree.y });
+    }
+
     const marker = mapArea.querySelector(`[data-tree-id="${treeId}"]`);
     if (marker) {
         marker.remove();
@@ -2049,8 +2103,8 @@ function toggleRedGooseMode() {
 }
 
 // Place blue goose marker
-function placeBlueGooseMarker(x, y) {
-    const gooseId = `blue-goose-${Date.now()}`;
+function placeBlueGooseMarker(x, y, existingId = null) {
+    const gooseId = existingId || `blue-goose-${Date.now()}`;
 
     const marker = document.createElement('div');
     marker.className = 'goose-marker blue-goose';
@@ -2075,6 +2129,10 @@ function placeBlueGooseMarker(x, y) {
         x: x,
         y: y
     });
+
+    if (window.recordMarkerAction && !window.isUndoRedo) {
+        window.recordMarkerAction({ kind: 'blue-goose', action: 'place', id: gooseId, x, y });
+    }
 
     savePositions();
     updatePlaceholder();
@@ -2106,6 +2164,11 @@ function handleBlueGooseDragEnd(e) {
 }
 
 function removeBlueGooseMarker(gooseId) {
+    const goose = placedBlueGeese.find(g => g.id === gooseId);
+    if (goose && window.recordMarkerAction && !window.isUndoRedo) {
+        window.recordMarkerAction({ kind: 'blue-goose', action: 'remove', id: gooseId, x: goose.x, y: goose.y });
+    }
+
     const marker = mapArea.querySelector(`[data-goose-id="${gooseId}"]`);
     if (marker) {
         marker.remove();
@@ -2116,8 +2179,8 @@ function removeBlueGooseMarker(gooseId) {
 }
 
 // Place red goose marker
-function placeRedGooseMarker(x, y) {
-    const gooseId = `red-goose-${Date.now()}`;
+function placeRedGooseMarker(x, y, existingId = null) {
+    const gooseId = existingId || `red-goose-${Date.now()}`;
 
     const marker = document.createElement('div');
     marker.className = 'goose-marker red-goose';
@@ -2142,6 +2205,10 @@ function placeRedGooseMarker(x, y) {
         x: x,
         y: y
     });
+
+    if (window.recordMarkerAction && !window.isUndoRedo) {
+        window.recordMarkerAction({ kind: 'red-goose', action: 'place', id: gooseId, x, y });
+    }
 
     savePositions();
     updatePlaceholder();
@@ -2173,6 +2240,11 @@ function handleRedGooseDragEnd(e) {
 }
 
 function removeRedGooseMarker(gooseId) {
+    const goose = placedRedGeese.find(g => g.id === gooseId);
+    if (goose && window.recordMarkerAction && !window.isUndoRedo) {
+        window.recordMarkerAction({ kind: 'red-goose', action: 'remove', id: gooseId, x: goose.x, y: goose.y });
+    }
+
     const marker = mapArea.querySelector(`[data-goose-id="${gooseId}"]`);
     if (marker) {
         marker.remove();
@@ -2206,8 +2278,8 @@ function addEnemies() {
 }
 
 // Place enemy group marker on map
-function placeEnemyGroup(x, y) {
-    const enemyGroupId = `enemy-group-${Date.now()}`;
+function placeEnemyGroup(x, y, existingId = null) {
+    const enemyGroupId = existingId || `enemy-group-${Date.now()}`;
 
     const marker = document.createElement('div');
     marker.className = 'group-marker enemy-group';
@@ -2236,6 +2308,10 @@ function placeEnemyGroup(x, y) {
         y: y,
         count: ENEMIES_PER_CLICK
     });
+
+    if (window.recordMarkerAction && !window.isUndoRedo) {
+        window.recordMarkerAction({ kind: 'enemy-group', action: 'place', id: enemyGroupId, x, y });
+    }
 
     savePositions();
     updatePlaceholder();
@@ -2269,6 +2345,11 @@ function handleEnemyGroupDragEnd(e) {
 
 // Remove enemy group
 function removeEnemyGroup(enemyGroupId) {
+    const enemy = placedEnemies.find(e => e.id === enemyGroupId);
+    if (enemy && window.recordMarkerAction && !window.isUndoRedo) {
+        window.recordMarkerAction({ kind: 'enemy-group', action: 'remove', id: enemyGroupId, x: enemy.x, y: enemy.y });
+    }
+
     const marker = mapArea.querySelector(`[data-enemy-group-id="${enemyGroupId}"]`);
     if (marker) {
         marker.remove();
@@ -2550,7 +2631,7 @@ async function clearAllDrawings() {
 }
 
 // Undo drawing
-function undoDrawing() {
+window.undoDrawing = function() {
     if (autoDeleteDrawings) {
         alert('Undo is not available when auto-delete is enabled. Please disable auto-delete first.');
         return;
@@ -2589,7 +2670,7 @@ function undoDrawing() {
 }
 
 // Redo drawing
-function redoDrawing() {
+window.redoDrawing = function() {
     if (autoDeleteDrawings) {
         alert('Redo is not available when auto-delete is enabled. Please disable auto-delete first.');
         return;
@@ -4072,18 +4153,24 @@ function setupClickOutsideHandler() {
 // Player Management Functions
 function setupPlayerManagementHandlers() {
     // Open player management modal
-    managePlayersBtn.addEventListener('click', openPlayerManagementModal);
+    if (managePlayersBtn) {
+        managePlayersBtn.addEventListener('click', openPlayerManagementModal);
+    }
 
     // Close modals
-    closeModalBtn.addEventListener('click', closePlayerManagementModal);
-    closeEditModalBtn.addEventListener('click', closePlayerEditModal);
+    if (closeModalBtn) {
+        closeModalBtn.addEventListener('click', closePlayerManagementModal);
+    }
+    if (closeEditModalBtn) {
+        closeEditModalBtn.addEventListener('click', closePlayerEditModal);
+    }
 
     // Close modal when clicking outside
     window.addEventListener('click', (e) => {
-        if (e.target === playerManagementModal) {
+        if (playerManagementModal && e.target === playerManagementModal) {
             closePlayerManagementModal();
         }
-        if (e.target === playerEditModal) {
+        if (playerEditModal && e.target === playerEditModal) {
             closePlayerEditModal();
         }
     });
@@ -4096,10 +4183,14 @@ function setupPlayerManagementHandlers() {
     }
 
     // Cancel edit button
-    cancelEditBtn.addEventListener('click', closePlayerEditModal);
+    if (cancelEditBtn) {
+        cancelEditBtn.addEventListener('click', closePlayerEditModal);
+    }
 
     // Form submission
-    playerEditForm.addEventListener('submit', handlePlayerFormSubmit);
+    if (playerEditForm) {
+        playerEditForm.addEventListener('submit', handlePlayerFormSubmit);
+    }
 }
 
 // ============================================================================
