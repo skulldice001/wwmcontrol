@@ -9,8 +9,8 @@ import 'datatables.net-responsive';
 import 'datatables.net-responsive-bs4';
 
 // Import Select2 synchronously
-import select2 from 'select2/dist/js/select2.full.min.js';
-select2(window.jQuery);
+import select2 from 'select2';
+select2();
 
 import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 import 'admin-lte/dist/js/adminlte.min.js';

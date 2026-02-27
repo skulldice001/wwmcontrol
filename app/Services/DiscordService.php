@@ -134,4 +134,36 @@ class DiscordService
 
         return [];
     }
+
+    /**
+     * Get the user's nickname in the guild.
+     *
+     * @param string $userId
+     * @return string|null
+     */
+    public function getGuildNickname(string $userId): ?string
+    {
+        if (!$this->botToken || !$this->guildId) {
+            return null;
+        }
+
+        try {
+            $response = Http::withHeaders([
+                'Authorization' => "Bot {$this->botToken}",
+            ])
+            ->withOptions([
+                'verify' => config('services.discord.guzzle.verify', true),
+            ])
+            ->get("https://discord.com/api/v10/guilds/{$this->guildId}/members/{$userId}");
+
+            if ($response->successful()) {
+                $member = $response->json();
+                return $member['nick'] ?? $member['user']['global_name'] ?? $member['user']['username'] ?? null;
+            }
+        } catch (\Exception $e) {
+            Log::error("Discord API error (nickname): {$e->getMessage()}");
+        }
+
+        return null;
+    }
 }

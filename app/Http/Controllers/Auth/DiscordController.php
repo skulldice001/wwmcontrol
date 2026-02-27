@@ -84,6 +84,10 @@ class DiscordController extends Controller
             return redirect()->route('home')->with('error', __('messages.discord_guild_required'));
         }
 
+        // Get Guild Nickname
+        $guildNickname = $discordService->getGuildNickname($discordUser->getId());
+        $nameToUse = $guildNickname ?: $discordUser->getName();
+
         $user = User::where('discord_id', $discordUser->getId())->first();
 
         // Ensure all inner ways exist in the database
@@ -128,7 +132,7 @@ class DiscordController extends Controller
             $user->innerWays()->sync($allInnerWayIds);
         } else {
             $user->update([
-                'name' => $discordUser->getName(),
+                'name' => $nameToUse,
                 'email' => $discordUser->getEmail(),
                 'discord_token' => $discordUser->token,
                 'discord_refresh_token' => $discordUser->refreshToken,
