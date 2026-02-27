@@ -31,6 +31,11 @@ class ListDiscordRoles extends Command
 
         $roles = $discordService->getRoles($userId);
 
+        if (is_null($roles)) {
+            $this->error("Failed to retrieve roles for user {$userId}. Check logs for details (likely 401/404 or config error).");
+            return;
+        }
+
         if (!empty($roles)) {
             $this->info("User {$userId} has the following roles:");
             foreach ($roles as $role) {
@@ -41,7 +46,7 @@ class ListDiscordRoles extends Command
                 }
             }
         } else {
-            $this->error("User {$userId} has no roles (or an error occurred).");
+            $this->info("User {$userId} has no roles.");
         }
     }
 }

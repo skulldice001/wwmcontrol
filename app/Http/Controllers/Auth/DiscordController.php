@@ -77,8 +77,16 @@ class DiscordController extends Controller
         $request->session()->regenerateToken();
 
         $roles = $discordService->getRoles($discordUser->getId());
+
+        if (is_null($roles)) {
+             \Log::error('Failed to retrieve roles for Discord user', [
+                'discord_id' => $discordUser->getId(),
+            ]);
+            return redirect()->route('home')->with('error', 'Unable to verify Discord server membership. Please ensure you have joined the required Discord server. If you are already a member, please contact the administrator.');
+        }
+
         if (empty($roles)) {
-            \Log::warning('Discord user is not in required guild', [
+            \Log::warning('Discord user has no roles in guild', [
                 'discord_id' => $discordUser->getId(),
             ]);
             return redirect()->route('home')->with('error', __('messages.discord_guild_required'));

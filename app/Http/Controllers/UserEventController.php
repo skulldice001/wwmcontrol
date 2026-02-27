@@ -6,6 +6,7 @@ use App\Models\Event;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use App\Constants\SkillRole;
 
 class UserEventController extends Controller
 {
@@ -27,6 +28,20 @@ class UserEventController extends Controller
 
                 if ($event->type === 'guild_war') {
                     $formation = $event->formation_data ?? null;
+
+                    // Check if user is placed on the map
+                    $placedMember = collect($formation['members'] ?? [])->firstWhere('memberId', $userId);
+                    $placedGroup = null;
+                    if (!$placedMember) {
+                        foreach ($formation['groups'] ?? [] as $group) {
+                            if (in_array($userId, $group['memberIds'] ?? [])) {
+                                $placedGroup = $group;
+                                break;
+                            }
+                        }
+                    }
+                    $event->is_placed_on_map = $placedMember || $placedGroup;
+
                     $roster = $formation['roster'] ?? null;
 
                     if ($roster && !empty($roster['assignments']) && !empty($roster['teams'])) {
@@ -97,5 +112,60 @@ class UserEventController extends Controller
         $event->participants()->detach($request->user()->id);
 
         return redirect()->back()->with('success', 'Đã hủy báo danh.');
+    }
+
+    public function map(Request $request, Event $event)
+    {
+        if ($event->type !== 'guild_war') {
+            return redirect()->route('events.index')->with('error', 'Chỉ có Bang chiến mới có bản đồ.');
+        }
+
+        // Ensure formation data exists
+        if (empty($event->formation_data)) {
+            return redirect()->route('events.index')->with('error', 'Chưa có dữ liệu đội hình cho sự kiện này.');
+        }
+
+        $userId = $request->user()->id;
+        $formation = $event->formation_data;
+
+        // Check if user is placed on the map
+        $placedMember = collect($formation['members'] ?? [])->firstWhere('memberId', $userId);
+        $placedGroup = null;
+
+        if (!$placedMember) {
+            foreach ($formation['groups'] ?? [] as $group) {
+                if (in_array($userId, $group['memberIds'] ?? [])) {
+                    $placedGroup = $group;
+                    break;
+                }
+            }
+        }
+
+        if (!$placedMember && !$placedGroup) {
+            return redirect()->route('events.index')->with('error', 'Bạn chưa được sắp xếp vị trí trên bản đồ.');
+        }
+
+        // Determine position
+        $userPosition = $placedMember ? 
+            ['x' => $placedMember['x'], 'y' => $placedMember['y']] : 
+            ['x' => $placedGroup['x'], 'y' => $placedGroup['y']];
+
+        // Determine team info
+        $roster = $formation['roster'] ?? [];
+        $teamId = $roster['assignments'][$userId] ?? null;
+        $team = null;
+        if ($teamId) {
+             $team = collect($roster['teams'] ?? [])->firstWhere('id', $teamId);
+        }
+        
+        $teamName = $team['name'] ?? 'Unknown Team';
+        $captainName = 'Unknown';
+        
+        if (!empty($team['captainId'])) {
+             $captain = User::find($team['captainId']);
+             $captainName = $captain ? ($captain->ingame_name ?? $captain->name) : 'Unknown';
+        }
+
+        return view('events.personal_map', compact('event', 'userPosition', 'teamName', 'captainName'));
     }
 }

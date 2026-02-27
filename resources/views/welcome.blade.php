@@ -49,6 +49,19 @@
 
 <div class="welcome-box">
     <h1 class="mb-4">{{ config('app.name') }}</h1>
+    
+    @if (session('error'))
+        <div class="alert alert-danger mb-4" role="alert" style="color: #721c24; background-color: #f8d7da; border-color: #f5c6cb; padding: .75rem 1.25rem; border: 1px solid transparent; border-radius: .25rem;">
+            {{ session('error') }}
+        </div>
+    @endif
+
+    @if (session('success'))
+        <div class="alert alert-success mb-4" role="alert" style="color: #155724; background-color: #d4edda; border-color: #c3e6cb; padding: .75rem 1.25rem; border: 1px solid transparent; border-radius: .25rem;">
+            {{ session('success') }}
+        </div>
+    @endif
+
     <p class="mb-4">{{ __('messages.welcome_message') }}</p>
     
     @if(Auth::check())

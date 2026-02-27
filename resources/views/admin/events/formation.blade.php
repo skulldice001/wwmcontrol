@@ -3,137 +3,211 @@
 @section('title', __('messages.sort_formation') . ' - ' . $event->name)
 
 @push('styles')
-<link rel="stylesheet" href="{{ asset('assets/guild_war/css/style.css') }}">
-<link rel="stylesheet" href="{{ asset('assets/guild_war/css/formation.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/guild_war/css/formation.css') }}">
+    <style>
+        /* OpenSeadragon container styles */
+        #openseadragon-viewer {
+            width: 100%;
+            height: 100%;
+            background-color: #2c3e50;
+            border: 3px dashed #34495e;
+            border-radius: 8px;
+            position: relative; /* For absolute positioned overlays if needed */
+        }
+        
+        /* Ensure markers are visible on top of OSD */
+        .member-marker, .group-marker, .objective-marker, .boss-marker, .tower-marker, .tree-marker, .enemy-marker, .marker-tooltip {
+            z-index: 100; /* OSD overlays usually handle z-index, but this helps if we use custom overlays */
+            position: absolute; /* OSD expects absolute positioning for overlays */
+            transform: translate(-50%, -50%); /* Center the marker on the coordinate */
+        }
+        
+        /* Hide the old static map background if it was on a wrapper */
+        .map-area {
+            background: none !important;
+            border: none !important;
+        }
+    </style>
 @endpush
 
 @section('content')
 <div class="guild-war-app">
-    <div class="app-header d-flex flex-column flex-lg-row justify-content-between align-items-center mb-3 p-3 bg-white shadow-sm rounded">
-        <div class="mb-2 mb-lg-0 text-center text-lg-left">
-            <h1 class="h4 mb-0 font-weight-bold" style="color: #4a5568;">{{ __('messages.guild_war_strategy_title') }}</h1>
-            <small class="text-muted">{{ __('messages.guild_war_strategy_subtitle') }}</small>
-        </div>
-        <div class="header-controls d-flex flex-wrap justify-content-center align-items-center">
-            <div class="mr-3 d-flex align-items-center mb-2 mb-md-0">
-                <input type="text" id="formationNameInput" class="form-control form-control-sm mr-2" placeholder="{{ __('messages.formation_name_placeholder') }}" title="{{ __('messages.formation_name_tooltip') }}">
-                <select id="loadFormationSelect" class="form-control form-control-sm" style="width: 200px;" title="{{ __('messages.load_formation_tooltip') }}">
-                    <option value="">{{ __('messages.load_formation_placeholder') }}</option>
-                </select>
-            </div>
-            <button id="saveFormationBtn" class="btn btn-sm btn-success mr-2">
-                <i class="fas fa-save"></i> {{ __('messages.save') }}
+    <!-- Top Toolbar -->
+    <div class="map-toolbar">
+        <div class="toolbar-group">
+            <button id="menuBtn" class="btn btn-outline-secondary d-md-none">
+                <i class="fas fa-bars"></i>
             </button>
-            <a href="{{ route('admin.events.index') }}" class="btn btn-sm btn-outline-secondary mr-2">
-                <i class="fas fa-arrow-left"></i> {{ __('messages.back_to_events') }}
-            </a>
-            <div class="menu-dropdown position-relative">
-                <button id="menuBtn" class="btn btn-outline-primary btn-sm rounded-circle" style="width: 32px; height: 32px; padding: 0;"><i class="fas fa-bars"></i></button>
-                <div id="menuContent" class="menu-content position-absolute bg-white shadow rounded p-2 mt-1" style="display: none; right: 0; min-width: 200px; z-index: 1000;">
-                    <button id="themeToggleBtn" class="btn btn-block btn-sm btn-light text-left mb-1">
-                        <i class="fas fa-adjust"></i> {{ __('messages.toggle_theme') }}
-                    </button>
-                    <button id="hotKeyBtn" class="btn btn-block btn-sm btn-light text-left">
-                        <i class="fas fa-keyboard"></i> {{ __('messages.keyboard_shortcuts') }}
-                    </button>
+            <h5 class="m-0 d-none d-md-block">{{ $event->title }}</h5>
+        </div>
+        
+        <div class="toolbar-divider"></div>
+        
+        <div class="toolbar-group">
+            <button id="saveFormationBtn" class="btn btn-primary">
+                <i class="fas fa-save"></i> <span class="d-none d-sm-inline">Save</span>
+            </button>
+            <button id="clearMapBtn" class="btn btn-danger">
+                <i class="fas fa-trash"></i> <span class="d-none d-sm-inline">Clear Map</span>
+            </button>
+            <div class="dropdown d-inline-block">
+                <button class="btn btn-secondary dropdown-toggle" type="button" id="moreActionsDropdown" data-toggle="dropdown">
+                    <i class="fas fa-ellipsis-v"></i>
+                </button>
+                <div class="dropdown-menu">
+                    <a class="dropdown-item" href="#" id="exportBtn"><i class="fas fa-file-export"></i> Export JSON</a>
+                    <a class="dropdown-item" href="#" id="importBtn"><i class="fas fa-file-import"></i> Import JSON</a>
+                    <div class="dropdown-divider"></div>
+                    <a class="dropdown-item" href="#" id="hotKeyBtn"><i class="fas fa-keyboard"></i> Shortcuts</a>
+                    <a class="dropdown-item" href="#" id="themeToggleBtn"><i class="fas fa-adjust"></i> Toggle Theme</a>
                 </div>
             </div>
+            <input type="file" id="importFileInput" style="display: none;" accept=".json">
+        </div>
+
+        <div class="toolbar-divider"></div>
+
+        <div class="toolbar-group stats-group">
+            <span id="playerCount" class="badge badge-info" title="Total Members">0/0</span>
+            <span id="placedCount" class="badge badge-success" title="Placed on Map">0/0</span>
+            <span id="enemyCount" class="badge badge-danger" title="Enemies">0</span>
         </div>
     </div>
 
     <div class="main-content">
-        <!-- Member Panel -->
+        <!-- Left Panel: Member List -->
         <div class="member-panel">
-            <h2>
-                {{ __('messages.guild_members') }} <span id="playerCount" class="badge badge-light ml-2" style="font-size: 0.8rem;">0/30</span>
-                <button id="managePlayersBtn" class="btn btn-sm btn-outline-primary" title="Xếp Team">
-                    {{ __('messages.assign_team') }}
-                </button>
-            </h2>
-
-            <div class="enemy-section mb-3">
-                <button id="addEnemiesBtn" class="add-enemies-btn">
-                    <i class="fas fa-swords"></i> {{ __('messages.add_enemies') }} (<span id="enemyCount">0</span>/30)
-                </button>
+            <div class="panel-header">
+                <div class="search-box">
+                    <input type="text" id="searchInput" placeholder="Search members...">
+                </div>
+                <div class="filter-controls">
+                    <div class="btn-group btn-group-sm">
+                        <button class="btn btn-outline-secondary active view-toggle-btn" data-view="grouped" title="Group by Team"><i class="fas fa-users"></i></button>
+                        <button class="btn btn-outline-secondary view-toggle-btn" data-view="list" title="List View"><i class="fas fa-list"></i></button>
+                    </div>
+                </div>
             </div>
-
-            <div class="search-box">
-                <input type="text" id="searchInput" placeholder="{{ __('messages.search_players') }}">
-            </div>
-
-            <div class="view-toggle">
-                <button class="view-toggle-btn active" data-view="grouped">{{ __('messages.view_grouped_by_team') }}</button>
-                <button class="view-toggle-btn" data-view="list">{{ __('messages.view_all_players') }}</button>
-            </div>
-
+            
             <div class="role-filters">
-                <button class="role-filter-btn active" data-role="all">{{ __('messages.all_roles') }}</button>
-                <button class="role-filter-btn" data-role="Tank">{{ __('messages.role_tank') }}</button>
-                <button class="role-filter-btn" data-role="DPS">{{ __('messages.role_dps') }}</button>
-                <button class="role-filter-btn" data-role="Healer">{{ __('messages.role_healer') }}</button>
-                <button class="role-filter-btn" data-role="Unknown">{{ __('messages.role_unknown') }}</button>
+                <button class="role-filter-btn active" data-role="all">All</button>
+                <button class="role-filter-btn" data-role="Tank">Tank</button>
+                <button class="role-filter-btn" data-role="DPS">DPS</button>
+                <button class="role-filter-btn" data-role="Healer">Healer</button>
+                <button class="role-filter-btn" data-role="Support">Support</button>
             </div>
 
             <div id="memberList" class="member-list">
-                <!-- Populated by JS -->
+                <!-- Members will be populated here -->
             </div>
-
-            <!-- Footer Stats/Export -->
-            <div class="panel-footer mt-auto pt-3 border-top">
-                <div class="d-flex justify-content-between mb-2">
-                    <small>{{ __('messages.placed_label') }} <span id="placedCount">0</span></small>
-                </div>
-                <div class="d-flex gap-2">
-                     <button id="exportBtn" class="btn btn-primary btn-sm flex-fill mr-1"><i class="fas fa-file-export"></i> {{ __('messages.export') }}</button>
-                     <button id="importBtn" class="btn btn-info btn-sm flex-fill ml-1"><i class="fas fa-file-import"></i> {{ __('messages.import') }}</button>
-                     <input type="file" id="importFileInput" style="display:none">
-                </div>
-                <div class="mt-2">
-                    <button id="saveFormationBtnBottom" class="btn btn-success btn-sm btn-block"><i class="fas fa-save"></i> {{ __('messages.save_formation') }}</button>
-                </div>
+            
+            <div class="panel-footer">
+                <button id="managePlayersBtn" class="btn btn-sm btn-outline-primary w-100">
+                    <i class="fas fa-users-cog"></i> Manage Players
+                </button>
             </div>
         </div>
 
-        <!-- Map Area -->
+        <!-- Right Panel: Map -->
         <div class="map-container">
-            <div id="mapArea" class="map-area" style="flex: 1; width: 100%; position: relative; overflow: hidden; border-radius: 8px; border: 1px solid #eee;">
-                <canvas id="drawingCanvas" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10;"></canvas>
+            <!-- OpenSeadragon Viewer Container -->
+            <!-- Note: We keep id="mapArea" wrapper for layout but the actual OSD will be inside or replace it -->
+            <!-- Actually, app.js expects mapArea to be the drop target. 
+                 We will make mapArea the OSD container. -->
+            <div id="mapArea" class="map-area">
+                <!-- OSD will inject content here -->
+                <div id="openseadragon-viewer"></div>
+                
+                <!-- Placeholder for empty map -->
+                <div class="map-placeholder" style="display: none; pointer-events: none; z-index: 0;">
+                    <i class="fas fa-map-marked-alt fa-3x mb-3 text-muted"></i>
+                    <p class="text-muted">Drag members or objects here</p>
+                </div>
+                
+                <!-- Canvas for drawings (might need rework for OSD) -->
+                <canvas id="drawingCanvas" class="drawing-canvas" style="display: none;"></canvas>
             </div>
 
-            <!-- Bottom Toolbar -->
-            <div class="map-toolbar mt-3">
-                <button id="addObjectiveBtn" class="toolbar-btn" title="{{ __('messages.objective') }}" draggable="true" data-type="objective"><i class="fas fa-bullseye" style="color: #e74c3c;"></i></button>
-                <div class="toolbar-divider"></div>
-
-                <button id="addBossBtn" class="toolbar-btn" title="{{ __('messages.boss') }}" draggable="true" data-type="boss"><img src="{{ asset('assets/guild_war/images/boss.png') }}" alt="{{ __('messages.boss') }}" class="btn-icon-img"></button>
-                <div class="toolbar-divider"></div>
-
-                <button id="addBlueTowerBtn" class="toolbar-btn" title="{{ __('messages.blue_tower') }}" draggable="true" data-type="blue-tower"><img src="{{ asset('assets/guild_war/images/tower_blue.png') }}" alt="{{ __('messages.blue_tower') }}" class="btn-icon-img"></button>
-                <button id="addRedTowerBtn" class="toolbar-btn" title="{{ __('messages.red_tower') }}" draggable="true" data-type="red-tower"><img src="{{ asset('assets/guild_war/images/tower_red.png') }}" alt="{{ __('messages.red_tower') }}" class="btn-icon-img"></button>
-
-                <button id="addBlueTreeBtn" class="toolbar-btn" title="{{ __('messages.blue_tree') }}" draggable="true" data-type="blue-tree"><img src="{{ asset('assets/guild_war/images/tree_blue.png') }}" alt="{{ __('messages.blue_tree') }}" class="btn-icon-img"></button>
-                <button id="addRedTreeBtn" class="toolbar-btn" title="{{ __('messages.red_tree') }}" draggable="true" data-type="red-tree"><img src="{{ asset('assets/guild_war/images/tree_red.png') }}" alt="{{ __('messages.red_tree') }}" class="btn-icon-img"></button>
-
-                <button id="addBlueGooseBtn" class="toolbar-btn" title="{{ __('messages.blue_goose') }}" draggable="true" data-type="blue-goose"><img src="{{ asset('assets/guild_war/images/goose_blue.png') }}" alt="{{ __('messages.blue_goose') }}" class="btn-icon-img"></button>
-                <button id="addRedGooseBtn" class="toolbar-btn" title="{{ __('messages.red_goose') }}" draggable="true" data-type="red-goose"><img src="{{ asset('assets/guild_war/images/goose_red.png') }}" alt="{{ __('messages.red_goose') }}" class="btn-icon-img"></button>
-
-                <div class="toolbar-divider"></div>
-
-                <!-- Drawing Tools -->
-                <button id="drawBtn" class="toolbar-btn" title="{{ __('messages.draw') }}"><i class="fas fa-pencil-alt"></i></button>
-                <input type="color" id="drawColorPicker" value="#ff0000" style="width: 30px; height: 30px; border: none; background: none; padding: 0;">
-                <button id="undoDrawBtn" class="toolbar-btn" title="{{ __('messages.undo') }}"><i class="fas fa-undo"></i></button>
-                <button id="redoDrawBtn" class="toolbar-btn" title="{{ __('messages.redo') }}"><i class="fas fa-redo"></i></button>
-                <button id="clearDrawBtn" class="toolbar-btn" title="{{ __('messages.clear_drawings') }}"><i class="fas fa-eraser"></i></button>
-
-                <div class="ml-2 d-flex align-items-center">
-                    <div class="custom-control custom-switch">
-                        <input type="checkbox" class="custom-control-input" id="autoDeleteToggle">
-                        <label class="custom-control-label small" for="autoDeleteToggle">{{ __('messages.auto_delete') }}</label>
+            <!-- Map Tools (Bottom) -->
+            <div class="map-tools">
+                <!-- Placing Tools -->
+                <div class="tools-section">
+                    <div class="tool-label">Objects</div>
+                    <div class="tool-buttons">
+                        <button class="toolbar-btn" id="addObjectiveBtn" title="Objective (O)">
+                            <i class="fas fa-flag"></i>
+                        </button>
+                        <button class="toolbar-btn" id="addBossBtn" title="Boss (B)">
+                            <i class="fas fa-skull"></i>
+                        </button>
+                        <button class="toolbar-btn" id="addBlueTowerBtn" title="Blue Tower (1)">
+                            <span class="icon-text" style="color: #3498db;">T</span>
+                        </button>
+                        <button class="toolbar-btn" id="addRedTowerBtn" title="Red Tower (2)">
+                            <span class="icon-text" style="color: #e74c3c;">T</span>
+                        </button>
+                        <button class="toolbar-btn" id="addBlueTreeBtn" title="Blue Tree (3)">
+                            <span class="icon-text" style="color: #3498db;">Tr</span>
+                        </button>
+                        <button class="toolbar-btn" id="addRedTreeBtn" title="Red Tree (4)">
+                            <span class="icon-text" style="color: #e74c3c;">Tr</span>
+                        </button>
+                         <button class="toolbar-btn" id="addBlueGooseBtn" title="Blue Goose (5)">
+                            <span class="icon-text" style="color: #3498db;">G</span>
+                        </button>
+                        <button class="toolbar-btn" id="addRedGooseBtn" title="Red Goose (6)">
+                            <span class="icon-text" style="color: #e74c3c;">G</span>
+                        </button>
+                        <button class="toolbar-btn" id="addEnemiesBtn" title="Add 5 Enemies">
+                            <i class="fas fa-user-ninja"></i>
+                        </button>
                     </div>
                 </div>
 
-                <button id="clearMapBtn" class="toolbar-btn ml-auto text-danger" title="{{ __('messages.clear_map') }}"><i class="fas fa-times"></i></button>
+                <!-- Drawing Tools -->
+                <div class="tools-section">
+                    <div class="tool-label">Draw</div>
+                    <div class="tool-buttons">
+                        <button class="toolbar-btn" id="drawBtn" title="Draw Mode">
+                            <i class="fas fa-pencil-alt"></i>
+                        </button>
+                        <input type="color" id="drawColorPicker" value="#ff0000" title="Color">
+                        <button class="toolbar-btn" id="undoDrawBtn" title="Undo (Ctrl+Z)" disabled>
+                            <i class="fas fa-undo"></i>
+                        </button>
+                        <button class="toolbar-btn" id="redoDrawBtn" title="Redo (Ctrl+Y)" disabled>
+                            <i class="fas fa-redo"></i>
+                        </button>
+                        <button class="toolbar-btn" id="clearDrawBtn" title="Clear Drawings">
+                            <i class="fas fa-eraser"></i>
+                        </button>
+                    </div>
+                    <div class="toggle-wrapper ml-2">
+                        <label class="toggle-label" title="Auto-delete drawings after 10s">
+                            <input type="checkbox" id="autoDeleteToggle">
+                            <div class="toggle-slider"></div>
+                            <span class="toggle-text">Auto-del</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="tools-section ml-auto">
+                    <button id="saveFormationBtnBottom" class="btn btn-primary btn-sm">
+                        <i class="fas fa-save"></i> Save Formation
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Formation Loader -->
+            <div class="formation-loader mt-2">
+                 <div class="input-group input-group-sm">
+                    <div class="input-group-prepend">
+                        <span class="input-group-text">Load from Event:</span>
+                    </div>
+                    <select class="form-control" id="loadFormationSelect">
+                        <option value="">-- Select Past Event --</option>
+                    </select>
+                </div>
             </div>
         </div>
     </div>
@@ -233,6 +307,11 @@
         'Healer': "{{ __('messages.role_healer') }}",
         'Unknown': "{{ __('messages.role_unknown') }}"
     };
+    window.mapImageUrl = "{{ asset('assets/guild_war/images/map.png') }}";
+    window.openseadragonImagesPath = "{{ asset('assets/openseadragon/openseadragon-bin-4.1.0/images/') }}/";
 </script>
-<script src="{{ asset('assets/guild_war/js/app.js') }}?v={{ time() }}"></script>
+    <!-- OpenSeadragon (Local) -->
+    <script src="{{ asset('assets/openseadragon/openseadragon-bin-4.1.0/openseadragon.min.js') }}"></script>
+    <!-- App Logic -->
+    <script src="{{ asset('assets/guild_war/js/app.js') }}?v={{ time() }}"></script>
 @endpush

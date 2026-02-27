@@ -83,6 +83,11 @@
                             </div>
                         @endif
                     </div>
+                    @if($event->is_placed_on_map)
+                        <a href="{{ route('events.map', $event->id) }}" class="btn btn-info btn-block mb-2">
+                            <i class="fas fa-map-marked-alt"></i> {{ __('messages.view_starting_position') }}
+                        </a>
+                    @endif
                     @if($event->status == 'upcoming')
                         <form action="{{ route('events.unregister', $event->id) }}" method="POST" class="d-inline">
                             @csrf

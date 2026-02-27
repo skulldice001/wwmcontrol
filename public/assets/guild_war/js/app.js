@@ -2,6 +2,7 @@
 // APPLICATION STATE & CONFIGURATION
 // ============================================================================
 
+let viewer = null; // OpenSeadragon viewer instance
 let members = window.initialMembers || [];
 
 // Placed items on map
@@ -369,8 +370,113 @@ function initializeDOM() {
     loadFormationSelect = document.getElementById('loadFormationSelect');
 }
 
+// ============================================================================
+// OPENSEADRAGON HELPERS
+// ============================================================================
+
+function initOpenSeadragon() {
+    if (!document.getElementById('openseadragon-viewer')) return;
+
+    // Use passed variables or defaults
+    const imagePath = window.mapImageUrl || "/assets/guild_war/images/map.png";
+    const prefixUrl = window.openseadragonImagesPath || "/assets/openseadragon/images/";
+
+    viewer = OpenSeadragon({
+        id: "openseadragon-viewer",
+        prefixUrl: prefixUrl,
+        tileSources: {
+            type: 'image',
+            url: imagePath
+        },
+        showNavigator: true,
+        defaultZoomLevel: 0, // Fit to screen
+        minZoomLevel: 0.1,
+        maxZoomLevel: 10,
+        visibilityRatio: 0.5,
+        constrainDuringPan: true,
+        gestureSettingsMouse: {
+            clickToZoom: false // Disable click to zoom to allow placing markers
+        }
+    });
+
+    viewer.addHandler('open', function() {
+        // Initial render or other setup
+        // Force a re-render of map elements now that viewer is ready
+        renderMap();
+    });
+
+    // Handle click on OSD (for placing objects)
+    viewer.addHandler('canvas-click', function(event) {
+        if (!event.quick) return;
+        
+        // Don't trigger if we clicked on an overlay (marker)
+        // OSD handles this check internally usually, but let's be safe
+        // Actually, if we click an overlay, the overlay's click handler fires first
+        // But we need to check if placingMode is active
+        
+        const viewportPoint = viewer.viewport.pointFromPixel(event.position);
+        const imagePoint = viewer.viewport.viewportToImageCoordinates(viewportPoint);
+        
+        handleMapClickOSD(imagePoint.x, imagePoint.y);
+    });
+}
+
+// Convert client coordinates (from drag events) to OSD Image Coordinates
+function getOSDImageCoordinates(clientX, clientY) {
+    if (!viewer) return { x: 0, y: 0 };
+    const point = viewer.viewport.pointFromPixel(new OpenSeadragon.Point(clientX, clientY));
+    const imagePoint = viewer.viewport.viewportToImageCoordinates(point);
+    return { x: imagePoint.x, y: imagePoint.y };
+}
+
+// Helper to add or update an overlay on OSD
+function addOverlayToOSD(element, x, y) {
+    if (!viewer) return;
+    
+    // Check if overlay already exists
+    const existingOverlay = viewer.getOverlayById(element);
+    
+    const imagePoint = new OpenSeadragon.Point(x, y);
+    const viewportPoint = viewer.viewport.imageToViewportCoordinates(imagePoint);
+    
+    if (existingOverlay) {
+        existingOverlay.update(viewportPoint);
+    } else {
+        viewer.addOverlay({
+            element: element,
+            location: viewportPoint,
+            checkResize: false // optimization
+        });
+    }
+}
+
+// Wrapper for handleMapClick that uses image coordinates
+function handleMapClickOSD(x, y) {
+    if (!placingMode) return;
+
+    if (placingMode === 'objective') {
+        placeObjectiveMarker(x, y);
+    } else if (placingMode === 'boss') {
+        placeBossMarker(x, y);
+    } else if (placingMode === 'blue-tower') {
+        placeBlueTowerMarker(x, y);
+    } else if (placingMode === 'red-tower') {
+        placeRedTowerMarker(x, y);
+    } else if (placingMode === 'blue-tree') {
+        placeBlueTreeMarker(x, y);
+    } else if (placingMode === 'red-tree') {
+        placeRedTreeMarker(x, y);
+    } else if (placingMode === 'blue-goose') {
+        placeBlueGooseMarker(x, y);
+    } else if (placingMode === 'red-goose') {
+        placeRedGooseMarker(x, y);
+    }
+}
+
+
 function init() {
     initializeDOM();
+    initOpenSeadragon(); // Initialize OSD before other handlers
     loadPlayersFromStorage();
     loadTeamNames();
     loadThemePreference();
@@ -963,7 +1069,7 @@ function handleTeamDragStart(e) {
     e.dataTransfer.effectAllowed = 'copy';
     const dragData = {
         type: 'team',
-        data: e.currentTarget.dataset.teamName
+        data: e.currentTarget.dataset.teamId
     };
     e.dataTransfer.setData('text/plain', JSON.stringify(dragData));
 }
@@ -1009,9 +1115,8 @@ function handleDrop(e) {
 
     const { type, data } = dragData;
 
-    const rect = mapArea.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    // Use OSD Image Coordinates
+    const { x, y } = getOSDImageCoordinates(e.clientX, e.clientY);
 
     if (type === 'toolbar-item') {
         const itemType = data;
@@ -1026,9 +1131,10 @@ function handleDrop(e) {
     } else if (type === 'team') {
         // Dropping a team group
         const teamName = data;
-        // Adjust position to top-right of cursor for better visibility
-        const adjustedX = x + 21; // 16px radius + 5px offset
-        const adjustedY = y - 21;
+        // Adjust position slightly for better visibility (in image coordinates)
+        // 20 pixels in image coordinates might be different, but let's keep logic
+        const adjustedX = x + 20; 
+        const adjustedY = y - 20;
         placeTeamGroupOnMap(teamName, adjustedX, adjustedY);
     } else if (type === 'member') {
         // Dropping individual member
@@ -1065,8 +1171,7 @@ function handleDrop(e) {
             placedMember.y = y;
             const marker = mapArea.querySelector(`[data-member-id="${memberId}"]`);
             if (marker) {
-                marker.style.left = `${x - 20}px`;
-                marker.style.top = `${y - 20}px`;
+               addOverlayToOSD(marker, x, y);
             }
             savePositions();
         }
@@ -1078,8 +1183,7 @@ function handleDrop(e) {
             placement.y = y;
             const marker = mapArea.querySelector(`[data-member-id="${memberId}"]`);
             if (marker) {
-                marker.style.left = `${x - 8}px`; // Center 16px
-                marker.style.top = `${y - 8}px`;
+                addOverlayToOSD(marker, x, y);
             }
             savePositions();
         }
@@ -1091,8 +1195,7 @@ function handleDrop(e) {
             group.y = y;
             const marker = mapArea.querySelector(`[data-group-id="${groupId}"]`);
             if (marker) {
-                marker.style.left = `${x - 16}px`; // Center 32px
-                marker.style.top = `${y - 16}px`;
+                addOverlayToOSD(marker, x, y);
                 updateGroupMarker(marker, group);
                 checkAndMergeNearbyGroups(group);
             }
@@ -1132,24 +1235,25 @@ function getTotalPlacedPlayers() {
 // ============================================================================
 
 // Place team group on map
-function placeTeamGroupOnMap(teamName, x, y) {
-    const teamMembers = members.filter(m => m.team === teamName && !isPlayerPlaced(m.id));
+function placeTeamGroupOnMap(teamId, x, y) {
+    const teamMembers = members.filter(m => m.team === teamId && !isPlayerPlaced(m.id));
+    const teamDisplayName = getTeamDisplayName(teamId);
 
     if (teamMembers.length === 0) {
-        alert(`All players from ${teamName} are already placed on the map!`);
+        alert(`All players from ${teamDisplayName} are already placed on the map!`);
         return;
     }
 
     // Check if any member is already placed (shouldn't happen but double check)
     const alreadyPlaced = teamMembers.filter(m => isPlayerPlaced(m.id));
     if (alreadyPlaced.length > 0) {
-        alert(`Some players from ${teamName} are already placed on the map!`);
+        alert(`Some players from ${teamDisplayName} are already placed on the map!`);
         return;
     }
 
     // Check max players limit
     if (getTotalPlacedPlayers() + teamMembers.length > MAX_PLAYERS) {
-        alert(`Cannot place ${teamName}: would exceed maximum ${MAX_PLAYERS} players!`);
+        alert(`Cannot place ${teamDisplayName}: would exceed maximum ${MAX_PLAYERS} players!`);
         return;
     }
 
@@ -1158,10 +1262,10 @@ function placeTeamGroupOnMap(teamName, x, y) {
 
     if (nearbyGroup) {
         // Merge with nearby group
-        mergeGroups(nearbyGroup, teamName, teamMembers);
+        mergeGroups(nearbyGroup, teamId, teamMembers);
     } else {
         // Create new group
-        createNewGroup(teamName, teamMembers, x, y);
+        createNewGroup(teamId, teamMembers, x, y);
     }
 
     renderMemberList(); // Re-render to hide placed members
@@ -1228,8 +1332,7 @@ function renderGroupMarker(group) {
     const marker = document.createElement('div');
     marker.className = 'group-marker';
     marker.dataset.groupId = group.id;
-    marker.style.left = `${group.x - 16}px`; // Center the 32px marker
-    marker.style.top = `${group.y - 16}px`;
+    // marker.style.left/top removed for OSD
     marker.draggable = true;
 
     updateGroupMarker(marker, group);
@@ -1238,7 +1341,8 @@ function renderGroupMarker(group) {
     marker.addEventListener('dragstart', handleGroupMarkerDragStart);
     marker.addEventListener('dragend', handleGroupMarkerDragEnd);
 
-    mapArea.appendChild(marker);
+    // Add to OSD
+    addOverlayToOSD(marker, group.x, group.y);
 }
 
 // Update group marker content
@@ -1587,8 +1691,7 @@ function placeObjectiveMarker(x, y) {
     const marker = document.createElement('div');
     marker.className = 'objective-marker';
     marker.dataset.objectiveId = objectiveId;
-    marker.style.left = `${x - 12}px`; // Center the 24px marker
-    marker.style.top = `${y - 12}px`;
+    // marker.style.left/top removed for OSD
     marker.draggable = true;
 
     marker.innerHTML = `
@@ -1598,7 +1701,7 @@ function placeObjectiveMarker(x, y) {
     marker.addEventListener('dragstart', handleObjectiveDragStart);
     marker.addEventListener('dragend', handleObjectiveDragEnd);
 
-    mapArea.appendChild(marker);
+    addOverlayToOSD(marker, x, y);
 
     placedObjectives.push({
         id: objectiveId,
@@ -1617,8 +1720,7 @@ function placeBossMarker(x, y) {
     const marker = document.createElement('div');
     marker.className = 'boss-marker';
     marker.dataset.bossId = bossId;
-    marker.style.left = `${x - 28}px`; // Center the 56px image
-    marker.style.top = `${y - 28}px`;
+    // marker.style.left/top removed for OSD
     marker.draggable = true;
 
     marker.innerHTML = `
@@ -1629,7 +1731,7 @@ function placeBossMarker(x, y) {
     marker.addEventListener('dragstart', handleBossDragStart);
     marker.addEventListener('dragend', handleBossDragEnd);
 
-    mapArea.appendChild(marker);
+    addOverlayToOSD(marker, x, y);
 
     placedBosses.push({
         id: bossId,
@@ -1723,8 +1825,7 @@ function placeBlueTowerMarker(x, y) {
     marker.className = 'tower-marker blue-tower';
     marker.dataset.towerId = towerId;
     marker.dataset.towerType = 'blue';
-    marker.style.left = `${x - 28}px`; // Center the 56px image
-    marker.style.top = `${y - 28}px`;
+    // marker.style.left/top removed for OSD
     marker.draggable = true;
 
     marker.innerHTML = `
@@ -1735,7 +1836,7 @@ function placeBlueTowerMarker(x, y) {
     marker.addEventListener('dragstart', handleBlueTowerDragStart);
     marker.addEventListener('dragend', handleBlueTowerDragEnd);
 
-    mapArea.appendChild(marker);
+    addOverlayToOSD(marker, x, y);
 
     placedBlueTowers.push({
         id: towerId,
@@ -1759,16 +1860,23 @@ function handleBlueTowerDragEnd(e) {
     e.currentTarget.style.opacity = '1';
 
     const towerId = e.currentTarget.dataset.towerId;
-    const rect = mapArea.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    const coords = getOSDImageCoordinates(e.clientX, e.clientY);
 
     const tower = placedBlueTowers.find(t => t.id === towerId);
     if (tower) {
-        tower.x = x;
-        tower.y = y;
-        e.currentTarget.style.left = `${x - 28}px`; // Center the 56px image
-        e.currentTarget.style.top = `${y - 28}px`;
+        tower.x = coords.x;
+        tower.y = coords.y;
+        
+        // Update OSD overlay position
+        const overlay = viewer.getOverlayById(e.currentTarget);
+        if (overlay) {
+            overlay.update(new OpenSeadragon.Point(coords.x, coords.y));
+        } else {
+             // Fallback if overlay reference is lost (shouldn't happen)
+             viewer.removeOverlay(e.currentTarget);
+             addOverlayToOSD(e.currentTarget, coords.x, coords.y);
+        }
+        
         savePositions();
     }
 }
@@ -1777,6 +1885,9 @@ function handleBlueTowerDragEnd(e) {
 function removeBlueTowerMarker(towerId) {
     const marker = mapArea.querySelector(`[data-tower-id="${towerId}"]`);
     if (marker) {
+        if (viewer) {
+             viewer.removeOverlay(marker);
+        }
         marker.remove();
     }
     placedBlueTowers = placedBlueTowers.filter(t => t.id !== towerId);
@@ -1792,8 +1903,7 @@ function placeRedTowerMarker(x, y) {
     marker.className = 'tower-marker red-tower';
     marker.dataset.towerId = towerId;
     marker.dataset.towerType = 'red';
-    marker.style.left = `${x - 28}px`; // Center the 56px image
-    marker.style.top = `${y - 28}px`;
+    // marker.style.left/top removed for OSD
     marker.draggable = true;
 
     marker.innerHTML = `
@@ -1804,7 +1914,7 @@ function placeRedTowerMarker(x, y) {
     marker.addEventListener('dragstart', handleRedTowerDragStart);
     marker.addEventListener('dragend', handleRedTowerDragEnd);
 
-    mapArea.appendChild(marker);
+    addOverlayToOSD(marker, x, y);
 
     placedRedTowers.push({
         id: towerId,
@@ -1828,16 +1938,22 @@ function handleRedTowerDragEnd(e) {
     e.currentTarget.style.opacity = '1';
 
     const towerId = e.currentTarget.dataset.towerId;
-    const rect = mapArea.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    const coords = getOSDImageCoordinates(e.clientX, e.clientY);
 
     const tower = placedRedTowers.find(t => t.id === towerId);
     if (tower) {
-        tower.x = x;
-        tower.y = y;
-        e.currentTarget.style.left = `${x - 28}px`; // Center the 56px image
-        e.currentTarget.style.top = `${y - 28}px`;
+        tower.x = coords.x;
+        tower.y = coords.y;
+        
+        // Update OSD overlay position
+        const overlay = viewer.getOverlayById(e.currentTarget);
+        if (overlay) {
+            overlay.update(new OpenSeadragon.Point(coords.x, coords.y));
+        } else {
+             viewer.removeOverlay(e.currentTarget);
+             addOverlayToOSD(e.currentTarget, coords.x, coords.y);
+        }
+        
         savePositions();
     }
 }
@@ -1846,6 +1962,9 @@ function handleRedTowerDragEnd(e) {
 function removeRedTowerMarker(towerId) {
     const marker = mapArea.querySelector(`[data-tower-id="${towerId}"]`);
     if (marker) {
+        if (viewer) {
+             viewer.removeOverlay(marker);
+        }
         marker.remove();
     }
     placedRedTowers = placedRedTowers.filter(t => t.id !== towerId);
@@ -1862,8 +1981,7 @@ function placeBlueTreeMarker(x, y) {
     marker.className = 'tree-marker blue-tree';
     marker.dataset.treeId = treeId;
     marker.dataset.treeType = 'blue';
-    marker.style.left = `${x - 28}px`; // Center the 56px image
-    marker.style.top = `${y - 28}px`;
+    // marker.style.left/top removed for OSD
     marker.draggable = true;
 
     marker.innerHTML = `
@@ -1874,7 +1992,7 @@ function placeBlueTreeMarker(x, y) {
     marker.addEventListener('dragstart', handleBlueTreeDragStart);
     marker.addEventListener('dragend', handleBlueTreeDragEnd);
 
-    mapArea.appendChild(marker);
+    addOverlayToOSD(marker, x, y);
 
     placedBlueTrees.push({
         id: treeId,
@@ -1898,16 +2016,22 @@ function handleBlueTreeDragEnd(e) {
     e.currentTarget.style.opacity = '1';
 
     const treeId = e.currentTarget.dataset.treeId;
-    const rect = mapArea.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    const coords = getOSDImageCoordinates(e.clientX, e.clientY);
 
     const tree = placedBlueTrees.find(t => t.id === treeId);
     if (tree) {
-        tree.x = x;
-        tree.y = y;
-        e.currentTarget.style.left = `${x - 28}px`; // Center the 56px image
-        e.currentTarget.style.top = `${y - 28}px`;
+        tree.x = coords.x;
+        tree.y = coords.y;
+        
+        // Update OSD overlay position
+        const overlay = viewer.getOverlayById(e.currentTarget);
+        if (overlay) {
+            overlay.update(new OpenSeadragon.Point(coords.x, coords.y));
+        } else {
+             viewer.removeOverlay(e.currentTarget);
+             addOverlayToOSD(e.currentTarget, coords.x, coords.y);
+        }
+        
         savePositions();
     }
 }
@@ -1916,6 +2040,9 @@ function handleBlueTreeDragEnd(e) {
 function removeBlueTreeMarker(treeId) {
     const marker = mapArea.querySelector(`[data-tree-id="${treeId}"]`);
     if (marker) {
+        if (viewer) {
+             viewer.removeOverlay(marker);
+        }
         marker.remove();
     }
     placedBlueTrees = placedBlueTrees.filter(t => t.id !== treeId);
@@ -1931,8 +2058,7 @@ function placeRedTreeMarker(x, y) {
     marker.className = 'tree-marker red-tree';
     marker.dataset.treeId = treeId;
     marker.dataset.treeType = 'red';
-    marker.style.left = `${x - 28}px`; // Center the 56px image
-    marker.style.top = `${y - 28}px`;
+    // marker.style.left/top removed for OSD
     marker.draggable = true;
 
     marker.innerHTML = `
@@ -1943,7 +2069,7 @@ function placeRedTreeMarker(x, y) {
     marker.addEventListener('dragstart', handleRedTreeDragStart);
     marker.addEventListener('dragend', handleRedTreeDragEnd);
 
-    mapArea.appendChild(marker);
+    addOverlayToOSD(marker, x, y);
 
     placedRedTrees.push({
         id: treeId,
@@ -1967,16 +2093,22 @@ function handleRedTreeDragEnd(e) {
     e.currentTarget.style.opacity = '1';
 
     const treeId = e.currentTarget.dataset.treeId;
-    const rect = mapArea.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    const coords = getOSDImageCoordinates(e.clientX, e.clientY);
 
     const tree = placedRedTrees.find(t => t.id === treeId);
     if (tree) {
-        tree.x = x;
-        tree.y = y;
-        e.currentTarget.style.left = `${x - 28}px`; // Center the 56px image
-        e.currentTarget.style.top = `${y - 28}px`;
+        tree.x = coords.x;
+        tree.y = coords.y;
+        
+        // Update OSD overlay position
+        const overlay = viewer.getOverlayById(e.currentTarget);
+        if (overlay) {
+            overlay.update(new OpenSeadragon.Point(coords.x, coords.y));
+        } else {
+             viewer.removeOverlay(e.currentTarget);
+             addOverlayToOSD(e.currentTarget, coords.x, coords.y);
+        }
+        
         savePositions();
     }
 }
@@ -1985,6 +2117,9 @@ function handleRedTreeDragEnd(e) {
 function removeRedTreeMarker(treeId) {
     const marker = mapArea.querySelector(`[data-tree-id="${treeId}"]`);
     if (marker) {
+        if (viewer) {
+             viewer.removeOverlay(marker);
+        }
         marker.remove();
     }
     placedRedTrees = placedRedTrees.filter(t => t.id !== treeId);
@@ -2054,8 +2189,7 @@ function placeBlueGooseMarker(x, y) {
     marker.className = 'goose-marker blue-goose';
     marker.dataset.gooseId = gooseId;
     marker.dataset.gooseType = 'blue';
-    marker.style.left = `${x - 28}px`;
-    marker.style.top = `${y - 28}px`;
+    // marker.style.left/top removed for OSD
     marker.draggable = true;
 
     marker.innerHTML = `
@@ -2066,7 +2200,7 @@ function placeBlueGooseMarker(x, y) {
     marker.addEventListener('dragstart', handleBlueGooseDragStart);
     marker.addEventListener('dragend', handleBlueGooseDragEnd);
 
-    mapArea.appendChild(marker);
+    addOverlayToOSD(marker, x, y);
 
     placedBlueGeese.push({
         id: gooseId,
@@ -2089,16 +2223,22 @@ function handleBlueGooseDragEnd(e) {
     e.currentTarget.style.opacity = '1';
 
     const gooseId = e.currentTarget.dataset.gooseId;
-    const rect = mapArea.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    const coords = getOSDImageCoordinates(e.clientX, e.clientY);
 
     const goose = placedBlueGeese.find(g => g.id === gooseId);
     if (goose) {
-        goose.x = x;
-        goose.y = y;
-        e.currentTarget.style.left = `${x - 28}px`;
-        e.currentTarget.style.top = `${y - 28}px`;
+        goose.x = coords.x;
+        goose.y = coords.y;
+        
+        // Update OSD overlay position
+        const overlay = viewer.getOverlayById(e.currentTarget);
+        if (overlay) {
+            overlay.update(new OpenSeadragon.Point(coords.x, coords.y));
+        } else {
+             viewer.removeOverlay(e.currentTarget);
+             addOverlayToOSD(e.currentTarget, coords.x, coords.y);
+        }
+        
         savePositions();
     }
 }
@@ -2106,6 +2246,9 @@ function handleBlueGooseDragEnd(e) {
 function removeBlueGooseMarker(gooseId) {
     const marker = mapArea.querySelector(`[data-goose-id="${gooseId}"]`);
     if (marker) {
+        if (viewer) {
+             viewer.removeOverlay(marker);
+        }
         marker.remove();
     }
     placedBlueGeese = placedBlueGeese.filter(g => g.id !== gooseId);
@@ -2121,8 +2264,7 @@ function placeRedGooseMarker(x, y) {
     marker.className = 'goose-marker red-goose';
     marker.dataset.gooseId = gooseId;
     marker.dataset.gooseType = 'red';
-    marker.style.left = `${x - 28}px`;
-    marker.style.top = `${y - 28}px`;
+    // marker.style.left/top removed for OSD
     marker.draggable = true;
 
     marker.innerHTML = `
@@ -2133,7 +2275,7 @@ function placeRedGooseMarker(x, y) {
     marker.addEventListener('dragstart', handleRedGooseDragStart);
     marker.addEventListener('dragend', handleRedGooseDragEnd);
 
-    mapArea.appendChild(marker);
+    addOverlayToOSD(marker, x, y);
 
     placedRedGeese.push({
         id: gooseId,
@@ -2156,16 +2298,22 @@ function handleRedGooseDragEnd(e) {
     e.currentTarget.style.opacity = '1';
 
     const gooseId = e.currentTarget.dataset.gooseId;
-    const rect = mapArea.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    const coords = getOSDImageCoordinates(e.clientX, e.clientY);
 
     const goose = placedRedGeese.find(g => g.id === gooseId);
     if (goose) {
-        goose.x = x;
-        goose.y = y;
-        e.currentTarget.style.left = `${x - 28}px`;
-        e.currentTarget.style.top = `${y - 28}px`;
+        goose.x = coords.x;
+        goose.y = coords.y;
+        
+        // Update OSD overlay position
+        const overlay = viewer.getOverlayById(e.currentTarget);
+        if (overlay) {
+            overlay.update(new OpenSeadragon.Point(coords.x, coords.y));
+        } else {
+             viewer.removeOverlay(e.currentTarget);
+             addOverlayToOSD(e.currentTarget, coords.x, coords.y);
+        }
+        
         savePositions();
     }
 }
@@ -2173,6 +2321,9 @@ function handleRedGooseDragEnd(e) {
 function removeRedGooseMarker(gooseId) {
     const marker = mapArea.querySelector(`[data-goose-id="${gooseId}"]`);
     if (marker) {
+        if (viewer) {
+             viewer.removeOverlay(marker);
+        }
         marker.remove();
     }
     placedRedGeese = placedRedGeese.filter(g => g.id !== gooseId);
@@ -2210,8 +2361,7 @@ function placeEnemyGroup(x, y) {
     const marker = document.createElement('div');
     marker.className = 'group-marker enemy-group';
     marker.dataset.enemyGroupId = enemyGroupId;
-    marker.style.left = `${x}px`;
-    marker.style.top = `${y}px`;
+    // marker.style.left/top removed for OSD
     marker.draggable = true;
 
     marker.innerHTML = `
@@ -2226,7 +2376,7 @@ function placeEnemyGroup(x, y) {
     marker.addEventListener('dragstart', handleEnemyGroupDragStart);
     marker.addEventListener('dragend', handleEnemyGroupDragEnd);
 
-    mapArea.appendChild(marker);
+    addOverlayToOSD(marker, x, y);
 
     placedEnemies.push({
         id: enemyGroupId,
@@ -2251,16 +2401,22 @@ function handleEnemyGroupDragEnd(e) {
     e.currentTarget.style.opacity = '1';
 
     const enemyGroupId = e.currentTarget.dataset.enemyGroupId;
-    const rect = mapArea.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    const coords = getOSDImageCoordinates(e.clientX, e.clientY);
 
     const enemyGroup = placedEnemies.find(eg => eg.id === enemyGroupId);
     if (enemyGroup) {
-        enemyGroup.x = x;
-        enemyGroup.y = y;
-        e.currentTarget.style.left = `${x}px`;
-        e.currentTarget.style.top = `${y}px`;
+        enemyGroup.x = coords.x;
+        enemyGroup.y = coords.y;
+        
+        // Update OSD overlay position
+        const overlay = viewer.getOverlayById(e.currentTarget);
+        if (overlay) {
+            overlay.update(new OpenSeadragon.Point(coords.x, coords.y));
+        } else {
+             viewer.removeOverlay(e.currentTarget);
+             addOverlayToOSD(e.currentTarget, coords.x, coords.y);
+        }
+        
         savePositions();
     }
 }
@@ -2269,6 +2425,9 @@ function handleEnemyGroupDragEnd(e) {
 function removeEnemyGroup(enemyGroupId) {
     const marker = mapArea.querySelector(`[data-enemy-group-id="${enemyGroupId}"]`);
     if (marker) {
+        if (viewer) {
+             viewer.removeOverlay(marker);
+        }
         marker.remove();
     }
     placedEnemies = placedEnemies.filter(e => e.id !== enemyGroupId);
@@ -2823,8 +2982,7 @@ function placeMemberOnMap(member, x, y) {
     const marker = document.createElement('div');
     marker.className = `member-marker role-${member.role}`;
     marker.dataset.memberId = member.id;
-    marker.style.left = `${x - 8}px`; // Center the 16px marker
-    marker.style.top = `${y - 8}px`;
+    // marker.style.left/top removed for OSD
     marker.draggable = true;
 
     const displayTeamName = getTeamDisplayName(member.team);
@@ -2845,7 +3003,7 @@ function placeMemberOnMap(member, x, y) {
     marker.addEventListener('dragstart', handleMarkerDragStart);
     marker.addEventListener('dragend', handleMarkerDragEnd);
 
-    mapArea.appendChild(marker);
+    addOverlayToOSD(marker, x, y);
 
     placedMembers.push({
         memberId: member.id,
@@ -2988,8 +3146,12 @@ function updatePlaceholder() {
 // Render all map markers from data
 function renderMap() {
     // Clear existing markers
-    const existingMarkers = mapArea.querySelectorAll('.member-marker, .group-marker, .objective-marker, .boss-marker, .tower-marker, .tree-marker, .enemy-marker');
-    existingMarkers.forEach(marker => marker.remove());
+    if (viewer) {
+        viewer.clearOverlays();
+    } else {
+        const existingMarkers = mapArea.querySelectorAll('.member-marker, .group-marker, .objective-marker, .boss-marker, .tower-marker, .tree-marker, .enemy-marker, .goose-marker');
+        existingMarkers.forEach(marker => marker.remove());
+    }
 
     // Render individual member markers
     placedMembers.forEach(placement => {
@@ -2999,6 +3161,7 @@ function renderMap() {
         const marker = document.createElement('div');
         marker.className = 'member-marker';
         marker.dataset.memberId = placement.memberId;
+        // Legacy fallback or just set for reference
         marker.style.left = `${placement.x - 8}px`;
         marker.style.top = `${placement.y - 8}px`;
         marker.draggable = true;
@@ -3020,7 +3183,7 @@ function renderMap() {
         marker.addEventListener('dragstart', handleMarkerDragStart);
         marker.addEventListener('dragend', handleMarkerDragEnd);
 
-        mapArea.appendChild(marker);
+        addOverlayToOSD(marker, placement.x, placement.y);
     });
 
     // Render group markers
@@ -3033,8 +3196,6 @@ function renderMap() {
         const marker = document.createElement('div');
         marker.className = 'objective-marker';
         marker.dataset.objectiveId = obj.id;
-        marker.style.left = `${obj.x - 12}px`;
-        marker.style.top = `${obj.y - 12}px`;
         marker.draggable = true;
         marker.innerHTML = '<button class="remove-btn" onclick="removeObjectiveMarker(\'' + obj.id + '\')">×</button>';
 
@@ -3047,20 +3208,17 @@ function renderMap() {
 
         marker.addEventListener('dragend', (e) => {
             e.currentTarget.style.opacity = '1';
-            const rect = mapArea.getBoundingClientRect();
-            const x = e.clientX - rect.left + 12;
-            const y = e.clientY - rect.top + 12;
+            const { x, y } = getOSDImageCoordinates(e.clientX, e.clientY);
             const objIndex = placedObjectives.findIndex(o => o.id === obj.id);
             if (objIndex !== -1) {
                 placedObjectives[objIndex].x = x;
                 placedObjectives[objIndex].y = y;
-                marker.style.left = `${x - 12}px`;
-                marker.style.top = `${y - 12}px`;
+                addOverlayToOSD(marker, x, y);
                 savePositions();
             }
         });
 
-        mapArea.appendChild(marker);
+        addOverlayToOSD(marker, obj.x, obj.y);
     });
 
     // Render bosses
@@ -3068,8 +3226,6 @@ function renderMap() {
         const marker = document.createElement('div');
         marker.className = 'boss-marker';
         marker.dataset.bossId = boss.id;
-        marker.style.left = `${boss.x - 28}px`;
-        marker.style.top = `${boss.y - 28}px`;
         marker.draggable = true;
         marker.innerHTML = '<button class="remove-btn" onclick="removeBossMarker(\'' + boss.id + '\')">×</button>';
 
@@ -3082,20 +3238,17 @@ function renderMap() {
 
         marker.addEventListener('dragend', (e) => {
             e.currentTarget.style.opacity = '1';
-            const rect = mapArea.getBoundingClientRect();
-            const x = e.clientX - rect.left + 28;
-            const y = e.clientY - rect.top + 28;
+            const { x, y } = getOSDImageCoordinates(e.clientX, e.clientY);
             const bossIndex = placedBosses.findIndex(b => b.id === boss.id);
             if (bossIndex !== -1) {
                 placedBosses[bossIndex].x = x;
                 placedBosses[bossIndex].y = y;
-                marker.style.left = `${x - 28}px`;
-                marker.style.top = `${y - 28}px`;
+                addOverlayToOSD(marker, x, y);
                 savePositions();
             }
         });
 
-        mapArea.appendChild(marker);
+        addOverlayToOSD(marker, boss.x, boss.y);
     });
 
     // Render blue towers
@@ -3104,8 +3257,6 @@ function renderMap() {
         marker.className = 'tower-marker blue-tower';
         marker.dataset.towerId = tower.id;
         marker.dataset.towerType = 'blue';
-        marker.style.left = `${tower.x - 28}px`;
-        marker.style.top = `${tower.y - 28}px`;
         marker.draggable = true;
         marker.innerHTML = `
             <img src="/assets/guild_war/images/tower_blue.png" alt="Blue Tower" draggable="false">
@@ -3121,20 +3272,17 @@ function renderMap() {
 
         marker.addEventListener('dragend', (e) => {
             e.currentTarget.style.opacity = '1';
-            const rect = mapArea.getBoundingClientRect();
-            const x = e.clientX - rect.left + 28;
-            const y = e.clientY - rect.top + 28;
+            const { x, y } = getOSDImageCoordinates(e.clientX, e.clientY);
             const towerIndex = placedBlueTowers.findIndex(t => t.id === tower.id);
             if (towerIndex !== -1) {
                 placedBlueTowers[towerIndex].x = x;
                 placedBlueTowers[towerIndex].y = y;
-                marker.style.left = `${x - 28}px`;
-                marker.style.top = `${y - 28}px`;
+                addOverlayToOSD(marker, x, y);
                 savePositions();
             }
         });
 
-        mapArea.appendChild(marker);
+        addOverlayToOSD(marker, tower.x, tower.y);
     });
 
     // Render red towers
@@ -3143,8 +3291,6 @@ function renderMap() {
         marker.className = 'tower-marker red-tower';
         marker.dataset.towerId = tower.id;
         marker.dataset.towerType = 'red';
-        marker.style.left = `${tower.x - 28}px`;
-        marker.style.top = `${tower.y - 28}px`;
         marker.draggable = true;
         marker.innerHTML = `
             <img src="/assets/guild_war/images/tower_red.png" alt="Red Tower" draggable="false">
@@ -3160,20 +3306,17 @@ function renderMap() {
 
         marker.addEventListener('dragend', (e) => {
             e.currentTarget.style.opacity = '1';
-            const rect = mapArea.getBoundingClientRect();
-            const x = e.clientX - rect.left + 28;
-            const y = e.clientY - rect.top + 28;
+            const { x, y } = getOSDImageCoordinates(e.clientX, e.clientY);
             const towerIndex = placedRedTowers.findIndex(t => t.id === tower.id);
             if (towerIndex !== -1) {
                 placedRedTowers[towerIndex].x = x;
                 placedRedTowers[towerIndex].y = y;
-                marker.style.left = `${x - 28}px`;
-                marker.style.top = `${y - 28}px`;
+                addOverlayToOSD(marker, x, y);
                 savePositions();
             }
         });
 
-        mapArea.appendChild(marker);
+        addOverlayToOSD(marker, tower.x, tower.y);
     });
 
     // Render trees
@@ -3181,8 +3324,6 @@ function renderMap() {
         const marker = document.createElement('div');
         marker.className = 'tree-marker';
         marker.dataset.treeId = tree.id;
-        marker.style.left = `${tree.x - 20}px`;
-        marker.style.top = `${tree.y - 20}px`;
         marker.draggable = true;
         marker.innerHTML = '<button class="remove-btn" onclick="removeTreeMarker(\'' + tree.id + '\')">×</button>';
 
@@ -3195,20 +3336,17 @@ function renderMap() {
 
         marker.addEventListener('dragend', (e) => {
             e.currentTarget.style.opacity = '1';
-            const rect = mapArea.getBoundingClientRect();
-            const x = e.clientX - rect.left + 20;
-            const y = e.clientY - rect.top + 20;
+            const { x, y } = getOSDImageCoordinates(e.clientX, e.clientY);
             const treeIndex = placedTrees.findIndex(t => t.id === tree.id);
             if (treeIndex !== -1) {
                 placedTrees[treeIndex].x = x;
                 placedTrees[treeIndex].y = y;
-                marker.style.left = `${x - 20}px`;
-                marker.style.top = `${y - 20}px`;
+                addOverlayToOSD(marker, x, y);
                 savePositions();
             }
         });
 
-        mapArea.appendChild(marker);
+        addOverlayToOSD(marker, tree.x, tree.y);
     });
 
 
@@ -3218,8 +3356,6 @@ function renderMap() {
         marker.className = 'goose-marker blue-goose';
         marker.dataset.gooseId = goose.id;
         marker.dataset.gooseType = 'blue';
-        marker.style.left = `${goose.x - 28}px`;
-        marker.style.top = `${goose.y - 28}px`;
         marker.draggable = true;
         marker.innerHTML = `
             <img src="/assets/guild_war/images/goose_blue.png" alt="Blue Goose" draggable="false">
@@ -3235,20 +3371,17 @@ function renderMap() {
 
         marker.addEventListener('dragend', (e) => {
             e.currentTarget.style.opacity = '1';
-            const rect = mapArea.getBoundingClientRect();
-            const x = e.clientX - rect.left + 28;
-            const y = e.clientY - rect.top + 28;
+            const { x, y } = getOSDImageCoordinates(e.clientX, e.clientY);
             const gooseIndex = placedBlueGeese.findIndex(g => g.id === goose.id);
             if (gooseIndex !== -1) {
                 placedBlueGeese[gooseIndex].x = x;
                 placedBlueGeese[gooseIndex].y = y;
-                marker.style.left = `${x - 28}px`;
-                marker.style.top = `${y - 28}px`;
+                addOverlayToOSD(marker, x, y);
                 savePositions();
             }
         });
 
-        mapArea.appendChild(marker);
+        addOverlayToOSD(marker, goose.x, goose.y);
     });
 
     // Render red geese
@@ -3257,8 +3390,6 @@ function renderMap() {
         marker.className = 'goose-marker red-goose';
         marker.dataset.gooseId = goose.id;
         marker.dataset.gooseType = 'red';
-        marker.style.left = `${goose.x - 28}px`;
-        marker.style.top = `${goose.y - 28}px`;
         marker.draggable = true;
         marker.innerHTML = `
             <img src="/assets/guild_war/images/goose_red.png" alt="Red Goose" draggable="false">
@@ -3274,28 +3405,23 @@ function renderMap() {
 
         marker.addEventListener('dragend', (e) => {
             e.currentTarget.style.opacity = '1';
-            const rect = mapArea.getBoundingClientRect();
-            const x = e.clientX - rect.left + 28;
-            const y = e.clientY - rect.top + 28;
+            const { x, y } = getOSDImageCoordinates(e.clientX, e.clientY);
             const gooseIndex = placedRedGeese.findIndex(g => g.id === goose.id);
             if (gooseIndex !== -1) {
                 placedRedGeese[gooseIndex].x = x;
                 placedRedGeese[gooseIndex].y = y;
-                marker.style.left = `${x - 28}px`;
-                marker.style.top = `${y - 28}px`;
+                addOverlayToOSD(marker, x, y);
                 savePositions();
             }
         });
 
-        mapArea.appendChild(marker);
+        addOverlayToOSD(marker, goose.x, goose.y);
     });
     // Render enemies
     placedEnemies.forEach(enemy => {
         const marker = document.createElement('div');
         marker.className = 'enemy-marker';
         marker.dataset.enemyId = enemy.id;
-        marker.style.left = `${enemy.x - 16}px`;
-        marker.style.top = `${enemy.y - 16}px`;
         marker.draggable = true;
         marker.innerHTML = `
             <div class="group-number">${enemy.count}</div>
@@ -3311,20 +3437,17 @@ function renderMap() {
 
         marker.addEventListener('dragend', (e) => {
             e.currentTarget.style.opacity = '1';
-            const rect = mapArea.getBoundingClientRect();
-            const x = e.clientX - rect.left + 16;
-            const y = e.clientY - rect.top + 16;
+            const { x, y } = getOSDImageCoordinates(e.clientX, e.clientY);
             const enemyIndex = placedEnemies.findIndex(en => en.id === enemy.id);
             if (enemyIndex !== -1) {
                 placedEnemies[enemyIndex].x = x;
                 placedEnemies[enemyIndex].y = y;
-                marker.style.left = `${x - 16}px`;
-                marker.style.top = `${y - 16}px`;
+                addOverlayToOSD(marker, x, y);
                 savePositions();
             }
         });
 
-        mapArea.appendChild(marker);
+        addOverlayToOSD(marker, enemy.x, enemy.y);
     });
 
     // Update placeholder and counts

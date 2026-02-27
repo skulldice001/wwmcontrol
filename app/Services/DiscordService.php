@@ -27,6 +27,10 @@ class DiscordService
     {
         $roles = $this->getRoles($discordUserId);
 
+        if (is_null($roles)) {
+            return false;
+        }
+
         if (empty($roles)) {
             return false;
         }
@@ -50,13 +54,13 @@ class DiscordService
      * Get all roles for a user in the configured guild.
      *
      * @param string $discordUserId
-     * @return array
+     * @return array|null
      */
-    public function getRoles(string $discordUserId): array
+    public function getRoles(string $discordUserId): ?array
     {
         if (!$this->botToken || !$this->guildId) {
             Log::warning('Discord Bot configuration is incomplete (missing bot_token or guild_id).');
-            return [];
+            return null;
         }
 
         try {
@@ -91,11 +95,10 @@ class DiscordService
 
             Log::error("Discord API error: {$response->status()} - {$response->body()}");
         } catch (\Exception $e) {
-            dd($e);
             Log::error("Discord API exception: {$e->getMessage()}");
         }
 
-        return [];
+        return null;
     }
 
     /**

@@ -198,6 +198,8 @@ return [
     'draw' => 'Vẽ',
     'undo' => 'Hoàn tác',
     'redo' => 'Làm lại',
+    'view_starting_position' => 'Xem vị trí xuất phát',
+    'map_responsive_note' => 'Bản đồ tự điều chỉnh theo kích thước màn hình.',
     'clear_drawings' => 'Xóa nét vẽ',
     'auto_delete' => 'Tự xóa',
     'clear_map' => 'Xóa sạch bản đồ',

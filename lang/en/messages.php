@@ -198,6 +198,8 @@ return [
     'draw' => 'Draw',
     'undo' => 'Undo',
     'redo' => 'Redo',
+    'view_starting_position' => 'View Starting Position',
+    'map_responsive_note' => 'Map adapts to screen size.',
     'clear_drawings' => 'Clear Drawings',
     'auto_delete' => 'Auto-delete',
     'clear_map' => 'Clear Map',
