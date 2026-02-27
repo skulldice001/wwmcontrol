@@ -110,6 +110,7 @@
                                                name="inner_ways[{{ $iw->slug }}]"
                                                class="form-control form-control-sm text-center"
                                                min="0" max="6"
+                                               oninput="if(this.value > 6) this.value = 6; if(this.value < 0) this.value = 0;"
                                                value="{{ $currentLevel }}">
                                     </div>
                                 </div>
