@@ -1,6 +1,6 @@
 @extends('layouts.admin')
 
-@section('title', 'Manage Skills & Inner Ways')
+@section('title', __('messages.skills_inner_ways_management'))
 
 @section('content')
 @push('styles')
@@ -90,7 +90,7 @@
 
             <div class="card card-info">
                 <div class="card-header">
-                    <h3 class="card-title">Inner Ways Configuration</h3>
+                    <h3 class="card-title">{{ __('messages.inner_ways_configuration') }}</h3>
                 </div>
                 <div class="card-body">
                     <div class="row">
@@ -119,7 +119,7 @@
                     </div>
                 </div>
                 <div class="card-footer">
-                    <button type="submit" class="btn btn-primary btn-block">Save Changes</button>
+                    <button type="submit" class="btn btn-primary btn-block">{{ __('messages.save_changes') }}</button>
                 </div>
             </div>
         </form>

@@ -29,7 +29,7 @@ class ProfileController extends Controller
 
         $user->update($validated);
 
-        return redirect()->back()->with('success', 'Profile updated successfully.');
+        return redirect()->back()->with('success', __('messages.profile_updated_success'));
     }
 
     public function editSkills()
@@ -55,14 +55,14 @@ class ProfileController extends Controller
              'main_skill_id' => 'nullable|exists:skills,id',
              'sub_skill_id' => 'nullable|exists:skills,id',
         ], [
-            'inner_ways.*.max' => 'Cấp độ tâm pháp không được vượt quá 6.',
-            'inner_ways.*.min' => 'Cấp độ tâm pháp không được nhỏ hơn 0.',
-            'inner_ways.*.integer' => 'Cấp độ tâm pháp phải là số nguyên.',
+            'inner_ways.*.max' => __('messages.inner_way_level_max_error'),
+            'inner_ways.*.min' => __('messages.inner_way_level_min_error'),
+            'inner_ways.*.integer' => __('messages.inner_way_level_integer_error'),
         ]);
 
         // Update Skills
         if ($request->filled('main_skill_id') && $request->filled('sub_skill_id') && $request->main_skill_id == $request->sub_skill_id) {
-             return redirect()->back()->withErrors(['sub_skill_id' => 'Võ công chính và phụ không được trùng nhau.']);
+             return redirect()->back()->withErrors(['sub_skill_id' => __('messages.skills_duplicate_error')]);
         }
 
         $user->main_skill_id = $request->input('main_skill_id');
@@ -106,6 +106,6 @@ class ProfileController extends Controller
             $data
         );
 
-        return redirect()->back()->with('success', 'Cập nhật giao diện thành công.');
+        return redirect()->back()->with('success', __('messages.theme_updated_success'));
     }
 }
