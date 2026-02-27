@@ -54,6 +54,10 @@ class ProfileController extends Controller
              'inner_ways.*' => 'integer|min:0|max:6', // Key is slug, value is level
              'main_skill_id' => 'nullable|exists:skills,id',
              'sub_skill_id' => 'nullable|exists:skills,id',
+        ], [
+            'inner_ways.*.max' => 'Cấp độ tâm pháp không được vượt quá 6.',
+            'inner_ways.*.min' => 'Cấp độ tâm pháp không được nhỏ hơn 0.',
+            'inner_ways.*.integer' => 'Cấp độ tâm pháp phải là số nguyên.',
         ]);
 
         // Update Skills
