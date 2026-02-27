@@ -33,7 +33,6 @@
             <tbody>
                 @foreach($users as $user)
                 <tr>
-                    <td>{{ $user->discord_id }}</td>
                     <td>
                         @if($user->discord_avatar)
                             <img src="{{ $user->discord_avatar }}" class="img-circle elevation-2" alt="User Image" style="width: 30px; height: 30px;">

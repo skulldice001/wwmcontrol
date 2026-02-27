@@ -22,6 +22,7 @@
         <table class="table table-bordered table-striped">
             <thead>
                 <tr>
+                    <th>{{ __('messages.discord_id') }}</th>
                     <th>{{ __('messages.event_title') }}</th>
                     <th>{{ __('messages.event_type') }}</th>
                     <th>{{ __('messages.event_status') }}</th>
@@ -34,6 +35,7 @@
             <tbody>
                 @foreach($events as $event)
                 <tr>
+                    <td>{{ $event->discord_id }}</td>
                     <td>{{ $event->title }}</td>
                     <td>
                         <span class="badge badge-{{ $event->type == 'guild_war' ? 'danger' : 'success' }}">

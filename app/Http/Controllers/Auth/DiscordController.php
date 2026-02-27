@@ -65,16 +65,25 @@ class DiscordController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        $roles = $discordService->getRoles($discordUser->getId());
+        $memberData = $discordService->getMember($discordUser->getId());
+
+        if (!$memberData) {
+            \Log::warning('Discord user not found in guild', [
+                'discord_id' => $discordUser->getId(),
+            ]);
+            return redirect()->route('home')->with('error', __('messages.discord_guild_required'));
+        }
+
+        $roles = $memberData['roles'] ?? [];
         if (empty($roles)) {
-            \Log::warning('Discord user is not in required guild', [
+            \Log::warning('Discord user has no roles in guild', [
                 'discord_id' => $discordUser->getId(),
             ]);
             return redirect()->route('home')->with('error', __('messages.discord_guild_required'));
         }
 
         // Get Guild Nickname
-        $guildNickname = $discordService->getGuildNickname($discordUser->getId());
+        $guildNickname = $memberData['nick'] ?? $memberData['user']['global_name'] ?? $memberData['user']['username'] ?? null;
         $nameToUse = $guildNickname ?: $discordUser->getName();
 
         $user = User::where('discord_id', $discordUser->getId())->first();
@@ -104,7 +113,7 @@ class DiscordController extends Controller
             } else {
                 $innerWay->update($innerWayData);
             }
-            $allInnerWayIds[$innerWay->id] = ['level' => 1];
+            $allInnerWayIds[$innerWay->id] = ['level' => 0];
         }
 
         if (!$user) {
@@ -117,7 +126,7 @@ class DiscordController extends Controller
                 'discord_avatar' => $discordUser->getAvatar(),
             ]);
 
-            // Sync with default level 1
+            // Sync with default level 0
             $user->innerWays()->sync($allInnerWayIds);
         } else {
             $user->update([

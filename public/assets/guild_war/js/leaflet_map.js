@@ -748,25 +748,8 @@ function overrideAppFunctions() {
             }
         }
 
-        // Reset current drawing but keep mode active?
-        // For connected drawing experience, we might want to start the next segment where this one ended.
-        // But the user requested "start from the last position of the path".
-        // If we clear polyLinePoints here, the next time user clicks (or moves?), what happens?
-
-        // If we keep the mode active, the user can draw another line.
-        // We need to re-initialize the start point for the NEXT line immediately if we want continuous drawing feel.
-
-        const lastPoint = polyLinePoints.length > 0 ? polyLinePoints[polyLinePoints.length - 1] : null;
-
-        polyLinePoints = [];
-        if (polyLineLayer) { map.removeLayer(polyLineLayer); polyLineLayer = null; }
-        if (polyLineElastic) { map.removeLayer(polyLineElastic); polyLineElastic = null; }
-
-        // Re-initialize start point for next segment if we had a valid path
-        if (lastPoint) {
-            polyLinePoints.push(lastPoint);
-        }
-
+        // Exit drawing mode
+        window.togglePolyLineDrawingMode();
         window.redrawAllPaths();
     }
 
