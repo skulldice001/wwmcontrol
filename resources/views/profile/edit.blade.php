@@ -175,7 +175,7 @@
                                  onclick="selectTheme('navbar', '')"
                                  style="cursor: pointer; border: 1px solid #ddd; padding: 5px; border-radius: 5px; {{ ($user->themeSetting->navbar_variant ?? '') == '' ? 'border: 2px solid #007bff;' : '' }}">
                                 <div class="bg-light elevation-1 mx-auto mb-1" style="width: 40px; height: 20px; border-radius: 4px;"></div>
-                                <div style="font-size: 10px;">Default</div>
+                                <div style="font-size: 10px;">{{ __('messages.default') }}</div>
                             </div>
                             @foreach($navbarVariants as $variant)
                                 @php $bg = getBgClass($variant, 'navbar'); @endphp
@@ -200,7 +200,7 @@
                                  onclick="selectTheme('sidebar', '')"
                                  style="cursor: pointer; border: 1px solid #ddd; padding: 5px; border-radius: 5px; {{ ($user->themeSetting->sidebar_variant ?? '') == '' ? 'border: 2px solid #007bff;' : '' }}">
                                 <div class="bg-primary elevation-1 mx-auto mb-1" style="width: 40px; height: 20px; border-radius: 4px;"></div>
-                                <div style="font-size: 10px;">Default</div>
+                                <div style="font-size: 10px;">{{ __('messages.default') }}</div>
                             </div>
                             @foreach($sidebarVariants as $variant)
                                 @php $bg = getBgClass($variant, 'sidebar'); $isLight = strpos($variant, 'light') !== false; @endphp
@@ -225,7 +225,7 @@
                                  onclick="selectTheme('brand', '')"
                                  style="cursor: pointer; border: 1px solid #ddd; padding: 5px; border-radius: 5px; {{ ($user->themeSetting->brand_logo_variant ?? '') == '' ? 'border: 2px solid #007bff;' : '' }}">
                                 <div class="bg-light elevation-1 mx-auto mb-1" style="width: 40px; height: 20px; border-radius: 4px;"></div>
-                                <div style="font-size: 10px;">Default</div>
+                                <div style="font-size: 10px;">{{ __('messages.default') }}</div>
                             </div>
                             @foreach($brandVariants as $variant)
                                 @php $bg = getBgClass($variant, 'brand'); @endphp
@@ -250,7 +250,7 @@
                                  onclick="selectTheme('accent', '')"
                                  style="cursor: pointer; border: 1px solid #ddd; padding: 5px; border-radius: 5px; {{ ($user->themeSetting->accent_color ?? '') == '' ? 'border: 2px solid #007bff;' : '' }}">
                                 <div class="bg-light elevation-1 mx-auto mb-1" style="width: 40px; height: 20px; border-radius: 4px;"></div>
-                                <div style="font-size: 10px;">None</div>
+                                <div style="font-size: 10px;">{{ __('messages.none_text') }}</div>
                             </div>
                             @foreach($accentVariants as $variant)
                                 @php $bg = getBgClass($variant, 'accent'); @endphp
@@ -275,7 +275,7 @@
                                  onclick="selectTheme('background', '')"
                                  style="cursor: pointer; border: 1px solid #ddd; padding: 5px; border-radius: 5px; {{ ($user->themeSetting->background_color ?? '') == '' ? 'border: 2px solid #007bff;' : '' }}">
                                 <div class="bg-light elevation-1 mx-auto mb-1" style="width: 40px; height: 20px; border-radius: 4px;"></div>
-                                <div style="font-size: 10px;">None</div>
+                                <div style="font-size: 10px;">{{ __('messages.none_text') }}</div>
                             </div>
                             @foreach($backgroundVariants as $variant)
                                 @php $bg = getBgClass($variant, 'background'); @endphp
