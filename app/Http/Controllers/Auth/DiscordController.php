@@ -110,7 +110,7 @@ class DiscordController extends Controller
         if (!$user) {
             $user = User::create([
                 'discord_id' => $discordUser->getId(),
-                'name' => $discordUser->getName(),
+                'name' => $nameToUse,
                 'email' => $discordUser->getEmail(),
                 'discord_token' => $discordUser->token,
                 'discord_refresh_token' => $discordUser->refreshToken,
