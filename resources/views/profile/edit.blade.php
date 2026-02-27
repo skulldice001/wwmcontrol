@@ -129,6 +129,9 @@
                         $brandVariants = [
                             'navbar-primary', 'navbar-secondary', 'navbar-info', 'navbar-success', 'navbar-danger', 'navbar-indigo', 'navbar-purple', 'navbar-pink', 'navbar-navy', 'navbar-lightblue', 'navbar-teal', 'navbar-cyan', 'navbar-dark', 'navbar-gray-dark', 'navbar-gray', 'navbar-light', 'navbar-warning', 'navbar-white', 'navbar-orange'
                         ];
+                        $backgroundVariants = [
+                            'bg-primary', 'bg-secondary', 'bg-info', 'bg-success', 'bg-danger', 'bg-indigo', 'bg-purple', 'bg-pink', 'bg-navy', 'bg-lightblue', 'bg-teal', 'bg-cyan', 'bg-white', 'bg-gray', 'bg-gray-dark'
+                        ];
 
                         function getBgClass($variant, $type) {
                             if ($type == 'navbar' || $type == 'brand') {
@@ -147,6 +150,9 @@
                                  $color = str_replace('accent-', '', $variant);
                                  return 'bg-' . $color;
                             }
+                            if ($type == 'background') {
+                                return $variant;
+                            }
                             return 'bg-gray';
                         }
                     @endphp
@@ -164,7 +170,7 @@
                         <label>{{ __('messages.navbar_variant') }}</label>
                         <input type="hidden" name="navbar_variant" id="input_navbar" value="{{ $user->themeSetting->navbar_variant ?? '' }}">
                         <div class="d-flex flex-wrap" style="max-height: 200px; overflow-y: auto;">
-                            <div class="mr-2 mb-2 text-center theme-item theme-item-navbar" 
+                            <div class="mr-2 mb-2 text-center theme-item theme-item-navbar"
                                  id="item_navbar_default"
                                  onclick="selectTheme('navbar', '')"
                                  style="cursor: pointer; border: 1px solid #ddd; padding: 5px; border-radius: 5px; {{ ($user->themeSetting->navbar_variant ?? '') == '' ? 'border: 2px solid #007bff;' : '' }}">
@@ -173,7 +179,7 @@
                             </div>
                             @foreach($navbarVariants as $variant)
                                 @php $bg = getBgClass($variant, 'navbar'); @endphp
-                                <div class="mr-2 mb-2 text-center theme-item theme-item-navbar" 
+                                <div class="mr-2 mb-2 text-center theme-item theme-item-navbar"
                                      id="item_navbar_{{ str_replace(' ', '_', $variant) }}"
                                      onclick="selectTheme('navbar', '{{ $variant }}')"
                                      style="cursor: pointer; border: 1px solid #ddd; padding: 5px; border-radius: 5px; {{ ($user->themeSetting->navbar_variant ?? '') == $variant ? 'border: 2px solid #007bff;' : '' }}">
@@ -189,7 +195,7 @@
                         <label>{{ __('messages.sidebar_variant') }}</label>
                         <input type="hidden" name="sidebar_variant" id="input_sidebar" value="{{ $user->themeSetting->sidebar_variant ?? '' }}">
                         <div class="d-flex flex-wrap" style="max-height: 200px; overflow-y: auto;">
-                            <div class="mr-2 mb-2 text-center theme-item theme-item-sidebar" 
+                            <div class="mr-2 mb-2 text-center theme-item theme-item-sidebar"
                                  id="item_sidebar_default"
                                  onclick="selectTheme('sidebar', '')"
                                  style="cursor: pointer; border: 1px solid #ddd; padding: 5px; border-radius: 5px; {{ ($user->themeSetting->sidebar_variant ?? '') == '' ? 'border: 2px solid #007bff;' : '' }}">
@@ -198,7 +204,7 @@
                             </div>
                             @foreach($sidebarVariants as $variant)
                                 @php $bg = getBgClass($variant, 'sidebar'); $isLight = strpos($variant, 'light') !== false; @endphp
-                                <div class="mr-2 mb-2 text-center theme-item theme-item-sidebar" 
+                                <div class="mr-2 mb-2 text-center theme-item theme-item-sidebar"
                                      id="item_sidebar_{{ $variant }}"
                                      onclick="selectTheme('sidebar', '{{ $variant }}')"
                                      style="cursor: pointer; border: 1px solid #ddd; padding: 5px; border-radius: 5px; {{ ($user->themeSetting->sidebar_variant ?? '') == $variant ? 'border: 2px solid #007bff;' : '' }}">
@@ -214,7 +220,7 @@
                         <label>{{ __('messages.brand_logo_variant') }}</label>
                         <input type="hidden" name="brand_logo_variant" id="input_brand" value="{{ $user->themeSetting->brand_logo_variant ?? '' }}">
                         <div class="d-flex flex-wrap" style="max-height: 200px; overflow-y: auto;">
-                             <div class="mr-2 mb-2 text-center theme-item theme-item-brand" 
+                             <div class="mr-2 mb-2 text-center theme-item theme-item-brand"
                                  id="item_brand_default"
                                  onclick="selectTheme('brand', '')"
                                  style="cursor: pointer; border: 1px solid #ddd; padding: 5px; border-radius: 5px; {{ ($user->themeSetting->brand_logo_variant ?? '') == '' ? 'border: 2px solid #007bff;' : '' }}">
@@ -223,7 +229,7 @@
                             </div>
                             @foreach($brandVariants as $variant)
                                 @php $bg = getBgClass($variant, 'brand'); @endphp
-                                <div class="mr-2 mb-2 text-center theme-item theme-item-brand" 
+                                <div class="mr-2 mb-2 text-center theme-item theme-item-brand"
                                      id="item_brand_{{ $variant }}"
                                      onclick="selectTheme('brand', '{{ $variant }}')"
                                      style="cursor: pointer; border: 1px solid #ddd; padding: 5px; border-radius: 5px; {{ ($user->themeSetting->brand_logo_variant ?? '') == $variant ? 'border: 2px solid #007bff;' : '' }}">
@@ -239,7 +245,7 @@
                         <label>{{ __('messages.accent_color') }}</label>
                          <input type="hidden" name="accent_color" id="input_accent" value="{{ $user->themeSetting->accent_color ?? '' }}">
                         <div class="d-flex flex-wrap" style="max-height: 200px; overflow-y: auto;">
-                             <div class="mr-2 mb-2 text-center theme-item theme-item-accent" 
+                             <div class="mr-2 mb-2 text-center theme-item theme-item-accent"
                                  id="item_accent_default"
                                  onclick="selectTheme('accent', '')"
                                  style="cursor: pointer; border: 1px solid #ddd; padding: 5px; border-radius: 5px; {{ ($user->themeSetting->accent_color ?? '') == '' ? 'border: 2px solid #007bff;' : '' }}">
@@ -248,12 +254,37 @@
                             </div>
                             @foreach($accentVariants as $variant)
                                 @php $bg = getBgClass($variant, 'accent'); @endphp
-                                <div class="mr-2 mb-2 text-center theme-item theme-item-accent" 
+                                <div class="mr-2 mb-2 text-center theme-item theme-item-accent"
                                      id="item_accent_{{ $variant }}"
                                      onclick="selectTheme('accent', '{{ $variant }}')"
                                      style="cursor: pointer; border: 1px solid #ddd; padding: 5px; border-radius: 5px; {{ ($user->themeSetting->accent_color ?? '') == $variant ? 'border: 2px solid #007bff;' : '' }}">
                                     <div class="{{ $bg }} elevation-1 mx-auto mb-1" style="width: 40px; height: 20px; border-radius: 4px;"></div>
                                     <div style="font-size: 10px;">{{ str_replace('accent-', '', $variant) }}</div>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+
+                    <!-- Background Color -->
+                    <div class="form-group">
+                        <label>{{ __('messages.background_color') }}</label>
+                         <input type="hidden" name="background_color" id="input_background" value="{{ $user->themeSetting->background_color ?? '' }}">
+                        <div class="d-flex flex-wrap" style="max-height: 200px; overflow-y: auto;">
+                             <div class="mr-2 mb-2 text-center theme-item theme-item-background"
+                                 id="item_background_default"
+                                 onclick="selectTheme('background', '')"
+                                 style="cursor: pointer; border: 1px solid #ddd; padding: 5px; border-radius: 5px; {{ ($user->themeSetting->background_color ?? '') == '' ? 'border: 2px solid #007bff;' : '' }}">
+                                <div class="bg-light elevation-1 mx-auto mb-1" style="width: 40px; height: 20px; border-radius: 4px;"></div>
+                                <div style="font-size: 10px;">None</div>
+                            </div>
+                            @foreach($backgroundVariants as $variant)
+                                @php $bg = getBgClass($variant, 'background'); @endphp
+                                <div class="mr-2 mb-2 text-center theme-item theme-item-background"
+                                     id="item_background_{{ $variant }}"
+                                     onclick="selectTheme('background', '{{ $variant }}')"
+                                     style="cursor: pointer; border: 1px solid #ddd; padding: 5px; border-radius: 5px; {{ ($user->themeSetting->background_color ?? '') == $variant ? 'border: 2px solid #007bff;' : '' }}">
+                                    <div class="{{ $bg }} elevation-1 mx-auto mb-1" style="width: 40px; height: 20px; border-radius: 4px;"></div>
+                                    <div style="font-size: 10px;">{{ str_replace('bg-', '', $variant) }}</div>
                                 </div>
                             @endforeach
                         </div>
@@ -267,7 +298,7 @@
                         items.forEach(function(item) {
                             item.style.border = '1px solid #ddd';
                         });
-                        
+
                         var id = 'item_' + type + '_' + (value ? value.replace(/ /g, '_') : 'default');
                         var selected = document.getElementById(id);
                         if (selected) {

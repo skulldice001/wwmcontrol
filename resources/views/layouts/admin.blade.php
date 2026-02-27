@@ -39,6 +39,11 @@
          // If I look at original code: <a href... class="{{ $brandClass }}">
          // I'll keep it simple.
     }
+
+    $contentWrapperClass = 'content-wrapper';
+    if ($theme && $theme->background_color) {
+        $contentWrapperClass .= ' ' . $theme->background_color;
+    }
 @endphp
 <body class="{{ $bodyClass }}">
 <div class="wrapper">
@@ -188,7 +193,7 @@
     </aside>
 
     <!-- Content Wrapper. Contains page content -->
-    <div class="content-wrapper">
+    <div class="{{ $contentWrapperClass }}">
         <!-- Content Header (Page header) -->
         <div class="content-header">
             <div class="container-fluid">
