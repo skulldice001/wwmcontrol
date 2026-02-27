@@ -42,12 +42,8 @@ class DiscordController extends Controller
                 'request_code' => $request->input('code'),
             ]);
 
-            // Workaround for Socialite session state issue
-            if ($request->has('state') && !$request->session()->has('state')) {
-                $request->session()->put('state', $request->input('state'));
-            }
-
-            $discordUser = Socialite::driver('discord')->user();
+            // Use stateless to avoid session state issues
+            $discordUser = Socialite::driver('discord')->stateless()->user();
 
             \Log::info('Discord User Obtained', ['id' => $discordUser->getId()]);
 
@@ -58,17 +54,10 @@ class DiscordController extends Controller
                 'session_all' => $request->session()->all(),
             ]);
 
-             // Temporary debugging: Show error directly to user
-             /*
-             return response()->json([
-                 'message' => 'Discord authentication failed.',
-                 'error' => $e->getMessage(),
-                 'session_id' => $request->session()->getId(),
-                 'session_state' => $request->session()->get('state'),
-                 'request_state' => $request->input('state'),
-                 'session_data' => $request->session()->all(),
-             ], 500);
-             */
+            if (str_contains($e->getMessage(), 'invalid_grant')) {
+                return redirect()->route('home')->with('error', 'Phiên đăng nhập không hợp lệ hoặc đã hết hạn. Vui lòng thử lại.');
+            }
+
              return redirect()->route('home')->with('error', 'Discord authentication failed: ' . $e->getMessage());
         }
 
