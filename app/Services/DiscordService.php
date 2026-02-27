@@ -17,6 +17,39 @@ class DiscordService
     }
 
     /**
+     * Get the guild member data.
+     *
+     * @param string $userId
+     * @return array|null
+     */
+    public function getMember(string $userId): ?array
+    {
+        if (!$this->botToken || !$this->guildId) {
+            return null;
+        }
+
+        try {
+            $response = Http::withHeaders([
+                'Authorization' => "Bot {$this->botToken}",
+            ])
+            ->withOptions([
+                'verify' => config('services.discord.guzzle.verify', true),
+            ])
+            ->get("https://discord.com/api/v10/guilds/{$this->guildId}/members/{$userId}");
+
+            if ($response->successful()) {
+                return $response->json();
+            }
+
+            Log::error("Discord API error (getMember): {$response->status()} - {$response->body()}");
+        } catch (\Exception $e) {
+            Log::error("Discord API exception (getMember): {$e->getMessage()}");
+        }
+
+        return null;
+    }
+
+    /**
      * Check if a user has a specific role in the configured guild.
      *
      * @param string $discordUserId
