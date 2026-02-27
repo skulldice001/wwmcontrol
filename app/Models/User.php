@@ -75,4 +75,9 @@ class User extends Authenticatable
     {
         return $this->belongsTo(Skill::class, 'sub_skill_id');
     }
+
+    public function themeSetting()
+    {
+        return $this->hasOne(ThemeSetting::class);
+    }
 }

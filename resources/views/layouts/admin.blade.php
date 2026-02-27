@@ -11,11 +11,40 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @stack('styles')
 </head>
-<body class="hold-transition sidebar-mini layout-fixed">
+@php
+    $user = Auth::user();
+    $theme = $user ? $user->themeSetting : null;
+
+    // Default values
+    $bodyClass = 'hold-transition sidebar-mini layout-fixed';
+    if ($theme && $theme->dark_mode) {
+        $bodyClass .= ' dark-mode';
+    }
+    if ($theme && $theme->accent_color) {
+        $bodyClass .= ' ' . $theme->accent_color;
+    }
+
+    $navbarClass = 'main-header navbar navbar-expand';
+    $navbarClass .= ($theme && $theme->navbar_variant) ? ' ' . $theme->navbar_variant : ' navbar-white navbar-light';
+
+    $sidebarClass = 'main-sidebar elevation-4';
+    $sidebarClass .= ($theme && $theme->sidebar_variant) ? ' ' . $theme->sidebar_variant : ' sidebar-dark-primary';
+
+    $brandClass = 'brand-link';
+    if ($theme && $theme->brand_logo_variant) {
+        $brandClass .= ' ' . $theme->brand_logo_variant;
+    } else {
+         // Default brand link class if no variant is set, but usually it's just 'brand-link' plus maybe a color?
+         // AdminLTE defaults: brand-link (plus bg color if desired).
+         // If I look at original code: <a href... class="{{ $brandClass }}">
+         // I'll keep it simple.
+    }
+@endphp
+<body class="{{ $bodyClass }}">
 <div class="wrapper">
 
     <!-- Navbar -->
-    <nav class="main-header navbar navbar-expand navbar-white navbar-light">
+    <nav class="{{ $navbarClass }}">
         <!-- Left navbar links -->
         <ul class="navbar-nav">
             <li class="nav-item">
@@ -73,9 +102,9 @@
     <!-- /.navbar -->
 
     <!-- Main Sidebar Container -->
-    <aside class="main-sidebar sidebar-dark-primary elevation-4">
+    <aside class="{{ $sidebarClass }}">
         <!-- Brand Logo -->
-        <a href="{{ route('admin.dashboard') }}" class="brand-link">
+        <a href="{{ route('admin.dashboard') }}" class="{{ $brandClass }}">
             <span class="brand-text font-weight-light">{{ config('app.name', 'AdminLTE') }}</span>
         </a>
 

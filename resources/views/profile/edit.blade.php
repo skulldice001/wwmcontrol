@@ -106,6 +106,180 @@
                 <p class="text-muted">{{ __('messages.id_label') }} {{ $user->discord_id }}</p>
             </div>
         </div>
+
+        <div class="card card-secondary">
+            <div class="card-header">
+                <h3 class="card-title">{{ __('messages.theme_settings') }}</h3>
+            </div>
+            <form action="{{ route('profile.theme.update') }}" method="POST">
+                @csrf
+                @method('PUT')
+                <div class="card-body">
+                    @php
+                        $navbarVariants = [
+                            'navbar-primary navbar-dark', 'navbar-secondary navbar-dark', 'navbar-info navbar-dark', 'navbar-success navbar-dark', 'navbar-danger navbar-dark', 'navbar-indigo navbar-dark', 'navbar-purple navbar-dark', 'navbar-pink navbar-dark', 'navbar-navy navbar-dark', 'navbar-lightblue navbar-dark', 'navbar-teal navbar-dark', 'navbar-cyan navbar-dark', 'navbar-dark navbar-dark', 'navbar-gray-dark navbar-dark', 'navbar-gray navbar-dark', 'navbar-light navbar-light', 'navbar-warning navbar-light', 'navbar-white navbar-light', 'navbar-orange navbar-light'
+                        ];
+                        $sidebarVariants = [
+                            'sidebar-dark-primary', 'sidebar-dark-warning', 'sidebar-dark-info', 'sidebar-dark-danger', 'sidebar-dark-success', 'sidebar-dark-indigo', 'sidebar-dark-lightblue', 'sidebar-dark-navy', 'sidebar-dark-purple', 'sidebar-dark-fuchsia', 'sidebar-dark-pink', 'sidebar-dark-maroon', 'sidebar-dark-orange', 'sidebar-dark-lime', 'sidebar-dark-teal', 'sidebar-dark-olive',
+                            'sidebar-light-primary', 'sidebar-light-warning', 'sidebar-light-info', 'sidebar-light-danger', 'sidebar-light-success', 'sidebar-light-indigo', 'sidebar-light-lightblue', 'sidebar-light-navy', 'sidebar-light-purple', 'sidebar-light-fuchsia', 'sidebar-light-pink', 'sidebar-light-maroon', 'sidebar-light-orange', 'sidebar-light-lime', 'sidebar-light-teal', 'sidebar-light-olive'
+                        ];
+                        $accentVariants = [
+                            'accent-primary', 'accent-warning', 'accent-info', 'accent-danger', 'accent-success', 'accent-indigo', 'accent-lightblue', 'accent-navy', 'accent-purple', 'accent-fuchsia', 'accent-pink', 'accent-maroon', 'accent-orange', 'accent-lime', 'accent-teal', 'accent-olive'
+                        ];
+                        $brandVariants = [
+                            'navbar-primary', 'navbar-secondary', 'navbar-info', 'navbar-success', 'navbar-danger', 'navbar-indigo', 'navbar-purple', 'navbar-pink', 'navbar-navy', 'navbar-lightblue', 'navbar-teal', 'navbar-cyan', 'navbar-dark', 'navbar-gray-dark', 'navbar-gray', 'navbar-light', 'navbar-warning', 'navbar-white', 'navbar-orange'
+                        ];
+
+                        function getBgClass($variant, $type) {
+                            if ($type == 'navbar' || $type == 'brand') {
+                                 $color = explode(' ', $variant)[0];
+                                 $color = str_replace('navbar-', '', $color);
+                                 if ($color == 'white') return 'bg-white';
+                                 if ($color == 'light') return 'bg-light';
+                                 return 'bg-' . $color;
+                            }
+                            if ($type == 'sidebar') {
+                                 $parts = explode('-', $variant);
+                                 $color = end($parts);
+                                 return 'bg-' . $color;
+                            }
+                            if ($type == 'accent') {
+                                 $color = str_replace('accent-', '', $variant);
+                                 return 'bg-' . $color;
+                            }
+                            return 'bg-gray';
+                        }
+                    @endphp
+
+                    <!-- Dark Mode -->
+                    <div class="form-group">
+                        <div class="custom-control custom-switch">
+                            <input type="checkbox" class="custom-control-input" id="dark_mode" name="dark_mode" {{ ($user->themeSetting->dark_mode ?? false) ? 'checked' : '' }}>
+                            <label class="custom-control-label" for="dark_mode">{{ __('messages.dark_mode') }}</label>
+                        </div>
+                    </div>
+
+                    <!-- Navbar Variant -->
+                    <div class="form-group">
+                        <label>{{ __('messages.navbar_variant') }}</label>
+                        <input type="hidden" name="navbar_variant" id="input_navbar" value="{{ $user->themeSetting->navbar_variant ?? '' }}">
+                        <div class="d-flex flex-wrap" style="max-height: 200px; overflow-y: auto;">
+                            <div class="mr-2 mb-2 text-center theme-item theme-item-navbar" 
+                                 id="item_navbar_default"
+                                 onclick="selectTheme('navbar', '')"
+                                 style="cursor: pointer; border: 1px solid #ddd; padding: 5px; border-radius: 5px; {{ ($user->themeSetting->navbar_variant ?? '') == '' ? 'border: 2px solid #007bff;' : '' }}">
+                                <div class="bg-light elevation-1 mx-auto mb-1" style="width: 40px; height: 20px; border-radius: 4px;"></div>
+                                <div style="font-size: 10px;">Default</div>
+                            </div>
+                            @foreach($navbarVariants as $variant)
+                                @php $bg = getBgClass($variant, 'navbar'); @endphp
+                                <div class="mr-2 mb-2 text-center theme-item theme-item-navbar" 
+                                     id="item_navbar_{{ str_replace(' ', '_', $variant) }}"
+                                     onclick="selectTheme('navbar', '{{ $variant }}')"
+                                     style="cursor: pointer; border: 1px solid #ddd; padding: 5px; border-radius: 5px; {{ ($user->themeSetting->navbar_variant ?? '') == $variant ? 'border: 2px solid #007bff;' : '' }}">
+                                    <div class="{{ $bg }} elevation-1 mx-auto mb-1" style="width: 40px; height: 20px; border-radius: 4px;"></div>
+                                    <div style="font-size: 10px;">{{ str_replace('navbar-', '', explode(' ', $variant)[0]) }}</div>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+
+                    <!-- Sidebar Variant -->
+                    <div class="form-group">
+                        <label>{{ __('messages.sidebar_variant') }}</label>
+                        <input type="hidden" name="sidebar_variant" id="input_sidebar" value="{{ $user->themeSetting->sidebar_variant ?? '' }}">
+                        <div class="d-flex flex-wrap" style="max-height: 200px; overflow-y: auto;">
+                            <div class="mr-2 mb-2 text-center theme-item theme-item-sidebar" 
+                                 id="item_sidebar_default"
+                                 onclick="selectTheme('sidebar', '')"
+                                 style="cursor: pointer; border: 1px solid #ddd; padding: 5px; border-radius: 5px; {{ ($user->themeSetting->sidebar_variant ?? '') == '' ? 'border: 2px solid #007bff;' : '' }}">
+                                <div class="bg-primary elevation-1 mx-auto mb-1" style="width: 40px; height: 20px; border-radius: 4px;"></div>
+                                <div style="font-size: 10px;">Default</div>
+                            </div>
+                            @foreach($sidebarVariants as $variant)
+                                @php $bg = getBgClass($variant, 'sidebar'); $isLight = strpos($variant, 'light') !== false; @endphp
+                                <div class="mr-2 mb-2 text-center theme-item theme-item-sidebar" 
+                                     id="item_sidebar_{{ $variant }}"
+                                     onclick="selectTheme('sidebar', '{{ $variant }}')"
+                                     style="cursor: pointer; border: 1px solid #ddd; padding: 5px; border-radius: 5px; {{ ($user->themeSetting->sidebar_variant ?? '') == $variant ? 'border: 2px solid #007bff;' : '' }}">
+                                    <div class="{{ $bg }} elevation-1 mx-auto mb-1" style="width: 40px; height: 20px; border-radius: 4px; border: {{ $isLight ? '1px solid #ccc' : 'none' }}"></div>
+                                    <div style="font-size: 10px;">{{ str_replace('sidebar-', '', $variant) }}</div>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+
+                    <!-- Brand Logo Variant -->
+                    <div class="form-group">
+                        <label>{{ __('messages.brand_logo_variant') }}</label>
+                        <input type="hidden" name="brand_logo_variant" id="input_brand" value="{{ $user->themeSetting->brand_logo_variant ?? '' }}">
+                        <div class="d-flex flex-wrap" style="max-height: 200px; overflow-y: auto;">
+                             <div class="mr-2 mb-2 text-center theme-item theme-item-brand" 
+                                 id="item_brand_default"
+                                 onclick="selectTheme('brand', '')"
+                                 style="cursor: pointer; border: 1px solid #ddd; padding: 5px; border-radius: 5px; {{ ($user->themeSetting->brand_logo_variant ?? '') == '' ? 'border: 2px solid #007bff;' : '' }}">
+                                <div class="bg-light elevation-1 mx-auto mb-1" style="width: 40px; height: 20px; border-radius: 4px;"></div>
+                                <div style="font-size: 10px;">Default</div>
+                            </div>
+                            @foreach($brandVariants as $variant)
+                                @php $bg = getBgClass($variant, 'brand'); @endphp
+                                <div class="mr-2 mb-2 text-center theme-item theme-item-brand" 
+                                     id="item_brand_{{ $variant }}"
+                                     onclick="selectTheme('brand', '{{ $variant }}')"
+                                     style="cursor: pointer; border: 1px solid #ddd; padding: 5px; border-radius: 5px; {{ ($user->themeSetting->brand_logo_variant ?? '') == $variant ? 'border: 2px solid #007bff;' : '' }}">
+                                    <div class="{{ $bg }} elevation-1 mx-auto mb-1" style="width: 40px; height: 20px; border-radius: 4px;"></div>
+                                    <div style="font-size: 10px;">{{ str_replace('navbar-', '', $variant) }}</div>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+
+                    <!-- Accent Color -->
+                    <div class="form-group">
+                        <label>{{ __('messages.accent_color') }}</label>
+                         <input type="hidden" name="accent_color" id="input_accent" value="{{ $user->themeSetting->accent_color ?? '' }}">
+                        <div class="d-flex flex-wrap" style="max-height: 200px; overflow-y: auto;">
+                             <div class="mr-2 mb-2 text-center theme-item theme-item-accent" 
+                                 id="item_accent_default"
+                                 onclick="selectTheme('accent', '')"
+                                 style="cursor: pointer; border: 1px solid #ddd; padding: 5px; border-radius: 5px; {{ ($user->themeSetting->accent_color ?? '') == '' ? 'border: 2px solid #007bff;' : '' }}">
+                                <div class="bg-light elevation-1 mx-auto mb-1" style="width: 40px; height: 20px; border-radius: 4px;"></div>
+                                <div style="font-size: 10px;">None</div>
+                            </div>
+                            @foreach($accentVariants as $variant)
+                                @php $bg = getBgClass($variant, 'accent'); @endphp
+                                <div class="mr-2 mb-2 text-center theme-item theme-item-accent" 
+                                     id="item_accent_{{ $variant }}"
+                                     onclick="selectTheme('accent', '{{ $variant }}')"
+                                     style="cursor: pointer; border: 1px solid #ddd; padding: 5px; border-radius: 5px; {{ ($user->themeSetting->accent_color ?? '') == $variant ? 'border: 2px solid #007bff;' : '' }}">
+                                    <div class="{{ $bg }} elevation-1 mx-auto mb-1" style="width: 40px; height: 20px; border-radius: 4px;"></div>
+                                    <div style="font-size: 10px;">{{ str_replace('accent-', '', $variant) }}</div>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
+
+                <script>
+                    function selectTheme(type, value) {
+                        document.getElementById('input_' + type).value = value;
+                        var items = document.querySelectorAll('.theme-item-' + type);
+                        items.forEach(function(item) {
+                            item.style.border = '1px solid #ddd';
+                        });
+                        
+                        var id = 'item_' + type + '_' + (value ? value.replace(/ /g, '_') : 'default');
+                        var selected = document.getElementById(id);
+                        if (selected) {
+                            selected.style.border = '2px solid #007bff';
+                        }
+                    }
+                </script>
+                <div class="card-footer">
+                    <button type="submit" class="btn btn-secondary">{{ __('messages.update_theme') }}</button>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
 @endsection

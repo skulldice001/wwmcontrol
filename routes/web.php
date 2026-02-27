@@ -81,6 +81,7 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::put('/profile/theme', [ProfileController::class, 'updateTheme'])->name('profile.theme.update');
     Route::get('/skills', [ProfileController::class, 'editSkills'])->name('skills.edit');
     Route::put('/skills', [ProfileController::class, 'updateInnerWays'])->name('skills.update');
 
