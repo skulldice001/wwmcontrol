@@ -4,13 +4,6 @@
 
     <div class="card-body">
         <div class="form-group">
-            <label>Discord ID</label>
-            <input type="text" name="discord_id" class="form-control"
-                   v-model="form.discord_id"
-                   placeholder="Enter Discord Message ID">
-        </div>
-
-        <div class="form-group">
             <label>Title</label>
             <input type="text" name="title" class="form-control"
                    :class="{'is-invalid': errors.title}"

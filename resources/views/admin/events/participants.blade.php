@@ -118,6 +118,7 @@
             <table class="table table-bordered table-striped">
                 <thead>
                     <tr>
+                        <th>{{ __('messages.discord_id') }}</th>
                         <th>{{ __('messages.name') }}</th>
                         <th>{{ __('messages.in_game_name') }}</th>
                         <th>{{ __('messages.main_skill') }}</th>
@@ -130,6 +131,7 @@
                 <tbody>
                     @forelse($participants as $user)
                     <tr>
+                        <td>{{ $user->discord_id }}</td>
                         <td>{{ $user->name }}</td>
                         <td>{{ $user->ingame_name ?? __('messages.not_available') }}</td>
                         <td>
