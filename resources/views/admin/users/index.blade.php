@@ -20,7 +20,6 @@
         <table class="table table-bordered table-striped" id="users-table">
             <thead>
                 <tr>
-                    <th>{{ __('messages.discord_id') }}</th>
                     <th>Avatar</th>
                     <th>{{ __('messages.discord_name') }}</th>
                     <th>{{ __('messages.ingame_name') }}</th>
