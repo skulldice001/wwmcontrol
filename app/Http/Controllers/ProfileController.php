@@ -91,9 +91,10 @@ class ProfileController extends Controller
             'sidebar_variant' => 'nullable|string',
             'brand_logo_variant' => 'nullable|string',
             'accent_color' => 'nullable|string',
+            'background_color' => 'nullable|string',
         ]);
 
-        $data = $request->only(['navbar_variant', 'sidebar_variant', 'brand_logo_variant', 'accent_color']);
+        $data = $request->only(['navbar_variant', 'sidebar_variant', 'brand_logo_variant', 'accent_color', 'background_color']);
         $data['dark_mode'] = $request->has('dark_mode');
 
         $user->themeSetting()->updateOrCreate(

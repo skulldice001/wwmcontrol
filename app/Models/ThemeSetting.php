@@ -16,6 +16,7 @@ class ThemeSetting extends Model
         'sidebar_variant',
         'brand_logo_variant',
         'accent_color',
+        'background_color',
     ];
 
     public function user()
