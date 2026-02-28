@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Auth\DiscordController;
+use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Admin\Auth\LoginController as AdminLoginController;
 use Illuminate\Http\Request;
@@ -19,9 +20,8 @@ Route::get('lang/{locale}', function ($locale) {
     return redirect()->back();
 })->name('lang.switch');
 
-Route::get('/login', function () {
-    return redirect()->route('home');
-})->name('login');
+Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
+Route::post('/login', [LoginController::class, 'login']);
 
 // Staff Routes
 Route::get('/admin', function () {
@@ -68,7 +68,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::post('events/{event}/formation', [EventController::class, 'saveFormation'])->name('events.formation.save');
         Route::post('events/{event}/complete', [EventController::class, 'complete'])->name('events.complete');
         Route::resource('events', EventController::class);
-        Route::get('/users', [UserController::class, 'index'])->name('users.index');
+        Route::resource('users', UserController::class);
     });
 });
 

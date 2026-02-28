@@ -65,10 +65,16 @@
         <a href="{{ route('auth.discord') }}" class="btn btn-primary btn-lg btn-block" style="background-color: #5865F2; border-color: #5865F2;">
             <i class="fab fa-discord mr-2"></i> {{ __('messages.login_discord') }}
         </a>
+        <div class="text-center my-2">{{ __('messages.or_sign_in_with') }}</div>
+        <a href="{{ route('login') }}" class="btn btn-default btn-lg btn-block">
+            <i class="fas fa-user mr-2"></i> {{ __('messages.sign_in') }}
+        </a>
     @endif
 
     <div class="mt-4 pt-3 border-top">
-        <a href="{{ route('admin.login') }}" class="text-muted small">{{ __('messages.staff_login_link') }}</a>
+        <a href="{{ route('admin.login') }}" class="btn btn-secondary btn-lg btn-block">
+            <i class="fas fa-user-shield mr-2"></i> {{ __('messages.staff_login_link') }}
+        </a>
     </div>
 </div>
 

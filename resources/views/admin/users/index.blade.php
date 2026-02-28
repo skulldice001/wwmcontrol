@@ -6,6 +6,11 @@
 <div class="card">
     <div class="card-header">
         <h3 class="card-title">{{ __('messages.guild_members_list') }}</h3>
+        <div class="card-tools">
+            <a href="{{ route('admin.users.create') }}" class="btn btn-success btn-sm">
+                <i class="fas fa-plus"></i> {{ __('messages.create_user') }}
+            </a>
+        </div>
     </div>
     <div class="card-body">
         <div class="mb-3">

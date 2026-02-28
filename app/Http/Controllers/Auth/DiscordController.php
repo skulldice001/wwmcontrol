@@ -62,8 +62,12 @@ class DiscordController extends Controller
         }
 
         // Invalidate old session and regenerate token
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
+        // Only if NOT already logged in, otherwise we might kill the current session?
+        // Actually, Socialite stateless() helps. If we are linking, we don't want to invalidate the current user's session.
+        if (!Auth::check()) {
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+        }
 
         $memberData = $discordService->getMember($discordUser->getId());
 
@@ -85,6 +89,71 @@ class DiscordController extends Controller
         // Get Guild Nickname
         $guildNickname = $memberData['nick'] ?? $memberData['user']['global_name'] ?? $memberData['user']['username'] ?? null;
         $nameToUse = $guildNickname ?: $discordUser->getName();
+
+        // CHECK FOR AUTHENTICATED USER (LINKING MODE)
+        if (Auth::check()) {
+            $currentUser = Auth::user();
+
+            // Check if this Discord ID is already used by another user
+            $existingUser = User::where('discord_id', $discordUser->getId())
+                                ->where('id', '!=', $currentUser->id)
+                                ->first();
+
+            if ($existingUser) {
+                return redirect()->route('profile.edit')->with('error', __('messages.discord_already_linked'));
+            }
+
+            // Link/Sync the account
+            $currentUser->update([
+                'discord_id' => $discordUser->getId(),
+                'name' => $nameToUse, // Sync name
+                // 'email' => $discordUser->getEmail(), // Optional: decide whether to overwrite email. Usually better to keep primary email or offer choice. Let's sync it for now as "sync info" implies it.
+                'discord_token' => $discordUser->token,
+                'discord_refresh_token' => $discordUser->refreshToken,
+                'discord_avatar' => $discordUser->getAvatar(),
+            ]);
+
+            // Sync Inner Ways if needed (optional for linking, but good for "sync")
+            // We can reuse the logic below or refactor.
+            // For now, let's just do the basic sync of account details.
+            // If user wants to sync skills/inner ways, that might be separate logic, but the prompt says "sync info with discord account".
+            // The existing logic below handles Inner Way creation/syncing for new/login users.
+            // Let's extract the Inner Way logic to a helper or just copy-paste for safety to avoid breaking existing flow.
+
+            // ... (Inner Way Logic Duplication or Refactoring)
+            // Actually, let's keep it simple: Just sync profile fields for now.
+            // If the user was created manually, they might not have Inner Ways initialized properly?
+            // Let's run the Inner Way initialization just in case.
+
+             $innerWayFiles = File::files(resource_path('icon/inner_way'));
+             $allInnerWayIds = [];
+             foreach ($innerWayFiles as $file) {
+                 $filenameWithExt = $file->getFilename();
+                 $filename = pathinfo($filenameWithExt, PATHINFO_FILENAME);
+                 $innerWayData = [
+                     'name' => str_replace('-', ' ', $filename),
+                     'icon' => $filenameWithExt,
+                 ];
+                 $innerWay = InnerWay::where('slug', Str::slug($filename))->first();
+                 if (!$innerWay) {
+                     $color = 'blue';
+                     if ($file->getExtension() === 'png') $color = 'gold';
+                     $innerWayData['color'] = $color;
+                     $innerWayData['slug'] = Str::slug($filename);
+                     $innerWay = InnerWay::create($innerWayData);
+                 } else {
+                     $innerWay->update($innerWayData);
+                 }
+                 $allInnerWayIds[$innerWay->id] = ['level' => 0];
+             }
+
+             // If user has no inner ways, give them default
+             if ($currentUser->innerWays()->count() == 0) {
+                 $currentUser->innerWays()->sync($allInnerWayIds);
+             }
+
+            return redirect()->route('profile.edit')->with('success', __('messages.discord_linked_success'));
+        }
 
         $user = User::where('discord_id', $discordUser->getId())->first();
 

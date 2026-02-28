@@ -16,7 +16,7 @@
                 </div>
             @endif
 
-            <form action="{{ route('profile.update') }}" method="POST">
+            <form action="{{ route('profile.update') }}" method="POST" enctype="multipart/form-data">
                 @csrf
                 @method('PUT')
                 <div class="card-body">
@@ -27,6 +27,18 @@
                     <div class="form-group">
                         <label>{{ __('messages.email') }}</label>
                         <input type="email" class="form-control" value="{{ $user->email }}" disabled>
+                    </div>
+                    <div class="form-group">
+                        <label for="avatar">{{ __('messages.avatar') }}</label>
+                        <div class="input-group">
+                            <div class="custom-file">
+                                <input type="file" class="custom-file-input" id="avatar" name="avatar" onchange="previewImage(this)">
+                                <label class="custom-file-label" for="avatar">{{ __('messages.upload_avatar') }}</label>
+                            </div>
+                        </div>
+                        <div class="mt-2" id="avatar-preview-container" style="display: none;">
+                            <img id="avatar-preview" src="#" alt="Avatar Preview" class="img-circle elevation-2" style="width: 100px; height: 100px; object-fit: cover;">
+                        </div>
                     </div>
                     <div class="form-group">
                         <label for="country">{{ __('messages.country') }}</label>
@@ -97,13 +109,21 @@
                 <h3 class="card-title">{{ __('messages.discord_info') }}</h3>
             </div>
             <div class="card-body text-center">
-                @if($user->discord_avatar)
+                @if($user->avatar)
+                    <img src="{{ asset('storage/' . $user->avatar) }}" class="img-circle elevation-2 mb-3" alt="User Image" style="width: 100px; height: 100px; object-fit: cover;">
+                @elseif($user->discord_avatar)
                     <img src="{{ $user->discord_avatar }}" class="img-circle elevation-2 mb-3" alt="User Image" style="width: 100px; height: 100px;">
                 @else
                     <img src="https://ui-avatars.com/api/?name={{ urlencode($user->name) }}" class="img-circle elevation-2 mb-3" alt="User Image" style="width: 100px; height: 100px;">
                 @endif
                 <h4>{{ $user->name }}</h4>
                 <p class="text-muted">{{ __('messages.id_label') }} {{ $user->discord_id }}</p>
+
+                <hr>
+                <a href="{{ route('auth.discord') }}" class="btn btn-block btn-primary" style="background-color: #7289da; border-color: #7289da;">
+                    <i class="fab fa-discord mr-2"></i>
+                    {{ $user->discord_id ? __('messages.sync_discord') : __('messages.link_discord') }}
+                </a>
             </div>
         </div>
 
@@ -291,21 +311,41 @@
                     </div>
                 </div>
 
-                <script>
-                    function selectTheme(type, value) {
-                        document.getElementById('input_' + type).value = value;
-                        var items = document.querySelectorAll('.theme-item-' + type);
-                        items.forEach(function(item) {
-                            item.style.border = '1px solid #ddd';
-                        });
+@push('scripts')
+<script>
+    function selectTheme(type, value) {
+        // Update hidden input
+        $('#input_' + type).val(value);
 
-                        var id = 'item_' + type + '_' + (value ? value.replace(/ /g, '_') : 'default');
-                        var selected = document.getElementById(id);
-                        if (selected) {
-                            selected.style.border = '2px solid #007bff';
-                        }
-                    }
-                </script>
+        // Update UI selection
+        $('.theme-item-' + type).css('border', '1px solid #ddd');
+        if (value == '') {
+            $('#item_' + type + '_default').css('border', '2px solid #007bff');
+        } else {
+             // Handle variants with spaces (navbar)
+             let safeValue = value.replace(/ /g, '_');
+             $('#item_' + type + '_' + safeValue).css('border', '2px solid #007bff');
+        }
+    }
+
+    function previewImage(input) {
+        if (input.files && input.files[0]) {
+            var reader = new FileReader();
+            
+            reader.onload = function(e) {
+                $('#avatar-preview').attr('src', e.target.result);
+                $('#avatar-preview-container').show();
+            }
+            
+            reader.readAsDataURL(input.files[0]);
+            
+            // Update file label
+            var fileName = input.files[0].name;
+            $(input).next('.custom-file-label').html(fileName);
+        }
+    }
+</script>
+@endpush
                 <div class="card-footer">
                     <button type="submit" class="btn btn-secondary">{{ __('messages.update_theme') }}</button>
                 </div>
