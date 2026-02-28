@@ -212,6 +212,12 @@
                                 <p>{{ __('messages.available_events') }}</p>
                             </a>
                         </li>
+                        <li class="nav-item">
+                            <a href="{{ route('entertainment.index') }}" class="nav-link {{ request()->routeIs('entertainment.*') ? 'active' : '' }}">
+                                <i class="nav-icon fas fa-gamepad"></i>
+                                <p>{{ __('messages.entertainment_hall') }}</p>
+                            </a>
+                        </li>
                     @endif
                 </ul>
             </nav>
