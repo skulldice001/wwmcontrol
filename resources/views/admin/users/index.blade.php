@@ -157,7 +157,7 @@
 
             // Find column index by header text to be robust
             table.columns().header().each(function(th, index) {
-                if ($(th).text().trim() === '{{ __('messages.role') }}') {
+                if ($(th).data('name') === 'role' || $(th).text().trim() === '{{ __('messages.role') }}') {
                     roleColumnIndex = index;
                 }
             });

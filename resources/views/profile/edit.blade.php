@@ -21,8 +21,12 @@
                 @method('PUT')
                 <div class="card-body">
                     <div class="form-group">
-                        <label>{{ __('messages.discord_name') }}</label>
+                        <label>{{ $user->discord_id ? __('messages.discord_name') : __('messages.name') }}</label>
                         <input type="text" class="form-control" name="name" value="{{ old('name', $user->name) }}" {{ $user->discord_id ? 'disabled' : '' }}>
+                    </div>
+                    <div class="form-group">
+                        <label>{{ __('messages.account') }}</label>
+                        <input type="text" class="form-control" name="account" value="{{ old('account', $user->account) }}" {{ $user->discord_id ? 'disabled' : '' }}>
                     </div>
                     <div class="form-group">
                         <label>{{ __('messages.email') }}</label>

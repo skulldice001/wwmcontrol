@@ -34,6 +34,7 @@ class ProfileController extends Controller
         if (!$user->discord_id) {
             $rules['name'] = 'required|string|max:255';
             $rules['email'] = 'required|string|email|max:255|unique:users,email,' . $user->id;
+            $rules['account'] = 'nullable|string|max:255|unique:users,account,' . $user->id;
         }
 
         $validated = $request->validate($rules);
