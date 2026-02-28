@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use App\Models\Skill;
 use App\Models\InnerWay;
 
@@ -115,5 +117,31 @@ class ProfileController extends Controller
         );
 
         return redirect()->back()->with('success', __('messages.theme_updated_success'));
+    }
+
+    public function updatePassword(Request $request)
+    {
+        $user = Auth::user();
+
+        $rules = [
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
+        ];
+
+        // Only require current password if user actually has one
+        if ($user->password) {
+            $rules['current_password'] = ['required'];
+        }
+
+        $request->validate($rules);
+
+        if ($user->password && !Hash::check($request->current_password, $user->password)) {
+             return back()->withErrors(['current_password' => __('messages.current_password_incorrect')]);
+        }
+
+        $user->update([
+            'password' => Hash::make($request->password)
+        ]);
+
+        return back()->with('success', __('messages.password_updated_success'));
     }
 }

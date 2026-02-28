@@ -127,6 +127,45 @@
             </div>
         </div>
 
+        <div class="card card-warning">
+            <div class="card-header">
+                <h3 class="card-title">{{ __('messages.change_password') }}</h3>
+            </div>
+            <form action="{{ route('profile.password.update') }}" method="POST">
+                @csrf
+                @method('PUT')
+                <div class="card-body">
+                    @if($user->password)
+                    <div class="form-group">
+                        <label for="current_password">{{ __('messages.current_password') }}</label>
+                        <input type="password" class="form-control @error('current_password') is-invalid @enderror" id="current_password" name="current_password">
+                        @error('current_password')
+                            <span class="invalid-feedback" role="alert">
+                                <strong>{{ $message }}</strong>
+                            </span>
+                        @enderror
+                    </div>
+                    @endif
+                    <div class="form-group">
+                        <label for="password">{{ __('messages.new_password') }}</label>
+                        <input type="password" class="form-control @error('password') is-invalid @enderror" id="password" name="password">
+                        @error('password')
+                            <span class="invalid-feedback" role="alert">
+                                <strong>{{ $message }}</strong>
+                            </span>
+                        @enderror
+                    </div>
+                    <div class="form-group">
+                        <label for="password_confirmation">{{ __('messages.confirm_password') }}</label>
+                        <input type="password" class="form-control" id="password_confirmation" name="password_confirmation">
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <button type="submit" class="btn btn-warning">{{ __('messages.update_password') }}</button>
+                </div>
+            </form>
+        </div>
+
         <div class="card card-secondary">
             <div class="card-header">
                 <h3 class="card-title">{{ __('messages.theme_settings') }}</h3>
