@@ -25,7 +25,15 @@ class ProfileController extends Controller
             'online_to' => 'nullable|date_format:H:i',
             'ingame_name' => 'nullable|string|max:255',
             'ingame_id' => 'nullable|string|max:255',
+            'avatar' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ]);
+
+        if ($request->hasFile('avatar')) {
+            if ($user->avatar) {
+                Storage::disk('public')->delete($user->avatar);
+            }
+            $validated['avatar'] = $request->file('avatar')->store('avatars', 'public');
+        }
 
         $user->update($validated);
 

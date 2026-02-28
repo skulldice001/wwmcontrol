@@ -7,7 +7,7 @@
 
     <!-- Google Font: Source Sans Pro -->
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
-    
+
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="hold-transition login-page">
@@ -67,8 +67,8 @@
 
             <hr>
             <div class="mt-3">
-                <a href="{{ route('auth.discord') }}" class="btn btn-outline-secondary btn-block">
-                    <i class="fab fa-discord mr-1"></i> {{ __('messages.login_discord') }}
+                <a href="{{ route('login') }}" class="btn btn-outline-secondary btn-block">
+                    <i class="fas fa-users mr-1"></i> {{ __('messages.go_to_user_login') }}
                 </a>
             </div>
         </div>

@@ -117,6 +117,28 @@
         <div class="sidebar">
             <!-- Sidebar user panel (optional) -->
             <div class="user-panel mt-3 pb-3 mb-3 d-flex">
+                <div class="image">
+                    @php
+                        $currentUser = Auth::user();
+                        $currentStaff = Auth::guard('staff')->user();
+                        $avatarUrl = null;
+
+                        if ($currentUser) {
+                            if ($currentUser->avatar) {
+                                $avatarUrl = asset('storage/' . $currentUser->avatar);
+                            } elseif ($currentUser->discord_avatar) {
+                                $avatarUrl = $currentUser->discord_avatar;
+                            } else {
+                                $avatarUrl = 'https://ui-avatars.com/api/?name=' . urlencode($currentUser->name);
+                            }
+                        } elseif ($currentStaff) {
+                             $avatarUrl = 'https://ui-avatars.com/api/?name=' . urlencode($currentStaff->name);
+                        }
+                    @endphp
+                    @if($avatarUrl)
+                        <img src="{{ $avatarUrl }}" class="img-circle elevation-2" alt="User Image" style="width: 33px; height: 33px; object-fit: cover;">
+                    @endif
+                </div>
                 <div class="info">
                     <a href="#" class="d-block">{{ Auth::user()->name ?? Auth::guard('staff')->user()->name ?? 'Guest' }}</a>
                 </div>
@@ -146,9 +168,15 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a href="{{ route('admin.users.index') }}" class="nav-link {{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
+                            <a href="{{ route('admin.users.index') }}" class="nav-link {{ (request()->routeIs('admin.users.*') && !request()->routeIs('admin.users.create')) ? 'active' : '' }}">
                                 <i class="nav-icon fas fa-users"></i>
                                 <p>{{ __('messages.guild_members') }}</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ route('admin.users.create') }}" class="nav-link {{ request()->routeIs('admin.users.create') ? 'active' : '' }}">
+                                <i class="nav-icon fas fa-user-plus"></i>
+                                <p>{{ __('messages.create_new_user') }}</p>
                             </a>
                         </li>
                         @if(Auth::guard('staff')->user()->isAdmin())
