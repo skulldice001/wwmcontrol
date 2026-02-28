@@ -22,11 +22,11 @@
                 <div class="card-body">
                     <div class="form-group">
                         <label>{{ __('messages.discord_name') }}</label>
-                        <input type="text" class="form-control" value="{{ $user->name }}" disabled>
+                        <input type="text" class="form-control" name="name" value="{{ old('name', $user->name) }}" {{ $user->discord_id ? 'disabled' : '' }}>
                     </div>
                     <div class="form-group">
                         <label>{{ __('messages.email') }}</label>
-                        <input type="email" class="form-control" value="{{ $user->email }}" disabled>
+                        <input type="email" class="form-control" name="email" value="{{ old('email', $user->email) }}" {{ $user->discord_id ? 'disabled' : '' }}>
                     </div>
                     <div class="form-group">
                         <label for="avatar">{{ __('messages.avatar') }}</label>
@@ -370,14 +370,14 @@
     function previewImage(input) {
         if (input.files && input.files[0]) {
             var reader = new FileReader();
-            
+
             reader.onload = function(e) {
                 $('#avatar-preview').attr('src', e.target.result);
                 $('#avatar-preview-container').show();
             }
-            
+
             reader.readAsDataURL(input.files[0]);
-            
+
             // Update file label
             var fileName = input.files[0].name;
             $(input).next('.custom-file-label').html(fileName);

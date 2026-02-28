@@ -21,14 +21,22 @@ class ProfileController extends Controller
     {
         $user = Auth::user();
 
-        $validated = $request->validate([
+        $rules = [
             'country' => 'nullable|string|max:255',
             'online_from' => 'nullable|date_format:H:i',
             'online_to' => 'nullable|date_format:H:i',
             'ingame_name' => 'nullable|string|max:255',
             'ingame_id' => 'nullable|string|max:255',
             'avatar' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
-        ]);
+        ];
+
+        // Allow name and email update if not linked to Discord
+        if (!$user->discord_id) {
+            $rules['name'] = 'required|string|max:255';
+            $rules['email'] = 'required|string|email|max:255|unique:users,email,' . $user->id;
+        }
+
+        $validated = $request->validate($rules);
 
         if ($request->hasFile('avatar')) {
             if ($user->avatar) {
