@@ -27,6 +27,7 @@
                 <tr>
                     <th>Avatar</th>
                     <th>{{ __('messages.discord_name') }}</th>
+                    <th>{{ __('messages.account') }}</th>
                     <th>{{ __('messages.ingame_name') }}</th>
                     <th>{{ __('messages.main_skill') }}</th>
                     <th>{{ __('messages.role') }}</th>
@@ -47,6 +48,7 @@
                     <td>
                         {{ $user->name }}
                     </td>
+                    <td>{{ $user->account }}</td>
                     <td>{{ $user->ingame_name ?? __('messages.not_available') }}</td>
                     <td>
                         @if($user->mainSkill)
@@ -151,8 +153,16 @@
 
         $('#role-filter').on('change', function () {
             var value = $(this).val();
-            // Role column index (0-based): ID(0), Avatar(1), Discord Name(2), Ingame Name(3), Main Skill(4), Role(5)
-            table.column(5).search(value).draw();
+            var roleColumnIndex = 5; // Default to 5
+
+            // Find column index by header text to be robust
+            table.columns().header().each(function(th, index) {
+                if ($(th).text().trim() === '{{ __('messages.role') }}') {
+                    roleColumnIndex = index;
+                }
+            });
+
+            table.column(roleColumnIndex).search(value).draw();
         });
     });
 </script>
