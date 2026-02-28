@@ -73,6 +73,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
 });
 
 use App\Http\Controllers\UserEventController;
+use App\Http\Controllers\EntertainmentController;
 
 Route::middleware('auth')->group(function () {
     Route::get('/dashboard', function () {
@@ -91,6 +92,11 @@ Route::middleware('auth')->group(function () {
     Route::post('/events/{event}/register', [UserEventController::class, 'register'])->name('events.register');
     Route::delete('/events/{event}/unregister', [UserEventController::class, 'unregister'])->name('events.unregister');
     Route::get('/events/{event}/map', [UserEventController::class, 'map'])->name('events.map');
+
+    // Entertainment Routes
+    Route::get('/entertainment', [EntertainmentController::class, 'index'])->name('entertainment.index');
+    Route::get('/entertainment/poker', [EntertainmentController::class, 'poker'])->name('entertainment.poker');
+    Route::get('/entertainment/blackjack', [EntertainmentController::class, 'blackjack'])->name('entertainment.blackjack');
 });
 
 
