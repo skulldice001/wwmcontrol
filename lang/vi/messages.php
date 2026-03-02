@@ -104,6 +104,7 @@ return [
     'select_all_visible' => 'Chọn tất cả hiển thị',
     'no_participants_found' => 'Không tìm thấy người chơi nào',
     'add' => 'Thêm',
+    'add_members_to_team' => 'Thêm thành viên vào :team',
     'entertainment_hall' => 'Sảnh giải trí',
     'poker_texas' => 'Poker Texas',
     'blackjack' => 'Blackjack',

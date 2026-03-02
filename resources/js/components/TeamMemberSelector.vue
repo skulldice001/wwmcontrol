@@ -100,15 +100,6 @@ export default {
       searchQuery: '',
       selectedIds: [],
       title: '',
-      defaultTranslations: {
-        select_members: 'Select Members',
-        available: 'available',
-        search_placeholder: 'Search players...',
-        select_all_visible: 'Select All Visible',
-        no_participants_found: 'No participants found',
-        cancel: 'Cancel',
-        add: 'Add'
-      }
     };
   },
   computed: {
@@ -131,13 +122,11 @@ export default {
     window.openTeamMemberSelector = (teamId, unassignedMembers, teamName) => {
       this.teamId = teamId;
       this.users = unassignedMembers || [];
-      // If teamName is provided, use it in the title. Otherwise use default.
-      // We'll handle the title logic here, but we can also use a translation for "Add Members to {team}" if we want to be fancy.
-      // For now, let's stick to simple string concatenation if teamName exists, or default title.
       if (teamName) {
-        this.title = `Add Members to ${teamName}`;
+        const tpl = this.t('add_members_to_team');
+        this.title = (tpl || '').replace(':team', teamName);
       } else {
-        this.title = ''; // Will fall back to default in template
+        this.title = '';
       }
       
       this.selectedIds = [];
@@ -147,7 +136,7 @@ export default {
   },
   methods: {
     t(key) {
-      return this.translations[key] || this.defaultTranslations[key] || key;
+      return this.translations[key] || key;
     },
     close() {
       this.isVisible = false;
