@@ -104,6 +104,7 @@ return [
     'select_all_visible' => 'Select All Visible',
     'no_participants_found' => 'No participants found',
     'add' => 'Add',
+    'add_members_to_team' => 'Add Members to :team',
     'entertainment_hall' => 'Entertainment Hall',
     'poker_texas' => 'Poker Texas',
     'blackjack' => 'Blackjack',

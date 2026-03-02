@@ -220,6 +220,7 @@
             "no_participants_found" => __('messages.no_participants_found') ?? "No participants found",
             "cancel" => __('messages.cancel') ?? "Cancel",
             "add" => __('messages.add') ?? "Add",
+            "add_members_to_team" => __('messages.add_members_to_team') ?? "Add Members to :team",
         ];
     @endphp
 
