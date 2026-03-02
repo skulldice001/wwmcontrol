@@ -275,4 +275,12 @@ return [
     'user_created_success' => 'User created successfully.',
     'go_to_user_login' => 'Go to User Login',
     'go_to_staff_login' => 'Admin/Management login here',
+    'add_participants_title' => 'Add Participants',
+    'add_participants_header' => 'Add Participants to Event:',
+    'select_participants' => 'Select Participants',
+    'all_users_joined' => 'All users have already joined this event.',
+    'add_participants_success' => 'Participants added to the event successfully.',
+    'add' => 'Add',
+    'select_all_visible' => 'Select All Visible',
+    'members_count' => 'members',
 ];
