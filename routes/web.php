@@ -3,6 +3,7 @@
 use App\Http\Controllers\Auth\DiscordController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\LibraryController;
 use App\Http\Controllers\Admin\Auth\LoginController as AdminLoginController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -71,6 +72,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::post('events/{event}/complete', [EventController::class, 'complete'])->name('events.complete');
         Route::resource('events', EventController::class);
         Route::resource('users', UserController::class);
+        Route::get('/library', [LibraryController::class, 'index'])->name('library.index');
     });
 });
 
@@ -99,6 +101,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/entertainment', [EntertainmentController::class, 'index'])->name('entertainment.index');
     Route::get('/entertainment/poker', [EntertainmentController::class, 'poker'])->name('entertainment.poker');
     Route::get('/entertainment/blackjack', [EntertainmentController::class, 'blackjack'])->name('entertainment.blackjack');
+
+    // Library Routes
+    Route::get('/library', [LibraryController::class, 'index'])->name('library.index');
 });
 
 

@@ -45,51 +45,57 @@
     <div class="main-content">
         <!-- Member Panel -->
         <div class="member-panel">
-            <h2>
-                {{ __('messages.guild_members') }} <span id="playerCount" class="badge badge-light ml-2" style="font-size: 0.8rem;">0/30</span>
-                <button id="managePlayersBtn" class="btn btn-sm btn-outline-primary" title="Xếp Team">
-                    {{ __('messages.assign_team') }}
-                </button>
-            </h2>
-
-            <div class="enemy-section mb-3">
-                <button id="addEnemiesBtn" class="add-enemies-btn">
-                    <i class="fas fa-swords"></i> {{ __('messages.add_enemies') }} (<span id="enemyCount">0</span>/30)
-                </button>
-            </div>
-
-            <div class="search-box">
-                <input type="text" id="searchInput" placeholder="{{ __('messages.search_players') }}">
-            </div>
-
-            <div class="view-toggle">
-                <button class="view-toggle-btn active" data-view="grouped">{{ __('messages.view_grouped_by_team') }}</button>
-                <button class="view-toggle-btn" data-view="list">{{ __('messages.view_all_players') }}</button>
-            </div>
-
-            <div class="role-filters">
-                <button class="role-filter-btn active" data-role="all">{{ __('messages.all_roles') }}</button>
-                <button class="role-filter-btn" data-role="Tank">{{ __('messages.role_tank') }}</button>
-                <button class="role-filter-btn" data-role="DPS">{{ __('messages.role_dps') }}</button>
-                <button class="role-filter-btn" data-role="Healer">{{ __('messages.role_healer') }}</button>
-            </div>
-
-            <div id="memberList" class="member-list">
-                <!-- Populated by JS -->
-            </div>
-
-            <!-- Footer Stats/Export -->
-            <div class="panel-footer mt-auto pt-3 border-top">
-                <div class="d-flex justify-content-between mb-2">
-                    <small>{{ __('messages.placed_label') }} <span id="placedCount">0</span></small>
+            <div class="card card-primary h-100 mb-0">
+                <div class="card-header">
+                    <h3 class="card-title">{{ __('messages.guild_members') }}</h3>
+                    <div class="card-tools">
+                        <span id="playerCount" class="badge badge-light mr-2" style="font-size: 0.8rem;">0/30</span>
+                        <button id="managePlayersBtn" type="button" class="btn btn-tool text-white" title="Xếp Team">
+                            <i class="fas fa-users-cog"></i>
+                        </button>
+                    </div>
                 </div>
-                <div class="d-flex gap-2">
-                     <button id="exportBtn" class="btn btn-primary btn-sm flex-fill mr-1"><i class="fas fa-file-export"></i> {{ __('messages.export') }}</button>
-                     <button id="importBtn" class="btn btn-info btn-sm flex-fill ml-1"><i class="fas fa-file-import"></i> {{ __('messages.import') }}</button>
-                     <input type="file" id="importFileInput" style="display:none">
+
+                <div class="card-body d-flex flex-column">
+                    <div class="enemy-section mb-3">
+                        <button id="addEnemiesBtn" class="add-enemies-btn">
+                            <i class="fas fa-swords"></i> {{ __('messages.add_enemies') }} (<span id="enemyCount">0</span>/30)
+                        </button>
+                    </div>
+
+                    <div class="search-box">
+                        <input type="text" id="searchInput" placeholder="{{ __('messages.search_players') }}">
+                    </div>
+
+                    <div class="view-toggle">
+                        <button class="view-toggle-btn active" data-view="grouped">{{ __('messages.view_grouped_by_team') }}</button>
+                        <button class="view-toggle-btn" data-view="list">{{ __('messages.view_all_players') }}</button>
+                    </div>
+
+                    <div class="role-filters">
+                        <button class="role-filter-btn active" data-role="all">{{ __('messages.all_roles') }}</button>
+                        <button class="role-filter-btn" data-role="Tank">{{ __('messages.role_tank') }}</button>
+                        <button class="role-filter-btn" data-role="DPS">{{ __('messages.role_dps') }}</button>
+                        <button class="role-filter-btn" data-role="Healer">{{ __('messages.role_healer') }}</button>
+                    </div>
+
+                    <div id="memberList" class="member-list">
+                        <!-- Populated by JS -->
+                    </div>
                 </div>
-                <div class="mt-2">
-                    <button id="saveFormationBtnBottom" class="btn btn-success btn-sm btn-block"><i class="fas fa-save"></i> {{ __('messages.save_formation') }}</button>
+
+                <div class="card-footer">
+                    <div class="d-flex justify-content-between mb-2">
+                        <small>{{ __('messages.placed_label') }} <span id="placedCount">0</span></small>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button id="exportBtn" class="btn btn-primary btn-sm flex-fill mr-1"><i class="fas fa-file-export"></i> {{ __('messages.export') }}</button>
+                        <button id="importBtn" class="btn btn-info btn-sm flex-fill ml-1"><i class="fas fa-file-import"></i> {{ __('messages.import') }}</button>
+                        <input type="file" id="importFileInput" style="display:none">
+                    </div>
+                    <div class="mt-2">
+                        <button id="saveFormationBtnBottom" class="btn btn-success btn-sm btn-block"><i class="fas fa-save"></i> {{ __('messages.save_formation') }}</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -202,6 +208,39 @@
                     <button type="submit" class="btn btn-primary">{{ __('messages.save') }}</button>
                 </div>
             </form>
+        </div>
+    </div>
+    
+    @php
+        $selectorTranslations = [
+            "select_members" => __('messages.add_participants_header') ?? "Select Members",
+            "available" => __('messages.members_count') ?? "Available",
+            "search_placeholder" => __('messages.search_players') ?? "Search players...",
+            "select_all_visible" => __('messages.select_all_visible') ?? "Select All Visible",
+            "no_participants_found" => __('messages.no_participants_found') ?? "No participants found",
+            "cancel" => __('messages.cancel') ?? "Cancel",
+            "add" => __('messages.add') ?? "Add",
+        ];
+    @endphp
+
+    <!-- Vue Component for Team Member Selection -->
+    <team-member-selector
+        :translations='@json($selectorTranslations, JSON_HEX_APOS)'
+    ></team-member-selector>
+
+    <div id="hotkeyHelpModal" class="modal">
+        <div class="modal-content">
+            <h3>{{ __('messages.keyboard_shortcuts') }}</h3>
+            <ul class="hotkey-list">
+                <li><kbd>Delete</kbd> / <kbd>Backspace</kbd>: {{ __('messages.delete_selected_item') }}</li>
+                <li><kbd>Ctrl</kbd> + <kbd>Z</kbd>: {{ __('messages.undo') }}</li>
+                <li><kbd>Ctrl</kbd> + <kbd>Y</kbd>: {{ __('messages.redo') }}</li>
+                <li><kbd>Esc</kbd>: {{ __('messages.cancel_current_action') }}</li>
+                <li><kbd>S</kbd>: {{ __('messages.save_formation') }}</li>
+            </ul>
+            <div class="text-right mt-3">
+                <button id="closeHotkeyModalBtn" class="btn btn-primary">{{ __('messages.close') }}</button>
+            </div>
         </div>
     </div>
 

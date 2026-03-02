@@ -114,6 +114,9 @@ class EventController extends Controller
             return [
                 'id' => $user->id,
                 'discord_id' => $user->discord_id,
+                'discord_avatar' => $user->discord_avatar,
+                'account' => $user->name,
+                'ingame_name' => $user->ingame_name,
                 'name' => $user->ingame_name ?? $user->name,
                 'role' => SkillRole::getRole($user->mainSkill->slug ?? null),
                 'team' => 'Unassigned', // Default team

@@ -26,6 +26,7 @@ var GW_CONSTANTS = {
         TEAM_DESCRIPTION_PLACEHOLDER: 'Thêm mô tả nhiệm vụ/vai trò cho đội này',
         DROP_MEMBERS_HERE: 'Kéo thả thành viên vào đây',
         REMOVE_FROM_TEAM: 'Xóa khỏi đội',
+        ADD_MEMBERS: 'Thêm thành viên',
         TOGGLE_CAPTAIN: 'Chọn/Bỏ chọn Đội trưởng',
         WEAPON_PREFIX: 'VK',
         NO_WEAPON: 'Không'

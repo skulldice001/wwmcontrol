@@ -19,9 +19,11 @@ import { createApp } from 'vue';
 import CreateEventForm from './components/CreateEventForm.vue';
 import InnerWaysCell from './components/InnerWaysCell.vue';
 import AddParticipants from './components/AddParticipants.vue';
+import TeamMemberSelector from './components/TeamMemberSelector.vue';
 
 const app = createApp({});
 app.component('create-event-form', CreateEventForm);
 app.component('inner-ways-cell', InnerWaysCell);
 app.component('add-participants', AddParticipants);
+app.component('team-member-selector', TeamMemberSelector);
 app.mount('#app');
