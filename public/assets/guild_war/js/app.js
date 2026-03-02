@@ -435,6 +435,46 @@ function renderMemberList() {
     }
 }
 
+// Add members to team (Called from Vue component)
+window.addMembersToTeam = function(teamId, memberIds) {
+    if (!teamId || !memberIds || !Array.isArray(memberIds)) return;
+    
+    let changed = false;
+    memberIds.forEach(id => {
+        const member = members.find(m => m.id === id);
+        if (member) {
+            member.team = teamId;
+            changed = true;
+        }
+    });
+    
+    if (changed) {
+        savePositions();
+        renderMemberList();
+    }
+};
+
+window.openAddMemberPopup = function(teamId) {
+    const teamIds = teams.map(t => t.id);
+    // Find members not in any team or explicitly 'Unassigned'
+    // Also include members whose team ID doesn't exist in current teams list (orphaned)
+    const unassignedMembers = members.filter(m => 
+        !m.team || 
+        m.team === 'Unassigned' || 
+        !teamIds.includes(m.team)
+    );
+    
+    const team = teams.find(t => t.id === teamId);
+    const teamName = team ? team.name : '';
+
+    if (window.openTeamMemberSelector) {
+        window.openTeamMemberSelector(teamId, unassignedMembers, teamName);
+    } else {
+        console.error("Vue component not ready");
+        alert("Please wait for the page to fully load.");
+    }
+};
+
 // Render grouped view by team
 function renderGroupedView() {
     // Add "Create Team" button
@@ -490,6 +530,7 @@ function renderGroupedView() {
                 <span class="team-name-wrapper">
                     <span class="toggle-icon">▼</span>
                     <span class="team-name">${displayName}</span>
+                    <button class="add-member-btn" onclick="event.stopPropagation(); openAddMemberPopup('${teamId}')" title="${GW_CONSTANTS.TEAM_MANAGEMENT.ADD_MEMBERS}"><i class="fas fa-user-plus"></i></button>
                     <button class="rename-team-btn" onclick="event.stopPropagation(); renameTeam('${teamId}')" title="${GW_CONSTANTS.TEAM_MANAGEMENT.RENAME_TEAM}">✏️</button>
                     <button class="delete-team-btn" onclick="event.stopPropagation(); deleteTeam('${teamId}')" title="${GW_CONSTANTS.TEAM_MANAGEMENT.DELETE_TEAM}">×</button>
                 </span>
