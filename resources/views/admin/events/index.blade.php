@@ -76,6 +76,9 @@
                             <a href="{{ route('admin.events.formation', $event->id) }}" class="btn btn-warning btn-sm mr-1">
                                 <i class="fas fa-users-cog"></i> {{ __('messages.sort_formation') }}
                             </a>
+                            <a href="{{ route('admin.events.add_participants_form', $event->id) }}" class="btn btn-success btn-sm mr-1" title="Thêm thành viên">
+                                <i class="fas fa-user-plus"></i>
+                            </a>
                         @endif
                         @if(!in_array($event->status, ['completed', 'cancelled']))
                             <button type="button"

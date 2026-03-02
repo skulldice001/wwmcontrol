@@ -241,4 +241,12 @@ return [
     'user_created_success' => 'Tạo người dùng thành công.',
     'go_to_user_login' => 'Chuyển sang đăng nhập User',
     'go_to_staff_login' => 'Ban quản trị đăng nhập ở đây',
+    'add_participants_title' => 'Thêm thành viên',
+    'add_participants_header' => 'Thêm thành viên vào sự kiện:',
+    'select_participants' => 'Chọn thành viên',
+    'all_users_joined' => 'Tất cả người dùng đã tham gia sự kiện này.',
+    'add_participants_success' => 'Đã thêm thành viên vào sự kiện thành công.',
+    'add' => 'Thêm',
+    'select_all_visible' => 'Chọn tất cả đang hiển thị',
+    'members_count' => 'thành viên',
 ];

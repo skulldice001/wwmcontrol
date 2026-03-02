@@ -221,6 +221,7 @@
         // Map Image URL
         window.mapImageUrl = "{{ asset('assets/guild_war/images/map.png') }}";
     </script>
+    <script src="{{ asset('assets/guild_war/js/constants.js') }}?v={{ time() }}" defer></script>
     <script src="{{ asset('assets/guild_war/js/app.js') }}?v={{ time() }}" defer></script>
     <script src="{{ asset('assets/guild_war/js/leaflet_map.js') }}?v={{ time() }}" defer></script>
 @endpush
