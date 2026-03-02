@@ -64,6 +64,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::put('/profile', [StaffProfileController::class, 'update'])->name('profile.update');
         Route::put('/profile/password', [StaffProfileController::class, 'updatePassword'])->name('profile.password.update');
         Route::get('events/{event}/participants', [EventController::class, 'participants'])->name('events.participants');
+        Route::get('events/{event}/add-participants', [EventController::class, 'addParticipantsForm'])->name('events.add_participants_form');
+        Route::post('events/{event}/add-participants', [EventController::class, 'addParticipants'])->name('events.add_participants');
         Route::get('events/{event}/formation', [EventController::class, 'formation'])->name('events.formation');
         Route::post('events/{event}/formation', [EventController::class, 'saveFormation'])->name('events.formation.save');
         Route::post('events/{event}/complete', [EventController::class, 'complete'])->name('events.complete');

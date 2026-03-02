@@ -40,6 +40,16 @@ return Application::configure(basePath: dirname(__DIR__))
             }
             return redirect()->route('login')->with('error', 'Phiên làm việc đã hết hạn. Vui lòng đăng nhập lại.');
         });
+
+        // $exceptions->render(function (\Throwable $e, Request $request) {
+        //     if ($request->is('admin/*')) {
+        //         return redirect()->route('admin.login')->with('error', 'Đã xảy ra lỗi: ' . $e->getMessage());
+        //     }
+        //     // For other routes, if it's not an API request, redirect to login
+        //     if (!$request->wantsJson() && !$request->is('api/*')) {
+        //          return redirect()->route('login')->with('error', 'Đã xảy ra lỗi: ' . $e->getMessage());
+        //     }
+        // });
     })
     ->withSchedule(function (Schedule $schedule): void {
         $schedule->command('events:close-expired')->dailyAt('00:00');
