@@ -17,9 +17,14 @@ import Echo from 'laravel-echo';
 import Pusher from 'pusher-js';
 window.Pusher = Pusher;
 
+const reverbAppKey = import.meta.env.VITE_REVERB_APP_KEY;
+if (!reverbAppKey) {
+    console.warn('VITE_REVERB_APP_KEY is missing. WebSocket connection will fail.');
+}
+
 window.Echo = new Echo({
     broadcaster: 'reverb',
-    key: import.meta.env.VITE_REVERB_APP_KEY,
+    key: reverbAppKey || 'missing-key', // Prevent crash if key is missing
     wsHost: import.meta.env.VITE_REVERB_HOST,
     wsPort: import.meta.env.VITE_REVERB_PORT ?? 80,
     wssPort: import.meta.env.VITE_REVERB_PORT ?? 443,
