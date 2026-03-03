@@ -71,6 +71,13 @@
                         <button type="button" class="btn btn-info btn-sm" data-toggle="modal" data-target="#modal-user-{{ $user->id }}">
                             <i class="fas fa-eye"></i> {{ __('messages.view_stats') }}
                         </button>
+                        <form action="{{ route('admin.users.destroy', $user->id) }}" method="POST" style="display:inline;" onsubmit="return confirm('{{ __('messages.confirm_delete') }}');">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="btn btn-danger btn-sm">
+                                <i class="fas fa-trash"></i> {{ __('messages.delete') }}
+                            </button>
+                        </form>
                     </td>
                 </tr>
                 @endforeach

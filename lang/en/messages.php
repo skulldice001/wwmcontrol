@@ -290,4 +290,6 @@ return [
     'user_created_success' => 'User created successfully.',
     'go_to_user_login' => 'Go to User Login',
     'go_to_staff_login' => 'Admin/Management login here',
+    'confirm_delete' => 'Are you sure you want to delete?',
+    'user_deleted_success' => 'User deleted successfully.',
 ];

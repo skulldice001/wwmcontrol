@@ -17,6 +17,17 @@ class UserController extends Controller
         return view('admin.users.index', compact('users'));
     }
 
+    public function destroy(User $user)
+    {
+        if (!auth()->guard('staff')->user()->isAdmin()) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        $user->delete();
+
+        return redirect()->route('admin.users.index')->with('success', __('messages.user_deleted_success'));
+    }
+
     public function show(User $user)
     {
         $user->load(['innerWays', 'mainSkill', 'subSkill']);

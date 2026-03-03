@@ -252,4 +252,6 @@ return [
     'user_created_success' => 'Tạo người dùng thành công.',
     'go_to_user_login' => 'Chuyển sang đăng nhập User',
     'go_to_staff_login' => 'Ban quản trị đăng nhập ở đây',
+    'confirm_delete' => 'Bạn có chắc chắn muốn xóa không?',
+    'user_deleted_success' => 'Xóa người dùng thành công.',
 ];
