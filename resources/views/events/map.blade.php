@@ -1,6 +1,6 @@
 @extends('layouts.admin')
 
-@section('title', 'Bản đồ Bang chiến - ' . $event->title)
+@section('title', __('messages.guild_war_map') . ' - ' . $event->title)
 
 @push('styles')
 <link rel="stylesheet" href="{{ asset('assets/guild_war/css/style.css') }}?v={{ time() }}">
@@ -69,25 +69,25 @@
 @section('content')
 <div class="guild-war-app">
     <div class="info-panel">
-        <h3><i class="fas fa-map-marked-alt mr-2"></i>Thông tin vị trí</h3>
+        <h3><i class="fas fa-map-marked-alt mr-2"></i>{{ __('messages.location_info') }}</h3>
         <div class="info-item">
-            <span class="info-label">Team:</span>
+            <span class="info-label">{{ __('messages.team') }}:</span>
             <span class="info-value">{{ $teamInfo['name'] }}</span>
         </div>
         <div class="info-item">
-            <span class="info-label">Đội trưởng:</span>
+            <span class="info-label">{{ __('messages.captain') }}:</span>
             <span class="info-value">{{ $teamInfo['captain'] }}</span>
         </div>
         <div class="info-item">
-            <span class="info-label">Vị trí của bạn:</span>
+            <span class="info-label">{{ __('messages.your_location') }}:</span>
             <button class="btn btn-sm btn-success" onclick="centerOnUser()">
-                <i class="fas fa-crosshairs"></i> Tìm tôi
+                <i class="fas fa-crosshairs"></i> {{ __('messages.find_me') }}
             </button>
         </div>
         <hr>
         <div class="mt-2">
              <a href="{{ route('events.index') }}" class="btn btn-secondary btn-sm btn-block">
-                 <i class="fas fa-arrow-left mr-1"></i> Quay lại danh sách
+                 <i class="fas fa-arrow-left mr-1"></i> {{ __('messages.back_to_list') }}
              </a>
         </div>
     </div>

@@ -54,15 +54,15 @@
 
             <div class="card card-primary">
                 <div class="card-header">
-                    <h3 class="card-title">Active Skills</h3>
+                    <h3 class="card-title">{{ __('messages.active_skills') }}</h3>
                 </div>
                 <div class="card-body">
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label>Main Skill</label>
+                                <label>{{ __('messages.main_skill') }}</label>
                                 <select name="main_skill_id" class="form-control select2-icon" style="width: 100%;">
-                                    <option value="">-- Select Main Skill --</option>
+                                    <option value="">{{ __('messages.select_main_skill') }}</option>
                                     @foreach($skills as $skill)
                                         <option value="{{ $skill->id }}" data-icon="{{ asset('icon/skill/' . $skill->icon) }}" {{ $user->main_skill_id == $skill->id ? 'selected' : '' }}>
                                             {{ $skill->name }}
@@ -73,9 +73,9 @@
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label>Sub Skill</label>
+                                <label>{{ __('messages.sub_skill') }}</label>
                                 <select name="sub_skill_id" class="form-control select2-icon" style="width: 100%;">
-                                    <option value="">-- Select Sub Skill --</option>
+                                    <option value="">{{ __('messages.select_sub_skill') }}</option>
                                     @foreach($skills as $skill)
                                         <option value="{{ $skill->id }}" data-icon="{{ asset('icon/skill/' . $skill->icon) }}" {{ $user->sub_skill_id == $skill->id ? 'selected' : '' }}>
                                             {{ $skill->name }}

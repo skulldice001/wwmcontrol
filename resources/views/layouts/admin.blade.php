@@ -78,18 +78,18 @@
             <li class="nav-item dropdown">
                 <a class="nav-link" data-toggle="dropdown" href="#">
                     <img src="{{ asset($currentFlag) }}"
-                         alt="{{ App::getLocale() == 'vi' ? 'Tiếng Việt' : 'English' }}"
+                         alt="{{ App::getLocale() == 'vi' ? __('messages.vietnamese') : __('messages.english') }}"
                          class="lang-flag">
                     <span class="d-none d-md-inline ml-2">
-                        {{ App::getLocale() == 'vi' ? 'Tiếng Việt' : 'English' }}
+                        {{ App::getLocale() == 'vi' ? __('messages.vietnamese') : __('messages.english') }}
                     </span>
                 </a>
                 <div class="dropdown-menu dropdown-menu-right">
                     <a href="{{ route('lang.switch', 'en') }}" class="dropdown-item {{ App::getLocale() == 'en' ? 'active' : '' }}">
-                        <img src="{{ asset('flags/us.svg') }}" alt="English" class="lang-flag mr-2"> English
+                        <img src="{{ asset('flags/us.svg') }}" alt="{{ __('messages.english') }}" class="lang-flag mr-2"> {{ __('messages.english') }}
                     </a>
                     <a href="{{ route('lang.switch', 'vi') }}" class="dropdown-item {{ App::getLocale() == 'vi' ? 'active' : '' }}">
-                        <img src="{{ asset($vnFlagPath) }}" alt="Tiếng Việt" class="lang-flag mr-2"> Tiếng Việt
+                        <img src="{{ asset($vnFlagPath) }}" alt="{{ __('messages.vietnamese') }}" class="lang-flag mr-2"> {{ __('messages.vietnamese') }}
                     </a>
                 </div>
             </li>

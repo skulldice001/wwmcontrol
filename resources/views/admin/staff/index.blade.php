@@ -33,9 +33,14 @@
             </thead>
             <tbody>
                 @foreach($staffs as $staff)
-                <tr>
+                <tr class="{{ $staff->trashed() ? 'table-danger' : '' }}">
                     <td>{{ $staff->id }}</td>
-                    <td>{{ $staff->name }}</td>
+                    <td>
+                        {{ $staff->name }}
+                        @if($staff->trashed())
+                            <span class="badge badge-danger ml-1">Disabled</span>
+                        @endif
+                    </td>
                     <td>{{ $staff->account }}</td>
                     <td>{{ $staff->email }}</td>
                     <td>
@@ -47,11 +52,18 @@
                         @if($currentStaff && $currentStaff->canManage($staff))
                             <a href="{{ route('admin.staff.edit', $staff->id) }}" class="btn btn-info btn-sm">{{ __('messages.edit') }}</a>
                             @if($staff->id !== $currentStaff->id)
-                                <form action="{{ route('admin.staff.destroy', $staff->id) }}" method="POST" style="display:inline-block;">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('{{ __('messages.confirm_delete') }}')">{{ __('messages.delete') }}</button>
-                                </form>
+                                @if($staff->trashed())
+                                    <form action="{{ route('admin.staff.restore', $staff->id) }}" method="POST" style="display:inline-block;">
+                                        @csrf
+                                        <button type="submit" class="btn btn-success btn-sm">{{ __('messages.restore') }}</button>
+                                    </form>
+                                @else
+                                    <form action="{{ route('admin.staff.destroy', $staff->id) }}" method="POST" style="display:inline-block;">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('{{ __('messages.confirm_disable') }}')">{{ __('messages.disable') }}</button>
+                                    </form>
+                                @endif
                             @endif
                         @endif
                     </td>

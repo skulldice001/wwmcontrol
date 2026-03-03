@@ -14,7 +14,7 @@
             <div class="icon">
                 <i class="fas fa-user-graduate"></i>
             </div>
-            <a href="#" class="small-box-footer">{{ __('messages.view_details') ?? 'View Details' }} <i class="fas fa-arrow-circle-right"></i></a>
+            <a href="#" class="small-box-footer">{{ __('messages.view_details') }} <i class="fas fa-arrow-circle-right"></i></a>
         </div>
     </div>
     <!-- ./col -->
@@ -28,7 +28,7 @@
             <div class="icon">
                 <i class="fas fa-trophy"></i>
             </div>
-            <a href="#" class="small-box-footer">{{ __('messages.view_details') ?? 'View Details' }} <i class="fas fa-arrow-circle-right"></i></a>
+            <a href="#" class="small-box-footer">{{ __('messages.view_details') }} <i class="fas fa-arrow-circle-right"></i></a>
         </div>
     </div>
     <!-- ./col -->

@@ -26,7 +26,7 @@
       class="btn btn-link p-0 align-baseline inner-ways-toggle"
       @click="toggle"
     >
-      {{ collapsed ? '+' + hiddenCount + ' more' : 'Show less' }}
+      {{ collapsed ? '+' + hiddenCount + ' ' + (translations.more || 'more') : (translations.show_less || 'Show less') }}
     </button>
   </div>
 </template>
@@ -43,6 +43,13 @@ export default {
       type: Number,
       default: 10,
     },
+    translations: {
+      type: Object,
+      default: () => ({
+        more: 'more',
+        show_less: 'Show less'
+      })
+    }
   },
   data() {
     return {

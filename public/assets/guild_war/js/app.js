@@ -101,7 +101,11 @@ function getTeamDisplayName(teamId) {
 
 // Add new team
 async function addTeam() {
-    const name = await showPrompt('Create Team', 'Enter new team name:', 'New Team');
+    const name = await showPrompt(
+        GW_CONSTANTS.PROMPTS.CREATE_TEAM_TITLE,
+        GW_CONSTANTS.PROMPTS.CREATE_TEAM_MSG,
+        GW_CONSTANTS.PROMPTS.CREATE_TEAM_DEFAULT
+    );
     if (name) {
         const id = `team_${Date.now()}`;
         teams.push({
@@ -123,11 +127,11 @@ async function deleteTeam(teamId) {
     // Check if team has members
     const hasMembers = members.some(m => m.team === teamId);
     if (hasMembers) {
-        alert(`Cannot delete "${team.name}" because it has members assigned. Move them first.`);
+        alert(GW_CONSTANTS.ALERTS.CANNOT_DELETE_HAS_MEMBERS.replace(':name', team.name));
         return;
     }
 
-    if (await showConfirm('Delete Team', `Delete team "${team.name}"?`)) {
+    if (await showConfirm(GW_CONSTANTS.PROMPTS.DELETE_TEAM_TITLE, GW_CONSTANTS.PROMPTS.DELETE_TEAM_MSG.replace(':name', team.name))) {
         teams = teams.filter(t => t.id !== teamId);
         savePositions();
         renderMemberList();
@@ -138,7 +142,11 @@ async function deleteTeam(teamId) {
 async function renameTeam(teamId) {
     const team = teams.find(t => t.id === teamId);
     if (team) {
-        const newName = await showPrompt('Rename Team', `Enter new name for "${team.name}":`, team.name);
+        const newName = await showPrompt(
+            GW_CONSTANTS.PROMPTS.RENAME_TEAM_TITLE,
+            GW_CONSTANTS.PROMPTS.RENAME_TEAM_MSG.replace(':name', team.name),
+            team.name
+        );
         if (newName && newName !== team.name) {
             team.name = newName;
             savePositions();
@@ -170,8 +178,8 @@ async function editTeamDescription(teamId) {
 
     const currentDescription = team.description || '';
     const newDescription = await showPrompt(
-        'Team Mission',
-        `Enter mission/role description for team "${team.name}":`,
+        GW_CONSTANTS.PROMPTS.TEAM_MISSION_TITLE,
+        GW_CONSTANTS.PROMPTS.TEAM_MISSION_MSG.replace(':name', team.name),
         currentDescription
     );
 
@@ -405,8 +413,8 @@ function initLoadFormationSelect() {
         const event = window.pastEvents.find(e => e.id == eventId);
         if (event && event.formation_data) {
             const confirmed = await showConfirm(
-                'Load Formation?',
-                `Are you sure you want to load formation from "${event.title}"? This will replace all current placements on the map.`
+                GW_CONSTANTS.PROMPTS.LOAD_FORMATION_TITLE,
+                GW_CONSTANTS.ALERTS.LOAD_FORMATION_CONFIRM.replace(':title', event.title)
             );
 
             if (confirmed) {
@@ -440,7 +448,7 @@ function renderGroupedView() {
     // Add "Create Team" button
     const addBtn = document.createElement('button');
     addBtn.className = 'add-team-btn';
-    addBtn.innerHTML = '+ Create New Team';
+    addBtn.innerHTML = GW_CONSTANTS.TEAM_MANAGEMENT.CREATE_NEW_TEAM;
     addBtn.onclick = addTeam;
     memberList.appendChild(addBtn);
 
@@ -490,14 +498,14 @@ function renderGroupedView() {
                 <span class="team-name-wrapper">
                     <span class="toggle-icon">▼</span>
                     <span class="team-name">${displayName}</span>
-                    <button class="rename-team-btn" onclick="event.stopPropagation(); renameTeam('${teamId}')" title="Rename team">✏️</button>
-                    <button class="delete-team-btn" onclick="event.stopPropagation(); deleteTeam('${teamId}')" title="Delete team">×</button>
+                    <button class="rename-team-btn" onclick="event.stopPropagation(); renameTeam('${teamId}')" title="${GW_CONSTANTS.TEAM_MANAGEMENT.RENAME_TEAM}">✏️</button>
+                    <button class="delete-team-btn" onclick="event.stopPropagation(); deleteTeam('${teamId}')" title="${GW_CONSTANTS.TEAM_MANAGEMENT.DELETE_TEAM}">×</button>
                 </span>
                 <span class="team-count">${teamMembers.length}</span>
             </div>
             <div class="team-description ${description ? '' : 'team-description-empty'}"
                  onclick="event.stopPropagation(); editTeamDescription('${teamId}')">
-                ${description || 'Add mission/role description for this team'}
+                ${description || GW_CONSTANTS.TEAM_MANAGEMENT.TEAM_DESCRIPTION_PLACEHOLDER}
             </div>
         `;
         headerDiv.addEventListener('click', (e) => {
@@ -518,7 +526,7 @@ function renderGroupedView() {
 
         // Add placeholder if empty so we can drop into it
         if (teamMembers.length === 0) {
-            playersDiv.innerHTML = '<div class="empty-team-placeholder" style="padding: 10px; text-align: center; color: #aaa; font-size: 0.8rem; font-style: italic;">Drop members here</div>';
+            playersDiv.innerHTML = `<div class="empty-team-placeholder" style="padding: 10px; text-align: center; color: #aaa; font-size: 0.8rem; font-style: italic;">${GW_CONSTANTS.TEAM_MANAGEMENT.DROP_MEMBERS_HERE}</div>`;
         }
 
         groupDiv.appendChild(headerDiv);
@@ -571,21 +579,21 @@ function createMemberElement(member) {
     const captainIcon = isCaptain ? '👑' : '☆';
 
     // Only show remove button if member is in a team
-    const removeBtn = member.team ? `<button class="remove-from-team-btn" onclick="event.stopPropagation(); removeMemberFromTeam(${member.id})" title="Remove from team" style="background: none; border: none; color: #e53e3e; cursor: pointer; font-weight: bold;">×</button>` : '';
+    const removeBtn = member.team ? `<button class="remove-from-team-btn" onclick="event.stopPropagation(); removeMemberFromTeam(${member.id})" title="${GW_CONSTANTS.TEAM_MANAGEMENT.REMOVE_FROM_TEAM}" style="background: none; border: none; color: #e53e3e; cursor: pointer; font-weight: bold;">×</button>` : '';
 
     div.innerHTML = `
         <div class="member-info">
             <div class="member-name">${member.name}</div>
             <div class="member-team">${getTeamDisplayName(member.team)}</div>
             <div class="member-weapons">
-                <div class="weapon-item">W1: ${member.weapon1 || 'None'}</div>
-                <div class="weapon-item">W2: ${member.weapon2 || 'None'}</div>
+                <div class="weapon-item">${GW_CONSTANTS.TEAM_MANAGEMENT.WEAPON_PREFIX}1: ${member.weapon1 || GW_CONSTANTS.TEAM_MANAGEMENT.NO_WEAPON}</div>
+                <div class="weapon-item">${GW_CONSTANTS.TEAM_MANAGEMENT.WEAPON_PREFIX}2: ${member.weapon2 || GW_CONSTANTS.TEAM_MANAGEMENT.NO_WEAPON}</div>
             </div>
         </div>
         <div class="member-controls" style="display: flex; flex-direction: column; align-items: flex-end; gap: 5px;">
             <div class="role-badge">${member.role}</div>
             <div style="display: flex; gap: 5px;">
-                <button class="captain-btn ${captainClass}" onclick="event.stopPropagation(); toggleCaptain(${member.id}, '${member.team}')" title="Toggle Captain">${captainIcon}</button>
+                <button class="captain-btn ${captainClass}" onclick="event.stopPropagation(); toggleCaptain(${member.id}, '${member.team}')" title="${GW_CONSTANTS.TEAM_MANAGEMENT.TOGGLE_CAPTAIN}">${captainIcon}</button>
                 ${removeBtn}
             </div>
         </div>
@@ -1054,13 +1062,13 @@ function handleDrop(e) {
 
         // Check if already placed
         if (isPlayerPlaced(memberId)) {
-            alert(`${member.name} is already placed on the map!`);
+            alert(GW_CONSTANTS.ALERTS.MEMBER_ALREADY_PLACED.replace(':name', member.name));
             return;
         }
 
         // Check max players limit
         if (getTotalPlacedPlayers() >= MAX_PLAYERS) {
-            alert(`Maximum ${MAX_PLAYERS} players allowed on the map!`);
+            alert(GW_CONSTANTS.ALERTS.MAX_PLAYERS_REACHED.replace(':max', MAX_PLAYERS));
             return;
         }
 
@@ -1151,20 +1159,20 @@ function placeTeamGroupOnMap(teamName, x, y) {
     const teamMembers = members.filter(m => m.team === teamName && !isPlayerPlaced(m.id));
 
     if (teamMembers.length === 0) {
-        alert(`All players from ${teamName} are already placed on the map!`);
+        alert(GW_CONSTANTS.ALERTS.ALL_PLAYERS_PLACED.replace(':name', teamName));
         return;
     }
 
     // Check if any member is already placed (shouldn't happen but double check)
     const alreadyPlaced = teamMembers.filter(m => isPlayerPlaced(m.id));
     if (alreadyPlaced.length > 0) {
-        alert(`Some players from ${teamName} are already placed on the map!`);
+        alert(GW_CONSTANTS.ALERTS.SOME_PLAYERS_PLACED.replace(':name', teamName));
         return;
     }
 
     // Check max players limit
     if (getTotalPlacedPlayers() + teamMembers.length > MAX_PLAYERS) {
-        alert(`Cannot place ${teamName}: would exceed maximum ${MAX_PLAYERS} players!`);
+        alert(GW_CONSTANTS.ALERTS.CANNOT_PLACE_EXCEED_LIMIT.replace(':name', teamName).replace(':max', MAX_PLAYERS));
         return;
     }
 
@@ -2280,7 +2288,7 @@ function addEnemies() {
     const currentEnemyCount = placedEnemies.length;
 
     if (currentEnemyCount >= MAX_ENEMIES) {
-        alert(`Maximum ${MAX_ENEMIES / ENEMIES_PER_CLICK} enemy groups already placed!`);
+        alert(GW_CONSTANTS.ALERTS.MAX_ENEMIES_REACHED.replace(':count', MAX_ENEMIES / ENEMIES_PER_CLICK));
         return;
     }
 
@@ -2689,7 +2697,7 @@ async function clearAllDrawings() {
 // Undo drawing
 window.undoDrawing = function() {
     if (autoDeleteDrawings) {
-        alert('Undo is not available when auto-delete is enabled. Please disable auto-delete first.');
+        alert(GW_CONSTANTS.ALERTS.UNDO_AUTO_DELETE);
         return;
     }
 
@@ -2728,7 +2736,7 @@ window.undoDrawing = function() {
 // Redo drawing
 window.redoDrawing = function() {
     if (autoDeleteDrawings) {
-        alert('Redo is not available when auto-delete is enabled. Please disable auto-delete first.');
+        alert(GW_CONSTANTS.ALERTS.REDO_AUTO_DELETE);
         return;
     }
 
@@ -2907,7 +2915,7 @@ function splitGroup(groupId) {
     if (!group) return;
 
     if (group.teams.length <= 1) {
-        alert('This group only contains one team. Nothing to split.');
+        alert(GW_CONSTANTS.MESSAGES.SPLIT_ONE_TEAM);
         return;
     }
 
@@ -3578,7 +3586,7 @@ function exportPositions() {
         } catch (error) {
             console.error('Export failed:', error);
             hideExportProgress();
-            alert('Failed to export strategy: ' + error.message);
+            alert(GW_CONSTANTS.MESSAGES.EXPORT_FAILED.replace(':error', error.message));
         }
     }, 100);
 }
@@ -3857,10 +3865,10 @@ function handleImportFile(event) {
             updateCounts();
             savePositions();
 
-            alert('Strategy imported successfully!');
+            alert(GW_CONSTANTS.MESSAGES.IMPORT_SUCCESS);
         } catch (error) {
             console.error('Error importing strategy:', error);
-            alert('Failed to import strategy. Please make sure the file is valid.');
+            alert(GW_CONSTANTS.MESSAGES.IMPORT_FAILED);
         }
 
         // Reset file input
@@ -3937,14 +3945,14 @@ function saveFormationToServer() {
                  btn.classList.add('btn-success');
              }, 2000);
         } else {
-            alert('Failed to save formation');
+            alert(GW_CONSTANTS.MESSAGES.SAVE_FAILED);
             btn.innerHTML = originalContent;
             btn.disabled = false;
         }
     })
     .catch(error => {
         console.error('Error saving formation:', error);
-        alert('Error saving formation');
+        alert(GW_CONSTANTS.MESSAGES.SAVE_ERROR);
         btn.innerHTML = originalContent;
         btn.disabled = false;
     });
@@ -4301,7 +4309,7 @@ function openPlayerEditModal(playerId = null) {
         // Edit existing player
         const player = members.find(m => m.id === playerId);
         if (player) {
-            editModalTitle.textContent = 'Edit Player';
+            editModalTitle.textContent = GW_CONSTANTS.PROMPTS.EDIT_PLAYER_TITLE;
             editPlayerId.value = playerId;
             editPlayerName.value = player.name;
             editPlayerRole.value = player.role;
@@ -4347,7 +4355,7 @@ function handlePlayerFormSubmit(e) {
     const playerWeapon2 = editPlayerWeapon2.value;
 
     if (!playerName) {
-        alert('Player name is required!');
+        alert(GW_CONSTANTS.MESSAGES.PLAYER_NAME_REQUIRED);
         return;
     }
 
@@ -4367,7 +4375,7 @@ function handlePlayerFormSubmit(e) {
     } else {
         // Add new player
         if (members.length >= MAX_PLAYERS) {
-            alert(`Maximum ${MAX_PLAYERS} players allowed!`);
+            alert(GW_CONSTANTS.ALERTS.MAX_PLAYERS_REACHED.replace(':max', MAX_PLAYERS));
             return;
         }
 
@@ -4403,7 +4411,7 @@ function renderPlayerManagementList() {
     const unassignedMembers = members.filter(m => !m.team || !validTeamIds.includes(m.team));
 
     if (unassignedMembers.length === 0) {
-        playerManagementList.innerHTML = '<div class="no-players">All registered players have been assigned to teams!</div>';
+        playerManagementList.innerHTML = `<div class="no-players">${GW_CONSTANTS.PLAYER_MANAGEMENT.NO_PLAYERS}</div>`;
         return;
     }
 
@@ -4555,7 +4563,7 @@ function updatePlacedPlayerInfo(playerId) {
                 // Add weapons tooltip if it doesn't exist
                 const weaponsDiv = document.createElement('div');
                 weaponsDiv.className = 'tooltip-weapons';
-                weaponsDiv.textContent = `⚔️ ${member.weapon1 || 'N/A'} | ${member.weapon2 || 'N/A'}`;
+                weaponsDiv.textContent = `⚔️ ${member.weapon1 || GW_CONSTANTS.PLAYER_MANAGEMENT.NA} | ${member.weapon2 || GW_CONSTANTS.PLAYER_MANAGEMENT.NA}`;
                 tooltip.parentElement.appendChild(weaponsDiv);
             }
         }

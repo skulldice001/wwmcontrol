@@ -55,10 +55,10 @@ class DiscordController extends Controller
             ]);
 
             if (str_contains($e->getMessage(), 'invalid_grant')) {
-                return redirect()->route('home')->with('error', 'Phiên đăng nhập không hợp lệ hoặc đã hết hạn. Vui lòng thử lại.');
+                return redirect()->route('home')->with('error', __('messages.login_session_expired'));
             }
 
-             return redirect()->route('home')->with('error', 'Discord authentication failed: ' . $e->getMessage());
+             return redirect()->route('home')->with('error', __('messages.discord_connect_failed', ['error' => $e->getMessage()]));
         }
 
         // Invalidate old session and regenerate token

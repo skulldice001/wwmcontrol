@@ -51,7 +51,7 @@
                             </a>
                             <br/>
                             <small>
-                                Type: {{ $table->type }}
+                                {{ __('messages.type') }}: {{ $table->type }}
                             </small>
                         </td>
                         <td>

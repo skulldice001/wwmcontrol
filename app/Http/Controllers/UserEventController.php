@@ -102,14 +102,14 @@ class UserEventController extends Controller
             $event->participants()->updateExistingPivot($user->id, [
                 'preferred_time' => $validated['preferred_time'] ?? null
             ]);
-            return redirect()->back()->with('success', 'Cập nhật báo danh thành công.');
+            return redirect()->back()->with('success', __('messages.registration_updated'));
         }
 
         $event->participants()->attach($user->id, [
             'preferred_time' => $validated['preferred_time'] ?? null
         ]);
 
-        return redirect()->back()->with('success', 'Báo danh thành công.');
+        return redirect()->back()->with('success', __('messages.registration_success'));
     }
 
     public function unregister(Request $request, Event $event)
@@ -158,7 +158,7 @@ class UserEventController extends Controller
         }
 
         if (!$userPosition) {
-            return redirect()->route('events.index')->with('error', 'Bạn chưa được xếp vị trí trên bản đồ.');
+            return redirect()->route('events.index')->with('error', __('messages.not_placed_on_map'));
         }
 
         // Prepare static markers
@@ -176,8 +176,8 @@ class UserEventController extends Controller
 
         // Team info
         $teamInfo = [
-            'name' => 'Chưa có đội',
-            'captain' => 'Chưa có',
+            'name' => __('messages.no_team'),
+            'captain' => __('messages.no_captain'),
         ];
 
         $roster = $formation['roster'] ?? null;
@@ -192,7 +192,7 @@ class UserEventController extends Controller
                     $teamInfo['name'] = $team['name'];
                     if (!empty($team['captainId'])) {
                         $captain = User::find($team['captainId']);
-                        $teamInfo['captain'] = $captain ? ($captain->ingame_name ?? $captain->name) : 'Chưa có';
+                        $teamInfo['captain'] = $captain ? ($captain->ingame_name ?? $captain->name) : __('messages.no_captain');
                     }
                 }
             }
