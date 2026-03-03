@@ -56,29 +56,6 @@ class EventController extends Controller
         return view('admin.events.participants', compact('event', 'participants', 'skills', 'innerWays', 'totalParticipants'));
     }
 
-    public function addParticipantsForm(Event $event)
-    {
-        // Get users who are not already participants
-        $participantsIds = $event->participants()->pluck('users.id')->toArray();
-        $users = User::with(['mainSkill', 'subSkill', 'innerWays'])
-            ->whereNotIn('id', $participantsIds)
-            ->get();
-
-        return view('admin.events.add_participants', compact('event', 'users'));
-    }
-
-    public function addParticipants(Request $request, Event $event)
-    {
-        $validated = $request->validate([
-            'participant_ids' => ['required', 'array'],
-            'participant_ids.*' => ['exists:users,id'],
-        ]);
-
-        $event->participants()->syncWithoutDetaching($validated['participant_ids']);
-
-        return redirect()->route('admin.events.index')->with('success', __('messages.add_participants_success'));
-    }
-
     public function saveFormation(Request $request, Event $event)
     {
         if ($event->type !== 'guild_war') {
@@ -108,15 +85,12 @@ class EventController extends Controller
             return redirect()->route('admin.events.index')->with('error', 'Cannot manage formation of a completed or cancelled event.');
         }
 
-        $participantsRaw = $event->participants()->with(['innerWays', 'mainSkill', 'subSkill'])->orderBy('users.id', 'asc')->get();
+        $participantsRaw = $event->participants()->with(['innerWays', 'mainSkill', 'subSkill'])->get();
 
         $participants = $participantsRaw->map(function ($user) {
             return [
                 'id' => $user->id,
                 'discord_id' => $user->discord_id,
-                'discord_avatar' => $user->discord_avatar,
-                'account' => $user->name,
-                'ingame_name' => $user->ingame_name,
                 'name' => $user->ingame_name ?? $user->name,
                 'role' => SkillRole::getRole($user->mainSkill->slug ?? null),
                 'team' => 'Unassigned', // Default team
