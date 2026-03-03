@@ -17,6 +17,17 @@
     background-color: #f4f6f9; /* AdminLTE default background */
 }
 
+.guild-war-app .member-panel {
+    background: transparent !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+}
+
+.guild-war-app .member-panel > .card {
+    height: 100%;
+}
+
 /* Modal styles */
 .modal {
     display: none;
@@ -141,6 +152,38 @@
     font-size: 0.8rem;
 }
 .team-group-header:hover .delete-team-btn {
+    opacity: 1;
+}
+
+.add-member-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    margin-left: 10px;
+    color: #28a745;
+    padding: 4px 8px;
+    opacity: 0.9;
+    transition: all 0.2s;
+    font-size: 1.4rem;
+    vertical-align: middle;
+}
+.add-member-btn:hover {
+    opacity: 1;
+    transform: scale(1.1);
+    background-color: rgba(40, 167, 69, 0.1);
+    border-radius: 50%;
+}
+
+.rename-team-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    margin-left: 5px;
+    opacity: 0;
+    transition: opacity 0.2s;
+    font-size: 0.8rem;
+}
+.team-group-header:hover .rename-team-btn {
     opacity: 1;
 }
 
