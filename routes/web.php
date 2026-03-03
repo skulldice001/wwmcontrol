@@ -96,6 +96,7 @@ Route::middleware('auth')->group(function () {
     // Entertainment Routes
     Route::get('/entertainment', [EntertainmentController::class, 'index'])->name('entertainment.index');
     Route::get('/entertainment/poker', [EntertainmentController::class, 'poker'])->name('entertainment.poker');
+    Route::get('/entertainment/poker/test-update', [EntertainmentController::class, 'testUpdate'])->name('entertainment.poker.test-update');
     Route::get('/entertainment/blackjack', [EntertainmentController::class, 'blackjack'])->name('entertainment.blackjack');
 });
 
