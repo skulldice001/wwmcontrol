@@ -61,6 +61,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         })->name('dashboard');
 
         Route::resource('staff', StaffController::class);
+        Route::post('staff/{staff}/restore', [StaffController::class, 'restore'])->name('staff.restore')->withTrashed();
         Route::get('/profile', [StaffProfileController::class, 'edit'])->name('profile.edit');
         Route::put('/profile', [StaffProfileController::class, 'update'])->name('profile.update');
         Route::put('/profile/password', [StaffProfileController::class, 'updatePassword'])->name('profile.password.update');
@@ -72,6 +73,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::post('events/{event}/complete', [EventController::class, 'complete'])->name('events.complete');
         Route::resource('events', EventController::class);
         Route::resource('users', UserController::class);
+        Route::post('users/{user}/restore', [UserController::class, 'restore'])->name('users.restore')->withTrashed();
         Route::get('/library', [LibraryController::class, 'index'])->name('library.index');
     });
 });

@@ -263,7 +263,7 @@ class EventController extends Controller
         $this->authorizeAdmin($request);
 
         if ($event->status === 'completed' || $event->status === 'cancelled') {
-            return redirect()->route('admin.events.index')->with('error', 'Sự kiện đã kết thúc hoặc đã hủy.');
+            return redirect()->route('admin.events.index')->with('error', __('messages.event_ended_or_cancelled'));
         }
 
         if (!$event->end_time) {
@@ -273,7 +273,7 @@ class EventController extends Controller
         $event->status = 'completed';
         $event->save();
 
-        return redirect()->route('admin.events.index')->with('success', 'Đã kết thúc sự kiện.');
+        return redirect()->route('admin.events.index')->with('success', __('messages.event_ended_success'));
     }
 
     protected function authorizeAdmin(Request $request)
@@ -313,9 +313,18 @@ class EventController extends Controller
 
             if ($startTime->month != $endTime->month) {
                  // Fallback for cross-month: "Guild war ngày 31/1 - 1/2"
-                 $title = "Guild war ngày {$satDay}/{$startTime->month} - {$sunDay}/{$endTime->month}";
+                 $title = __('messages.guild_war_title_format', [
+                     'startDate' => $satDay,
+                     'startMonth' => $startTime->month,
+                     'endDate' => $sunDay,
+                     'endMonth' => $endTime->month
+                 ]);
             } else {
-                 $title = "Guild war ngày {$satDay} - {$sunDay} tháng {$month}";
+                 $title = __('messages.guild_war_title_format_same_month', [
+                     'startDate' => $satDay,
+                     'endDate' => $sunDay,
+                     'month' => $month
+                 ]);
             }
 
             $request->merge([

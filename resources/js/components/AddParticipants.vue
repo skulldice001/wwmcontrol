@@ -111,7 +111,15 @@ export default {
     },
     translations: {
       type: Object,
-      default: () => ({})
+      default: () => ({
+        members_count: 'Members',
+        search_players: 'Search players...',
+        select_all_visible: 'Select All Visible',
+        not_available: 'N/A',
+        no_participants_found: 'No participants found',
+        add: 'Add',
+        cancel: 'Cancel'
+      })
     }
   },
   data() {

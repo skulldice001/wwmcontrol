@@ -12,9 +12,20 @@ class UserController extends Controller
 {
     public function index()
     {
-        // Get all users with their inner ways and skills
-        $users = User::with(['innerWays', 'mainSkill', 'subSkill'])->get();
+        // Get all users with their inner ways and skills, including soft deleted
+        $users = User::withTrashed()->with(['innerWays', 'mainSkill', 'subSkill'])->get();
         return view('admin.users.index', compact('users'));
+    }
+
+    public function restore(User $user)
+    {
+        if (!auth()->guard('staff')->user()->isAdmin()) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        $user->restore();
+
+        return redirect()->route('admin.users.index')->with('success', __('messages.user_enabled_success'));
     }
 
     public function destroy(User $user)
@@ -25,7 +36,7 @@ class UserController extends Controller
 
         $user->delete();
 
-        return redirect()->route('admin.users.index')->with('success', __('messages.user_deleted_success'));
+        return redirect()->route('admin.users.index')->with('success', __('messages.user_disabled_success'));
     }
 
     public function show(User $user)

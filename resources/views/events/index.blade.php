@@ -84,7 +84,7 @@
                             @if($event->is_placed)
                                 <div class="mt-2">
                                     <a href="{{ route('events.map', $event->id) }}" class="btn btn-success btn-block">
-                                        <i class="fas fa-map-marked-alt mr-2"></i> Vị trí xuất phát
+                                        <i class="fas fa-map-marked-alt mr-2"></i> {{ __('messages.starting_position') }}
                                     </a>
                                 </div>
                             @endif

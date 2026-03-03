@@ -8,7 +8,7 @@
         <h3 class="card-title">{{ __('messages.blackjack') }}</h3>
     </div>
     <div class="card-body">
-        <p>Coming Soon...</p>
+        <p>{{ __('messages.coming_soon') }}</p>
     </div>
 </div>
 @endsection

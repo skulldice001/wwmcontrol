@@ -448,12 +448,12 @@ function overrideAppFunctions() {
             const member = members.find(m => m.id === parseInt(data));
             if (member && !window.isPlayerPlaced(member.id)) {
                 if (window.getTotalPlacedPlayers() >= MAX_PLAYERS) {
-                    alert(`Maximum ${MAX_PLAYERS} players allowed!`);
+                    alert(GW_CONSTANTS.ALERTS.MAX_PLAYERS_REACHED.replace(':max', MAX_PLAYERS));
                     return;
                 }
                 window.placeMemberOnMap(member, x, y);
             } else if (member) {
-                alert(`${member.name} is already placed!`);
+                alert(GW_CONSTANTS.ALERTS.MEMBER_ALREADY_PLACED.replace(':name', member.name));
             }
         } else if (type === 'split-member') {
             window.splitMemberFromGroup(dragData.groupId, parseInt(dragData.memberId));
@@ -491,7 +491,7 @@ function overrideAppFunctions() {
         } else {
             // Check if member is selected
             if (!window.selectedMemberId) {
-                alert('Vui lòng chọn thành viên cần vẽ đường!');
+                alert(GW_CONSTANTS.ALERTS.SELECT_MEMBER_TO_DRAW);
                 return;
             }
 
@@ -571,9 +571,9 @@ function overrideAppFunctions() {
         if (window.selectedMemberId) {
              const memberDrawings = drawingPaths.filter(p => p.memberId === window.selectedMemberId);
              if (memberDrawings.length === 0) {
-                 alert('No drawings for selected member.');
+                 alert(GW_CONSTANTS.MESSAGES.NO_DRAWINGS);
                  return;
-             }
+            }
              message = 'Clear drawings for selected member?';
              targetMemberId = window.selectedMemberId;
         }
@@ -617,7 +617,7 @@ function overrideAppFunctions() {
         } else {
             // Check if member is selected
             if (!window.selectedMemberId) {
-                alert('Vui lòng chọn thành viên cần vẽ đường!');
+                alert(GW_CONSTANTS.ALERTS.SELECT_MEMBER_TO_DRAW);
                 return;
             }
 
@@ -1361,11 +1361,11 @@ function overrideAppFunctions() {
     window.placeTeamGroupOnMap = function(teamName, x, y) {
         const teamMembers = members.filter(m => m.team === teamName && !isPlayerPlaced(m.id));
         if (teamMembers.length === 0) {
-            alert(`All players from ${teamName} are already placed!`);
+            alert(GW_CONSTANTS.ALERTS.ALL_PLAYERS_PLACED.replace(':name', teamName));
             return;
         }
         if (window.getTotalPlacedPlayers() + teamMembers.length > MAX_PLAYERS) {
-            alert(`Cannot place ${teamName}: would exceed max players!`);
+            alert(GW_CONSTANTS.ALERTS.CANNOT_PLACE_EXCEED_LIMIT.replace(':name', teamName).replace(':max', MAX_PLAYERS));
             return;
         }
 

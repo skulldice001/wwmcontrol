@@ -4,30 +4,30 @@
 
     <div class="card-body">
         <div class="form-group">
-            <label>Title</label>
+            <label>{{ translations.title_label }}</label>
             <input type="text" name="title" class="form-control"
                    :class="{'is-invalid': errors.title}"
                    v-model="form.title"
                    :readonly="isGuildWar"
-                   placeholder="Enter event title">
+                   :placeholder="translations.title_placeholder">
             <span v-if="errors.title" class="error invalid-feedback">{{ errors.title }}</span>
         </div>
 
         <div class="form-group">
-            <label>Description</label>
-            <textarea name="description" class="form-control" rows="3" v-model="form.description" placeholder="Enter description"></textarea>
+            <label>{{ translations.description_label }}</label>
+            <textarea name="description" class="form-control" rows="3" v-model="form.description" :placeholder="translations.description_placeholder"></textarea>
         </div>
 
         <div class="form-group">
-            <label>Type</label>
+            <label>{{ translations.type_label }}</label>
             <select name="type" class="form-control"
                     :class="{'is-invalid': errors.type}"
                     v-model="form.type"
                     :disabled="initialType !== ''"
                     @change="handleTypeChange"
                     :style="initialType !== '' ? 'pointer-events:none;background-color:#e9ecef;' : ''">
-                <option value="casual">Casual</option>
-                <option value="guild_war">Guild War</option>
+                <option value="casual">{{ translations.type_casual }}</option>
+                <option value="guild_war">{{ translations.type_guild_war }}</option>
             </select>
             <!-- Hidden input for type if it's disabled to ensure it sends -->
             <input v-if="initialType !== ''" type="hidden" name="type" :value="form.type">
@@ -35,7 +35,7 @@
         </div>
 
         <div class="form-group">
-            <label>Start Time</label>
+            <label>{{ translations.start_time_label }}</label>
             <input type="datetime-local" name="start_time" class="form-control"
                    :class="{'is-invalid': errors.start_time}"
                    v-model="form.start_time"
@@ -44,7 +44,7 @@
         </div>
 
         <div class="form-group">
-            <label>End Time</label>
+            <label>{{ translations.end_time_label }}</label>
             <input type="datetime-local" name="end_time" class="form-control"
                    :class="{'is-invalid': errors.end_time}"
                    v-model="form.end_time"
@@ -53,24 +53,24 @@
         </div>
 
         <div class="form-group" v-if="!isGuildWar">
-            <label>Location</label>
-            <input type="text" name="location" class="form-control" v-model="form.location" placeholder="Enter location">
+            <label>{{ translations.location_label }}</label>
+            <input type="text" name="location" class="form-control" v-model="form.location" :placeholder="translations.location_placeholder">
         </div>
 
         <div class="form-group">
-            <label>Status</label>
+            <label>{{ translations.status_label }}</label>
             <select name="status" class="form-control" v-model="form.status">
-                <option value="upcoming">Upcoming</option>
-                <option value="ongoing">Ongoing</option>
-                <option value="completed">Completed</option>
-                <option value="cancelled">Cancelled</option>
+                <option value="upcoming">{{ translations.status_upcoming }}</option>
+                <option value="ongoing">{{ translations.status_ongoing }}</option>
+                <option value="completed">{{ translations.status_completed }}</option>
+                <option value="cancelled">{{ translations.status_cancelled }}</option>
             </select>
         </div>
     </div>
 
     <div class="card-footer">
-        <button type="submit" class="btn btn-primary">Create Event</button>
-        <a :href="routeIndex" class="btn btn-default float-right">Cancel</a>
+        <button type="submit" class="btn btn-primary">{{ translations.create_btn }}</button>
+        <a :href="routeIndex" class="btn btn-default float-right">{{ translations.cancel_btn }}</a>
     </div>
   </form>
 </template>
@@ -94,6 +94,10 @@ export default {
         initialType: {
             type: String,
             default: ''
+        },
+        translations: {
+            type: Object,
+            default: () => ({})
         }
     },
     setup(props) {
@@ -153,9 +157,16 @@ export default {
 
             let title = '';
             if (month !== endMonth) {
-                 title = `Guild war ngày ${satDate}/${month} - ${sunDate}/${endMonth}`;
+                 title = props.translations.guild_war_title_format
+                    .replace(':startDate', satDate)
+                    .replace(':startMonth', month)
+                    .replace(':endDate', sunDate)
+                    .replace(':endMonth', endMonth);
             } else {
-                 title = `Guild war ngày ${satDate} - ${sunDate} tháng ${month}`;
+                 title = props.translations.guild_war_title_format_same_month
+                    .replace(':startDate', satDate)
+                    .replace(':endDate', sunDate)
+                    .replace(':month', month);
             }
 
             form.value.title = title;

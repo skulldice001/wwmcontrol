@@ -12,8 +12,21 @@ class StaffController extends Controller
 {
     public function index()
     {
-        $staffs = Staff::all();
+        $staffs = Staff::withTrashed()->get();
         return view('admin.staff.index', compact('staffs'));
+    }
+
+    public function restore(Request $request, Staff $staff)
+    {
+        $this->authorizeAdmin($request);
+
+        if (!$request->user()->canManage($staff)) {
+            abort(403);
+        }
+
+        $staff->restore();
+
+        return redirect()->route('admin.staff.index')->with('success', __('messages.staff_enabled_success'));
     }
 
     public function create()
@@ -96,7 +109,7 @@ class StaffController extends Controller
 
         $staff->delete();
 
-        return redirect()->route('admin.staff.index')->with('success', 'Staff member deleted successfully.');
+        return redirect()->route('admin.staff.index')->with('success', __('messages.staff_disabled_success'));
     }
 
     protected function authorizeAdmin(Request $request)

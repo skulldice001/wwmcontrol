@@ -25,7 +25,7 @@
         <div class="small-box bg-success">
             <div class="inner">
                 <h3>{{ __('messages.blackjack') }}</h3>
-                <p>Blackjack 21</p>
+                <p>{{ __('messages.blackjack_description') }}</p>
             </div>
             <div class="icon">
                 <i class="fas fa-chess-king"></i>

@@ -89,7 +89,16 @@ export default {
   props: {
     translations: {
       type: Object,
-      default: () => ({})
+      default: () => ({
+        select_members: 'Select Members',
+        available: 'Available',
+        search_placeholder: 'Search...',
+        select_all_visible: 'Select All Visible',
+        no_participants_found: 'No participants found',
+        cancel: 'Cancel',
+        add: 'Add',
+        add_members_to_team: 'Add members to team :team'
+      })
     }
   },
   data() {

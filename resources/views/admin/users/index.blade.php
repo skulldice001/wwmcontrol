@@ -37,7 +37,7 @@
             </thead>
             <tbody>
                 @foreach($users as $user)
-                <tr>
+                <tr class="{{ $user->trashed() ? 'table-danger' : '' }}">
                     <td>
                         @if($user->discord_avatar)
                             <img src="{{ $user->discord_avatar }}" class="img-circle elevation-2" alt="User Image" style="width: 30px; height: 30px;">
@@ -47,6 +47,9 @@
                     </td>
                     <td>
                         {{ $user->name }}
+                        @if($user->trashed())
+                            <span class="badge badge-danger ml-1">Disabled</span>
+                        @endif
                     </td>
                     <td>{{ $user->account }}</td>
                     <td>{{ $user->ingame_name ?? __('messages.not_available') }}</td>
@@ -71,13 +74,22 @@
                         <button type="button" class="btn btn-info btn-sm" data-toggle="modal" data-target="#modal-user-{{ $user->id }}">
                             <i class="fas fa-eye"></i> {{ __('messages.view_stats') }}
                         </button>
-                        <form action="{{ route('admin.users.destroy', $user->id) }}" method="POST" style="display:inline;" onsubmit="return confirm('{{ __('messages.confirm_delete') }}');">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit" class="btn btn-danger btn-sm">
-                                <i class="fas fa-trash"></i> {{ __('messages.delete') }}
-                            </button>
-                        </form>
+                        @if($user->trashed())
+                            <form action="{{ route('admin.users.restore', $user->id) }}" method="POST" style="display:inline;">
+                                @csrf
+                                <button type="submit" class="btn btn-success btn-sm">
+                                    <i class="fas fa-trash-restore"></i> {{ __('messages.restore') }}
+                                </button>
+                            </form>
+                        @else
+                            <form action="{{ route('admin.users.destroy', $user->id) }}" method="POST" style="display:inline;" onsubmit="return confirm('{{ __('messages.confirm_disable') }}');">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="btn btn-danger btn-sm">
+                                    <i class="fas fa-ban"></i> {{ __('messages.disable') }}
+                                </button>
+                            </form>
+                        @endif
                     </td>
                 </tr>
                 @endforeach

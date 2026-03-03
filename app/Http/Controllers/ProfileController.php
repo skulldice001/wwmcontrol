@@ -102,7 +102,7 @@ class ProfileController extends Controller
             $user->innerWays()->sync($syncData);
         }
 
-        return redirect()->back()->with('success', 'Cập nhật võ công thành công');
+        return redirect()->back()->with('success', __('messages.skills_updated_success'));
     }
 
     public function updateTheme(Request $request)

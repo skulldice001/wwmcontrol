@@ -162,6 +162,10 @@
                             @endphp
                             <inner-ways-cell
                                 :inner-ways='@json($innerWaysData)'
+                                :translations='@json([
+                                    "more" => __("messages.more"),
+                                    "show_less" => __("messages.show_less")
+                                ])'
                             ></inner-ways-cell>
                         </td>
                         <td>{{ $user->pivot->preferred_time ?? __('messages.not_available') }}</td>
