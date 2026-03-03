@@ -1,14 +1,21 @@
 import './bootstrap';
 
+// jQuery is already imported and assigned to window in bootstrap.js
+// but we import it here again to ensure it's available for the following imports
 import jQuery from 'jquery';
-window.$ = window.jQuery = jQuery;
 
-import 'datatables.net';
-import 'datatables.net-bs4';
-import 'datatables.net-responsive';
+import DataTable from 'datatables.net-bs4';
 import 'datatables.net-responsive-bs4';
 
-// Import Select2 synchronously
+// Fix for DataTables in production build:
+// Explicitly attach DataTable to the global jQuery instance if it's not there.
+// This handles cases where the module system might isolate the jQuery instance.
+if (window.jQuery && !window.jQuery.fn.DataTable) {
+    window.jQuery.fn.DataTable = DataTable;
+}
+// Also expose DataTable globally just in case
+window.DataTable = DataTable;
+
 import select2 from 'select2';
 select2();
 
