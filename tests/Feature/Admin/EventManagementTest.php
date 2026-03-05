@@ -66,6 +66,6 @@ class EventManagementTest extends TestCase
         $response = $this->actingAs($admin, 'staff')->delete(route('admin.events.destroy', $event));
 
         $response->assertRedirect(route('admin.events.index'));
-        $this->assertDatabaseMissing('events', ['id' => $event->id]);
+        $this->assertSoftDeleted('events', ['id' => $event->id]);
     }
 }
