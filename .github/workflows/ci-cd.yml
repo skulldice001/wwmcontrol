@@ -35,10 +35,15 @@ jobs:
     - name: Directory Permissions
       run: chmod -R 777 storage bootstrap/cache
 
+    - name: Create SQLite Database
+      run: |
+        mkdir -p database
+        touch database/database.sqlite
+
     - name: Execute Tests (Unit/Feature)
       env:
         DB_CONNECTION: sqlite
-        DB_DATABASE: database/database.sqlite
+        DB_DATABASE: ${{ github.workspace }}/database/database.sqlite
       run: php artisan test
 
     - name: Setup Node.js
@@ -95,7 +100,7 @@ jobs:
           npm run build
 
           # Run Migrations
-          php artisan migrate --force
+          php artisan migrate 
 
           # Clear Caches
           php artisan optimize:clear
