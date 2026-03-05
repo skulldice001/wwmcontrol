@@ -40,12 +40,6 @@ jobs:
         mkdir -p database
         touch database/database.sqlite
 
-    - name: Execute Tests (Unit/Feature)
-      env:
-        DB_CONNECTION: sqlite
-        DB_DATABASE: ${{ github.workspace }}/database/database.sqlite
-      run: php artisan test
-
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
@@ -63,6 +57,12 @@ jobs:
         VITE_REVERB_HOST: localhost
         VITE_REVERB_PORT: 8080
         VITE_REVERB_SCHEME: http
+
+    - name: Execute Tests (Unit/Feature)
+      env:
+        DB_CONNECTION: sqlite
+        DB_DATABASE: ${{ github.workspace }}/database/database.sqlite
+      run: php artisan test
 
   # -----------------------------------------------------------------------------
   # Job 2: Deploy to Server (Continuous Deployment)
@@ -100,7 +100,7 @@ jobs:
           npm run build
 
           # Run Migrations
-          php artisan migrate 
+          php artisan migrate
 
           # Clear Caches
           php artisan optimize:clear
