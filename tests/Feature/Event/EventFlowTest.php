@@ -15,9 +15,9 @@ class EventFlowTest extends TestCase
     {
         $user = User::factory()->create();
         Event::factory()->count(3)->create(['status' => 'upcoming']);
-        
+
         $response = $this->actingAs($user)->get(route('events.index'));
-        
+
         $response->assertOk();
         $response->assertViewHas('events');
     }
@@ -42,9 +42,10 @@ class EventFlowTest extends TestCase
             'preferred_time' => '19:30',
         ]);
 
+        $response->assertSessionHasNoErrors();
         $response->assertRedirect();
         $this->assertTrue($user->events->contains($event));
-        
+
         // Check pivot data
         $pivot = $user->events()->where('event_id', $event->id)->first()->pivot;
         $this->assertEquals('19:30', $pivot->preferred_time);
@@ -94,7 +95,7 @@ class EventFlowTest extends TestCase
         $user->events()->attach($event);
 
         $response = $this->actingAs($user)->get(route('events.map', $event));
-        
+
         $response->assertOk();
     }
 }
