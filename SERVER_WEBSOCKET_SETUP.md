@@ -33,7 +33,16 @@ VITE_REVERB_PORT=443
 VITE_REVERB_SCHEME="https"
 ```
 
-## 2. Build lại Assets (Bắt buộc)
+## 2. Cài đặt Dependencies và Build (QUAN TRỌNG)
+
+Nếu bạn gặp lỗi **"There are no commands defined in the 'reverb' namespace"**, hãy chạy lệnh sau để cài đặt gói Reverb:
+
+```bash
+composer require laravel/reverb
+php artisan reverb:install
+```
+
+Sau đó, build lại assets (Bắt buộc):
 
 Vì Vite nhúng giá trị biến môi trường `VITE_*` vào file Javascript tại thời điểm build, bạn **phải** chạy lại lệnh build sau khi sửa file `.env`.
 
@@ -111,3 +120,10 @@ php artisan view:clear
 
 ## Tóm tắt lỗi "missing-key"
 Lỗi này xảy ra khi biến `VITE_REVERB_APP_KEY` không tồn tại trong quá trình `npm run build`. Khi đó, code JS sẽ lấy giá trị mặc định là `'missing-key'` (do mình đã thêm fallback trong `bootstrap.js`), và client sẽ cố kết nối đến server mặc định của Pusher thay vì server Reverb của bạn.
+
+## Troubleshooting
+
+Nếu gặp lỗi **"There are no commands defined in the 'reverb' namespace"**:
+1.  Chạy `composer install` để đảm bảo thư mục `vendor` có đủ các gói.
+2.  Chạy `php artisan package:discover` để Laravel nhận diện gói mới.
+3.  Nếu vẫn lỗi, chạy `composer require laravel/reverb` để cài đặt lại.
