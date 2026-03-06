@@ -95,13 +95,15 @@ jobs:
           php artisan down || true
 
           # Pull latest code
-          git pull origin main
+          git fetch origin
+          git checkout ${{ github.ref_name }}
+          git pull origin ${{ github.ref_name }}
 
           # Install PHP dependencies
           composer install --no-interaction --prefer-dist --optimize-autoloader
 
-          # Install Node dependencies
-          npm ci
+          # Install Node dependencies (Force devDeps for Vite build)
+          npm install --production=false
 
           # Build Assets (CRITICAL: Ensure .env has VITE_ vars set on server!)
           npm run build
