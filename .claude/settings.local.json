@@ -1,0 +1,31 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run:*)",
+      "Bash(./node_modules/.bin/vite build:*)",
+      "Bash(npm --version)",
+      "Bash(node node_modules/vite/bin/vite.js build)",
+      "Bash(npm install:*)",
+      "Bash(cmd.exe /c \"npm install\")",
+      "Bash(cmd.exe /c \"npm run build\")",
+      "Bash(cmd.exe /c \"npm run build 2>&1 && echo BUILD_SUCCESS || echo BUILD_FAILED\")",
+      "Bash(cmd.exe /c \"npm run build > C:\\\\DEV\\\\wwmV3\\\\wwmcontrol\\\\build_output.txt 2>&1\")",
+      "Bash(powershell.exe -Command \"cd ''C:\\\\DEV\\\\wwmV3\\\\wwmcontrol''; npm run build 2>&1 | Out-String\")",
+      "Bash(powershell.exe -Command \"Test-Path ''C:\\\\DEV\\\\wwmV3\\\\wwmcontrol\\\\node_modules\\\\.bin''; ls ''C:\\\\DEV\\\\wwmV3\\\\wwmcontrol\\\\node_modules\\\\.bin'' | Select-Object -First 10 -ExpandProperty Name\")",
+      "Bash(powershell.exe -Command \"dir ''C:\\\\DEV\\\\wwmV3\\\\wwmcontrol\\\\node_modules\\\\.bin'' | Select-Object -First 10 | Format-Table Name\")",
+      "Bash(powershell.exe -Command \"\\(Get-ChildItem ''C:\\\\DEV\\\\wwmV3\\\\wwmcontrol\\\\node_modules\\\\.bin''\\).Count\")",
+      "Bash(powershell.exe -Command \"cd ''C:\\\\DEV\\\\wwmV3\\\\wwmcontrol''; npm install 2>&1 | Select-Object -Last 20 | Out-String\")",
+      "Bash(powershell.exe -Command \"Get-Item ''C:\\\\DEV\\\\wwmV3\\\\wwmcontrol\\\\node_modules\\\\@esbuild\\\\win32-x64\\\\esbuild.exe'' -Stream Zone.Identifier -ErrorAction SilentlyContinue | Get-Content\")",
+      "Bash(powershell.exe -Command \":*)",
+      "Bash(powershell.exe -NoProfile -Command \"cd ''C:\\\\DEV\\\\wwmV3\\\\wwmcontrol''; & ''C:\\\\Study\\\\nodejs\\\\npm.cmd'' install esbuild 2>&1 | Select-Object -Last 15\")",
+      "Bash(powershell.exe -NoProfile -Command \"& ''C:\\\\DEV\\\\wwmV3\\\\wwmcontrol\\\\node_modules\\\\@esbuild\\\\win32-x64\\\\esbuild.exe'' --version\")",
+      "Bash(powershell.exe -NoProfile -Command \"cd ''C:\\\\DEV\\\\wwmV3\\\\wwmcontrol''; & ''C:\\\\Study\\\\nodejs\\\\npm.cmd'' run build 2>&1\")",
+      "Bash(php artisan:*)",
+      "Bash(find node_modules/@fortawesome -name *.woff2)",
+      "Bash(powershell.exe -NoProfile -Command \"Get-ChildItem ''C:\\\\DEV\\\\wwmV3\\\\wwmcontrol\\\\node_modules\\\\@fortawesome\\\\fontawesome-free'' | Select-Object Name\")",
+      "Bash(powershell.exe -NoProfile -Command \"Get-ChildItem ''C:\\\\DEV\\\\wwmV3\\\\wwmcontrol\\\\node_modules\\\\@fortawesome\\\\fontawesome-free'' -Recurse | Select-Object FullName | Where-Object { $_.FullName -match ''woff|ttf|eot'' } | Select-Object -First 10\")",
+      "Bash(powershell.exe -NoProfile -Command \":*)",
+      "Bash(powershell.exe -NoProfile -Command \"Test-Path ''C:\\\\DEV\\\\wwmV3\\\\wwmcontrol\\\\node_modules\\\\@fortawesome\\\\fontawesome-free\\\\webfonts''; Get-ChildItem ''C:\\\\DEV\\\\wwmV3\\\\wwmcontrol\\\\node_modules\\\\@fortawesome\\\\fontawesome-free\\\\'' | Select-Object Name\")"
+    ]
+  }
+}
