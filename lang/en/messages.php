@@ -421,4 +421,19 @@ return [
     'gw_edit_player_title' => 'Edit Player',
     'gw_add_player_title' => 'Add New Player',
     'gw_na' => 'N/A',
+
+    // Poker room notifications
+    'poker_fail_join'        => 'Failed to join table.',
+    'poker_fail_create'      => 'Error creating table.',
+    'poker_connection_error' => 'Connection error. Please try again.',
+    'poker_cant_start_hand'  => 'Cannot start new hand.',
+    'poker_confirm_leave'    => 'Are you sure you want to leave the table?',
+    'poker_loading_players'  => 'Loading players...',
+    'poker_im_ready'         => "I'm Ready",
+    'poker_cancel_ready'     => 'Cancel Ready',
+    'poker_players_ready'    => ':ready / :total players ready',
+    'poker_notify_error'     => 'Error',
+    'poker_notify_warning'   => 'Warning',
+    'poker_notify_success'   => 'Success',
+    'poker_notify_info'      => 'Info',
 ];

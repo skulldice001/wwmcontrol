@@ -383,4 +383,19 @@ return [
     'gw_edit_player_title' => 'Sửa Người Chơi',
     'gw_add_player_title' => 'Thêm Người Chơi Mới',
     'gw_na' => 'N/A',
+
+    // Poker room notifications
+    'poker_fail_join'        => 'Không thể vào bàn.',
+    'poker_fail_create'      => 'Không thể tạo bàn.',
+    'poker_connection_error' => 'Lỗi kết nối. Vui lòng thử lại.',
+    'poker_cant_start_hand'  => 'Không thể bắt đầu ván mới.',
+    'poker_confirm_leave'    => 'Bạn có chắc muốn rời bàn không?',
+    'poker_loading_players'  => 'Đang tải...',
+    'poker_im_ready'         => 'Sẵn sàng',
+    'poker_cancel_ready'     => 'Hủy sẵn sàng',
+    'poker_players_ready'    => ':ready / :total người chơi sẵn sàng',
+    'poker_notify_error'     => 'Lỗi',
+    'poker_notify_warning'   => 'Cảnh báo',
+    'poker_notify_success'   => 'Thành công',
+    'poker_notify_info'      => 'Thông báo',
 ];

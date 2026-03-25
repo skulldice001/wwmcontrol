@@ -3,35 +3,113 @@
 namespace App\Http\Controllers;
 
 use App\Events\PokerRoomUpdated;
+use App\Jobs\AutoFoldJob;
 use App\Models\PokerGame;
 use App\Models\PokerTable;
-use App\Services\Poker\Deck;
+use App\Models\User;
 use App\Services\Poker\HandEvaluator;
 use App\Services\Poker\GameEngine;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class PokerGameController extends Controller
 {
-    /** POST — start a new hand (called by EntertainmentController after all-ready) */
+    /** POST — start a new hand (called when player clicks "New Hand") */
     public function start(PokerTable $table)
     {
         $humanIds = $table->players()->pluck('users.id')->toArray();
-        $game     = GameEngine::startGame($table, $humanIds);
 
+        if (!$this->deductBuyIn($table, $humanIds)) {
+            return response()->json([
+                'error' => 'Không đủ Z-Coin để vào ván (cần ' . number_format($table->max_buy_in) . ' Z)',
+            ], 422);
+        }
+
+        $game = GameEngine::startGame($table, $humanIds);
+        $this->dispatchTurnTimer($table, $game);
         $this->broadcast($table, $game);
 
         return response()->json(['state' => $this->clientState($game, Auth::id())]);
     }
 
-    /** GET — current game state from this user's perspective */
+    /** GET — current game state + lobby player list */
     public function state(PokerTable $table)
     {
-        $game = PokerGame::where('poker_table_id', $table->id)->latest()->first();
+        $players = $table->players()->get();
+        $game    = PokerGame::where('poker_table_id', $table->id)->latest()->first();
         if (!$game) {
-            return response()->json(['state' => null]);
+            return response()->json(['state' => null, 'players' => $this->playerData($players)]);
         }
-        return response()->json(['state' => $this->clientState($game, Auth::id())]);
+        return response()->json([
+            'state'   => $this->clientState($game, Auth::id()),
+            'players' => $this->playerData($players),
+        ]);
+    }
+
+    /** POST — toggle ready flag; starts game when all players are ready */
+    public function ready(PokerTable $table)
+    {
+        $user   = Auth::user();
+        $seated = $table->players()->where('user_id', $user->id)->first();
+        if (!$seated) {
+            return response()->json(['error' => 'Not seated at this table'], 422);
+        }
+
+        $newReady = !(bool) $seated->pivot->is_ready;
+        $table->players()->updateExistingPivot($user->id, ['is_ready' => $newReady]);
+
+        $players  = $table->players()->get();
+        $allReady = $players->isNotEmpty() && $players->every(fn($p) => $p->pivot->is_ready);
+
+        if ($allReady) {
+            $humanIds = $players->pluck('id')->toArray();
+
+            if (!$this->deductBuyIn($table, $humanIds)) {
+                // Reset all ready flags so the lobby is not stuck
+                DB::table('poker_table_players')
+                    ->where('poker_table_id', $table->id)
+                    ->update(['is_ready' => false]);
+
+                $freshPlayers = $table->players()->get();
+                $playersData  = $this->playerData($freshPlayers);
+                event(new PokerRoomUpdated($table->id, ['type' => 'ready_update', 'players' => $playersData]));
+
+                return response()->json([
+                    'game_started' => false,
+                    'error'        => 'Một hoặc nhiều người chơi không đủ Z-Coin (cần ' . number_format($table->max_buy_in) . ' Z)',
+                    'players'      => $playersData,
+                ]);
+            }
+
+            $game  = GameEngine::startGame($table, $humanIds);
+            $this->dispatchTurnTimer($table, $game);
+            $seats = $this->buildSeats($players, $game);
+
+            event(new PokerRoomUpdated($table->id, [
+                'type'  => 'game_started',
+                'seats' => $seats,
+                'phase' => $game->state['phase'],
+                'pot'   => (int) $game->state['pot'],
+            ]));
+
+            return response()->json([
+                'game_started' => true,
+                'state'        => $seats[$user->id],
+            ]);
+        }
+
+        $playersData = $this->playerData($players);
+        event(new PokerRoomUpdated($table->id, [
+            'type'    => 'ready_update',
+            'players' => $playersData,
+        ]));
+
+        return response()->json([
+            'game_started' => false,
+            'is_ready'     => $newReady,
+            'players'      => $playersData,
+        ]);
     }
 
     /** POST — human player action */
@@ -49,6 +127,14 @@ class PokerGameController extends Controller
             Auth::id()
         );
 
+        // Pay out Z-Coins when the hand reaches showdown
+        if ($game->state['phase'] === 'showdown') {
+            $humanIds = $table->players()->pluck('users.id')->toArray();
+            $this->settleZCoins($game, $humanIds);
+        } else {
+            $this->dispatchTurnTimer($table, $game);
+        }
+
         $this->broadcast($table, $game);
 
         return response()->json(['state' => $this->clientState($game, Auth::id())]);
@@ -59,19 +145,35 @@ class PokerGameController extends Controller
     /** Broadcast updated game state to all players in the room */
     private function broadcast(PokerTable $table, PokerGame $game): void
     {
-        // Build state for each human seat so WebSocket can deliver the right view
-        $s       = $game->state;
-        $players = $table->players()->withPivot('is_ready')->get();
-        $seats   = [];
-        foreach ($players as $user) {
-            $seats[$user->id] = $this->clientState($game, $user->id);
-        }
+        $s     = $game->state;
+        $seats = $this->buildSeats($table->players()->get(), $game);
 
         event(new PokerRoomUpdated($table->id, [
-            'phase'  => $s['phase'],
-            'seats'  => $seats,  // keyed by user_id
-            'pot'    => (int) $s['pot'],
+            'type'  => 'game_update',
+            'phase' => $s['phase'],
+            'seats' => $seats,
+            'pot'   => (int) $s['pot'],
         ]));
+    }
+
+    /** Map a players collection to the lobby data array */
+    private function playerData($players): array
+    {
+        return $players->map(fn($p) => [
+            'id'       => $p->id,
+            'name'     => $p->name,
+            'is_ready' => (bool) $p->pivot->is_ready,
+        ])->values()->toArray();
+    }
+
+    /** Build per-user game state array keyed by user_id */
+    private function buildSeats($players, PokerGame $game): array
+    {
+        $seats = [];
+        foreach ($players as $p) {
+            $seats[$p->id] = $this->clientState($game, $p->id);
+        }
+        return $seats;
     }
 
     /** Format game state for a specific user's browser */
@@ -94,8 +196,8 @@ class PokerGameController extends Controller
             // Show cards only for: own seat, or AI/others at showdown
             $revealCards = ($p['id'] === $userId) || ($phase === 'showdown' && $p['status'] !== 'folded');
             $cards = $revealCards
-                ? array_map(fn($c) => ['suit' => $c['suit'], 'rank' => $c['rank'], 'img' => Deck::img($c)], $p['hole_cards'])
-                : array_fill(0, count($p['hole_cards']), ['suit' => 'back', 'rank' => 'back', 'img' => null]);
+                ? array_map(fn($c) => ['suit' => $c['suit'], 'rank' => $c['rank']], $p['hole_cards'])
+                : array_fill(0, count($p['hole_cards']), ['suit' => 'back', 'rank' => 'back']);
 
             $handName = null;
             if ($phase === 'showdown' && $p['status'] !== 'folded') {
@@ -135,9 +237,7 @@ class PokerGameController extends Controller
             'pot'             => (int) $s['pot'],
             'current_bet'     => (int) $s['current_bet'],
             'big_blind'       => (int) $s['big_blind'],
-            'community_cards' => array_map(fn($c) => [
-                'suit' => $c['suit'], 'rank' => $c['rank'], 'img' => Deck::img($c),
-            ], $s['community_cards']),
+            'community_cards' => array_map(fn($c) => ['suit' => $c['suit'], 'rank' => $c['rank']], $s['community_cards']),
             'players'         => $players,
             'my_index'        => $myIdx,
             'is_my_turn'      => $isMyTurn,
@@ -148,6 +248,55 @@ class PokerGameController extends Controller
             'my_chips'        => $myPlayer ? (int) $myPlayer['chips'] : 0,
             'winner_info'     => $s['winner_info'],
             'log'             => array_slice($s['log'] ?? [], -8),
+            'z_coins'         => User::find($userId)?->z_coins ?? 0,
+            'turn_started_at' => $s['turn_started_at'] ?? null,
         ];
+    }
+
+    // -------------------------------------------------------------------------
+
+    /** Dispatch a 60-second auto-fold job if the current player is human. */
+    private function dispatchTurnTimer(PokerTable $table, PokerGame $game): void
+    {
+        $state = $game->state;
+        if ($state['phase'] === 'showdown') return;
+
+        $p = $state['players'][$state['current_player']];
+        if ($p['is_ai'] || $p['status'] !== 'active' || !$p['pending']) return;
+
+        AutoFoldJob::dispatch(
+            $table->id,
+            $game->id,
+            $state['current_player'],
+            $state['turn_started_at']
+        )->delay(now()->addSeconds(60));
+    }
+
+    /** Deduct buy-in from all human players atomically. Returns false if any lack funds. */
+    private function deductBuyIn(PokerTable $table, array $humanIds): bool
+    {
+        if (empty($humanIds)) return true;
+        $buyIn = (int) $table->max_buy_in;
+
+        return DB::transaction(function () use ($humanIds, $buyIn) {
+            $users = User::whereIn('id', $humanIds)->lockForUpdate()->get();
+            foreach ($users as $user) {
+                if ($user->z_coins < $buyIn) return false;
+            }
+            User::whereIn('id', $humanIds)->decrement('z_coins', $buyIn);
+            return true;
+        });
+    }
+
+    /** Credit each human player their final chip count at showdown. */
+    private function settleZCoins(PokerGame $game, array $humanIds): void
+    {
+        foreach ($game->state['players'] as $p) {
+            if ($p['is_ai'] || !in_array($p['id'], $humanIds)) continue;
+            $finalChips = (int) $p['chips'];
+            if ($finalChips > 0) {
+                User::where('id', $p['id'])->increment('z_coins', $finalChips);
+            }
+        }
     }
 }

@@ -111,9 +111,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/entertainment/blackjack', [EntertainmentController::class, 'blackjack'])->name('entertainment.blackjack');
 
     // Poker game actions (inside a room)
-    Route::post('/entertainment/poker/{table}/game/start',  [PokerGameController::class, 'start'])->name('entertainment.poker.game.start');
-    Route::get('/entertainment/poker/{table}/game/state',   [PokerGameController::class, 'state'])->name('entertainment.poker.game.state');
-    Route::post('/entertainment/poker/{table}/game/action', [PokerGameController::class, 'action'])->name('entertainment.poker.game.action');
+    Route::post('/entertainment/poker/{table}/ready',        [PokerGameController::class, 'ready'])->name('entertainment.poker.ready');
+    Route::post('/entertainment/poker/{table}/game/start',   [PokerGameController::class, 'start'])->name('entertainment.poker.game.start');
+    Route::get('/entertainment/poker/{table}/game/state',    [PokerGameController::class, 'state'])->name('entertainment.poker.game.state');
+    Route::post('/entertainment/poker/{table}/game/action',  [PokerGameController::class, 'action'])->name('entertainment.poker.game.action');
 
     // Library Routes
     Route::get('/library', [LibraryController::class, 'index'])->name('library.index');

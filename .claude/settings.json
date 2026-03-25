@@ -8,7 +8,10 @@
       "Bash(php -l app/Http/Controllers/EntertainmentController.php)",
       "Bash(grep -o \"\"message\"\":\"\"[^\"\"]*\"\")",
       "Bash(find /c/DEV/wwmV3/wwmcontrol/resources -type f \\\\\\(-name *card* -o -name *poker* -o -name *.svg \\\\\\))",
-      "Bash(find /c/DEV/wwmV3/wwmcontrol/resources/js -type f -name *.js -o -name *.vue)"
+      "Bash(find /c/DEV/wwmV3/wwmcontrol/resources/js -type f -name *.js -o -name *.vue)",
+      "Bash(php -l app/Http/Controllers/PokerGameController.php)",
+      "Bash(php -l resources/views/entertainment/poker_room.blade.php)",
+      "Bash(php -l c:DEVwwmV3wwmcontrolappHttpControllersPokerGameController.php)"
     ]
   }
 }
