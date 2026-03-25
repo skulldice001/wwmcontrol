@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use App\Models\PokerTable;
 use App\Events\PokerTableUpdated;
 
@@ -29,6 +30,101 @@ class EntertainmentController extends Controller
     public function blackjack()
     {
         return view('entertainment.blackjack');
+    }
+
+    public function showTable(PokerTable $table)
+    {
+        return view('entertainment.poker_room', compact('table'));
+    }
+
+    public function createTable(Request $request)
+    {
+        $data = $request->validate([
+            'name'        => 'required|string|max:60',
+            'type'        => 'required|in:no_limit_holdem,pot_limit_omaha',
+            'small_blind' => 'required|numeric|min:1',
+            'big_blind'   => 'required|numeric|min:2',
+            'min_buy_in'  => 'required|numeric|min:1',
+            'max_buy_in'  => 'required|numeric|min:1',
+            'max_players' => 'required|integer|min:2|max:9',
+        ]);
+
+        $data['status']          = 'waiting';
+        $data['current_players'] = 0;
+
+        $table = PokerTable::create($data);
+
+        // Auto-join creator
+        $user = Auth::user();
+        $table->players()->attach($user->id, ['joined_at' => now()]);
+        $table->current_players = 1;
+        $table->status = 'playing';
+        $table->save();
+
+        event(new PokerTableUpdated($table));
+
+        return response()->json(['redirect' => route('entertainment.poker.show', $table)]);
+    }
+
+    public function joinTable(PokerTable $table)
+    {
+        $user = Auth::user();
+
+        // Already sitting at this table - idempotent, just redirect in
+        if ($table->players()->where('user_id', $user->id)->exists()) {
+            return response()->json(['redirect' => route('entertainment.poker.show', $table)]);
+        }
+
+        // If user is at a different table, remove them first
+        $otherTable = PokerTable::whereHas('players', fn($q) => $q->where('user_id', $user->id))
+            ->where('id', '!=', $table->id)
+            ->first();
+
+        if ($otherTable) {
+            $otherTable->players()->detach($user->id);
+            $otherTable->current_players = $otherTable->players()->count();
+            $otherTable->status = $otherTable->current_players <= 0 ? 'waiting' : 'playing';
+            $otherTable->save();
+            event(new PokerTableUpdated($otherTable));
+        }
+
+        // Check capacity after potential vacating
+        if ($table->current_players >= $table->max_players) {
+            return response()->json(['message' => __('messages.table_full')], 422);
+        }
+
+        // Seat the player (unique constraint prevents duplicates at DB level too)
+        $table->players()->attach($user->id, ['joined_at' => now()]);
+        $table->current_players = $table->players()->count();
+        $table->status = $table->current_players >= $table->max_players ? 'full' : 'playing';
+        $table->save();
+
+        event(new PokerTableUpdated($table));
+
+        return response()->json(['redirect' => route('entertainment.poker.show', $table)]);
+    }
+
+    public function leaveTable(PokerTable $table)
+    {
+        $user = Auth::user();
+
+        $table->players()->detach($user->id);
+        $table->current_players = $table->players()->count();
+
+        if ($table->current_players <= 0) {
+            event(new PokerTableUpdated($table->fill(['status' => 'closed'])));
+            $table->delete();
+
+            return redirect()->route('entertainment.poker')
+                ->with('success', __('messages.table_closed'));
+        }
+
+        $table->status = 'playing';
+        $table->save();
+
+        event(new PokerTableUpdated($table));
+
+        return redirect()->route('entertainment.poker');
     }
 
     public function testUpdate()
