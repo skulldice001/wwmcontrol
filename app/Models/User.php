@@ -37,6 +37,7 @@ class User extends Authenticatable
         'main_skill_id',
         'sub_skill_id',
         'z_coins',
+        'z_coins_frozen',
     ];
 
     /**
@@ -58,7 +59,8 @@ class User extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
-            'z_coins'           => 'integer',
+            'z_coins'          => 'integer',
+            'z_coins_frozen'   => 'integer',
         ];
     }
 

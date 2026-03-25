@@ -398,4 +398,13 @@ return [
     'poker_notify_warning'   => 'Cảnh báo',
     'poker_notify_success'   => 'Thành công',
     'poker_notify_info'      => 'Thông báo',
+
+    // Z-Coin freeze
+    'zcoin_total'         => 'Tổng cộng',
+    'zcoin_frozen'        => 'Đóng băng',
+    'zcoin_available'     => 'Khả dụng',
+    'zcoin_freeze'        => 'Cập nhật đóng băng',
+    'zcoin_set_freeze'    => 'Số lượng đóng băng',
+    'zcoin_freeze_success'=> 'Cập nhật đóng băng thành công.',
+    'zcoin_freeze_exceed' => 'Số lượng đóng băng không được vượt quá tổng Z-Coin.',
 ];
