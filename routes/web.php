@@ -80,6 +80,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
 use App\Http\Controllers\UserEventController;
 use App\Http\Controllers\EntertainmentController;
+use App\Http\Controllers\PokerGameController;
 
 Route::middleware('auth')->group(function () {
     Route::get('/dashboard', function () {
@@ -101,9 +102,18 @@ Route::middleware('auth')->group(function () {
 
     // Entertainment Routes
     Route::get('/entertainment', [EntertainmentController::class, 'index'])->name('entertainment.index');
-    Route::get('/entertainment/poker', [EntertainmentController::class, 'poker'])->name('entertainment.poker');
+    Route::get('/entertainment/poker',  [EntertainmentController::class, 'poker'])->name('entertainment.poker');
+    Route::post('/entertainment/poker', [EntertainmentController::class, 'createTable'])->name('entertainment.poker.create');
     Route::get('/entertainment/poker/test-update', [EntertainmentController::class, 'testUpdate'])->name('entertainment.poker.test-update');
+    Route::get('/entertainment/poker/{table}', [EntertainmentController::class, 'showTable'])->name('entertainment.poker.show');
+    Route::post('/entertainment/poker/{table}/join', [EntertainmentController::class, 'joinTable'])->name('entertainment.poker.join');
+    Route::delete('/entertainment/poker/{table}/leave', [EntertainmentController::class, 'leaveTable'])->name('entertainment.poker.leave');
     Route::get('/entertainment/blackjack', [EntertainmentController::class, 'blackjack'])->name('entertainment.blackjack');
+
+    // Poker game actions (inside a room)
+    Route::post('/entertainment/poker/{table}/game/start',  [PokerGameController::class, 'start'])->name('entertainment.poker.game.start');
+    Route::get('/entertainment/poker/{table}/game/state',   [PokerGameController::class, 'state'])->name('entertainment.poker.game.state');
+    Route::post('/entertainment/poker/{table}/game/action', [PokerGameController::class, 'action'])->name('entertainment.poker.game.action');
 
     // Library Routes
     Route::get('/library', [LibraryController::class, 'index'])->name('library.index');

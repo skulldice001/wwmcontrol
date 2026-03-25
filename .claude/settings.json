@@ -6,7 +6,9 @@
       "Bash(composer show:*)",
       "Bash(composer require:*)",
       "Bash(php -l app/Http/Controllers/EntertainmentController.php)",
-      "Bash(grep -o \"\"message\"\":\"\"[^\"\"]*\"\")"
+      "Bash(grep -o \"\"message\"\":\"\"[^\"\"]*\"\")",
+      "Bash(find /c/DEV/wwmV3/wwmcontrol/resources -type f \\\\\\(-name *card* -o -name *poker* -o -name *.svg \\\\\\))",
+      "Bash(find /c/DEV/wwmV3/wwmcontrol/resources/js -type f -name *.js -o -name *.vue)"
     ]
   }
 }
