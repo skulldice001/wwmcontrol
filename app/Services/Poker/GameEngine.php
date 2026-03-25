@@ -90,6 +90,7 @@ class GameEngine
             'sb_index'        => $sbIdx,
             'bb_index'        => $bbIdx,
             'current_player'  => $firstToAct,
+            'turn_started_at' => time(),
             'players'         => $players,
             'winner_info'     => null,
             'small_blind'     => (float) $table->small_blind,
@@ -235,7 +236,8 @@ class GameEngine
         for ($i = 0; $i < $n; $i++) {
             $p = $state['players'][$next];
             if ($p['status'] === 'active' && $p['pending']) {
-                $state['current_player'] = $next;
+                $state['current_player']  = $next;
+                $state['turn_started_at'] = time();
                 return $state;
             }
             $next = ($next + 1) % $n;
@@ -292,7 +294,8 @@ class GameEngine
         $start = ($state['dealer_index'] + 1) % $n;
         for ($i = 0; $i < $n; $i++) {
             if ($state['players'][$start]['status'] === 'active') {
-                $state['current_player'] = $start;
+                $state['current_player']  = $start;
+                $state['turn_started_at'] = time();
                 break;
             }
             $start = ($start + 1) % $n;

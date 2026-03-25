@@ -67,6 +67,17 @@
                 </a>
             </li>
 
+            @auth
+            <!-- Z-Coin Balance -->
+            <li class="nav-item d-none d-sm-inline-block">
+                <span class="nav-link" title="Z-Coin">
+                    <i class="fas fa-coins" style="color:#f6c23e;"></i>
+                    <strong style="color:#f6c23e;">{{ number_format(Auth::user()->z_coins ?? 0) }}</strong>
+                    <small class="text-muted ml-1">Z</small>
+                </span>
+            </li>
+            @endauth
+
             @php
                 $vnFlagPath = file_exists(public_path('flags/vn.jpg'))
                     ? 'flags/vn.jpg'
@@ -110,8 +121,8 @@
     <!-- Main Sidebar Container -->
     <aside class="{{ $sidebarClass }}">
         <!-- Brand Logo -->
-        <a href="{{ route('admin.dashboard') }}" class="{{ $brandClass }}">
-            <span class="brand-text font-weight-light">{{ config('app.name', 'AdminLTE') }}</span>
+        <a href="{{ Auth::guard('staff')->check() ? route('admin.dashboard') : route('dashboard') }}" class="{{ $brandClass }}">
+            <span class="brand-text font-weight-bold" style="letter-spacing:3px; font-size:16px;">THE ZOO</span>
         </a>
 
         <!-- Sidebar -->
@@ -217,6 +228,15 @@
                             <a href="{{ route('entertainment.index') }}" class="nav-link {{ request()->routeIs('entertainment.*') ? 'active' : '' }}">
                                 <i class="nav-icon fas fa-gamepad"></i>
                                 <p>{{ __('messages.entertainment_hall') }}</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="#" class="nav-link disabled" style="opacity:.55; cursor:not-allowed;">
+                                <i class="nav-icon fas fa-gift"></i>
+                                <p>
+                                    Đổi Thưởng
+                                    <span class="badge badge-secondary ml-1" style="font-size:.65rem;">Sắp ra mắt</span>
+                                </p>
                             </a>
                         </li>
                     @endif

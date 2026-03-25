@@ -12,7 +12,7 @@
             <i class="fas fa-plus"></i> {{ __('messages.create_table') }}
         </button>
         <button id="test-update-btn" class="btn btn-outline-info float-right">
-            <i class="fas fa-sync"></i> Test Update
+            <i class="fas fa-sync"></i> {{ __('messages.test_update') }}
         </button>
     </div>
 </div>
@@ -112,7 +112,6 @@
                 <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
             </div>
             <div class="modal-body">
-                <div id="create-table-errors" class="alert alert-danger" style="display:none"></div>
                 <form id="create-table-form">
                     <div class="form-group">
                         <label>{{ __('messages.table_name') }}</label>
@@ -179,11 +178,16 @@
 </div>
 @endsection
 
+@include('partials.notify')
+
 @push('scripts')
 <script type="module">
-    $(document).ready(function() {
-        console.log('Poker Lobby Loaded');
+    const MSG = {
+        failJoin   : '{{ __("messages.poker_fail_join") }}',
+        failCreate : '{{ __("messages.poker_fail_create") }}',
+    };
 
+    $(document).ready(function() {
         var joinTimeout = null;
 
         function showLoading() {
@@ -216,8 +220,8 @@
                 error: function(xhr) {
                     hideLoading();
                     btn.prop('disabled', false);
-                    var msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : 'Failed to join table.';
-                    alert(msg);
+                    var msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : MSG.failJoin;
+                    notify('error', msg);
                 }
             });
         });
@@ -225,7 +229,6 @@
         // Create table - AJAX submit
         $('#create-table-submit').click(function() {
             var $btn = $(this).prop('disabled', true);
-            var $err = $('#create-table-errors').hide();
 
             $.ajax({
                 url: "{{ route('entertainment.poker.create') }}",
@@ -239,10 +242,10 @@
                 },
                 error: function(xhr) {
                     $btn.prop('disabled', false);
-                    var errors = xhr.responseJSON && xhr.responseJSON.errors
-                        ? Object.values(xhr.responseJSON.errors).flat().join('<br>')
-                        : (xhr.responseJSON && xhr.responseJSON.message) || 'Error creating table.';
-                    $err.html(errors).show();
+                    var msg = xhr.responseJSON && xhr.responseJSON.errors
+                        ? Object.values(xhr.responseJSON.errors).flat().join(' ')
+                        : (xhr.responseJSON && xhr.responseJSON.message) || MSG.failCreate;
+                    notify('error', msg);
                 }
             });
         });
@@ -250,7 +253,6 @@
         // Re-enable submit button when modal opens
         $('#create-table-modal').on('show.bs.modal', function() {
             $('#create-table-submit').prop('disabled', false);
-            $('#create-table-errors').hide();
         });
 
         $('#test-update-btn').click(function() {
