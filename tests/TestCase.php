@@ -10,8 +10,11 @@ abstract class TestCase extends BaseTestCase
     protected function setUp(): void
     {
         parent::setUp();
-        
-        // Disable CSRF middleware for all tests
+
+        // Tắt kiểm tra CSRF khi chạy test để tránh lỗi 419
         $this->withoutMiddleware(ValidateCsrfToken::class);
+
+        // Tắt kiểm tra Vite manifest khi chạy test
+        $this->withoutVite();
     }
 }
