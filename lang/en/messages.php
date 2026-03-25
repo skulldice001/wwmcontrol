@@ -436,4 +436,13 @@ return [
     'poker_notify_warning'   => 'Warning',
     'poker_notify_success'   => 'Success',
     'poker_notify_info'      => 'Info',
+
+    // Z-Coin freeze
+    'zcoin_total'         => 'Total',
+    'zcoin_frozen'        => 'Frozen',
+    'zcoin_available'     => 'Available',
+    'zcoin_freeze'        => 'Update Freeze',
+    'zcoin_set_freeze'    => 'Set freeze amount',
+    'zcoin_freeze_success'=> 'Z-Coins frozen updated.',
+    'zcoin_freeze_exceed' => 'Freeze amount cannot exceed total Z-Coins.',
 ];

@@ -11,7 +11,8 @@
       "Bash(find /c/DEV/wwmV3/wwmcontrol/resources/js -type f -name *.js -o -name *.vue)",
       "Bash(php -l app/Http/Controllers/PokerGameController.php)",
       "Bash(php -l resources/views/entertainment/poker_room.blade.php)",
-      "Bash(php -l c:DEVwwmV3wwmcontrolappHttpControllersPokerGameController.php)"
+      "Bash(php -l c:DEVwwmV3wwmcontrolappHttpControllersPokerGameController.php)",
+      "Bash(xargs grep:*)"
     ]
   }
 }

@@ -151,6 +151,35 @@
             <div class="modal-footer justify-content-between">
                 <button type="button" class="btn btn-default" data-dismiss="modal">{{ __('messages.close_modal') }}</button>
             </div>
+            {{-- Z-Coin section --}}
+            <div class="modal-body border-top pt-3">
+                <h6 class="mb-3"><i class="fas fa-coins mr-1" style="color:#f6c23e;"></i> Z-Coin</h6>
+                <div class="row mb-3">
+                    <div class="col-4 text-center">
+                        <div class="text-muted small">{{ __('messages.zcoin_total') }}</div>
+                        <strong style="color:#f6c23e;">{{ number_format($user->z_coins) }} Z</strong>
+                    </div>
+                    <div class="col-4 text-center">
+                        <div class="text-muted small">{{ __('messages.zcoin_frozen') }}</div>
+                        <strong style="color:#e74c3c;">{{ number_format($user->z_coins_frozen) }} Z</strong>
+                    </div>
+                    <div class="col-4 text-center">
+                        <div class="text-muted small">{{ __('messages.zcoin_available') }}</div>
+                        <strong style="color:#2ecc71;">{{ number_format($user->z_coins - $user->z_coins_frozen) }} Z</strong>
+                    </div>
+                </div>
+                <form action="{{ route('admin.users.freeze-coins', $user->id) }}" method="POST" class="form-inline justify-content-center">
+                    @csrf
+                    <label class="mr-2">{{ __('messages.zcoin_set_freeze') }}:</label>
+                    <input type="number" name="amount" class="form-control form-control-sm mr-2"
+                           style="width:130px"
+                           min="0" max="{{ $user->z_coins }}"
+                           value="{{ $user->z_coins_frozen }}" required>
+                    <button type="submit" class="btn btn-sm btn-warning">
+                        <i class="fas fa-lock mr-1"></i>{{ __('messages.zcoin_freeze') }}
+                    </button>
+                </form>
+            </div>
         </div>
     </div>
 </div>

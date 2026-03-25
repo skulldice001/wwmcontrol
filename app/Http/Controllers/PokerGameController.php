@@ -281,7 +281,8 @@ class PokerGameController extends Controller
         return DB::transaction(function () use ($humanIds, $buyIn) {
             $users = User::whereIn('id', $humanIds)->lockForUpdate()->get();
             foreach ($users as $user) {
-                if ($user->z_coins < $buyIn) return false;
+                $available = $user->z_coins - $user->z_coins_frozen;
+                if ($available < $buyIn) return false;
             }
             User::whereIn('id', $humanIds)->decrement('z_coins', $buyIn);
             return true;

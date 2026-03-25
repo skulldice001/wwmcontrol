@@ -53,6 +53,27 @@ class UserController extends Controller
         return view('admin.users.create');
     }
 
+    public function freezeCoins(Request $request, User $user)
+    {
+        if (!auth()->guard('staff')->user()->isAdmin()) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        $request->validate([
+            'amount' => ['required', 'integer', 'min:0'],
+        ]);
+
+        $amount = (int) $request->amount;
+
+        if ($amount > $user->z_coins) {
+            return back()->with('error', __('messages.zcoin_freeze_exceed'));
+        }
+
+        $user->update(['z_coins_frozen' => $amount]);
+
+        return back()->with('success', __('messages.zcoin_freeze_success'));
+    }
+
     public function store(Request $request)
     {
         if (!auth()->guard('staff')->user()->isAdmin()) {

@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>{{ config('app.name', 'Laravel') }} | @yield('title')</title>
+    <title>THE ZOO | @yield('title')</title>
 
     <!-- Google Font: Source Sans Pro -->
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
@@ -69,11 +69,21 @@
 
             @auth
             <!-- Z-Coin Balance -->
+            @php
+                $zTotal    = Auth::user()->z_coins        ?? 0;
+                $zFrozen   = Auth::user()->z_coins_frozen ?? 0;
+                $zAvail    = $zTotal - $zFrozen;
+            @endphp
             <li class="nav-item d-none d-sm-inline-block">
-                <span class="nav-link" title="Z-Coin">
+                <span class="nav-link" title="{{ $zFrozen > 0 ? __('messages.zcoin_frozen').': '.number_format($zFrozen).' Z' : 'Z-Coin' }}">
                     <i class="fas fa-coins" style="color:#f6c23e;"></i>
-                    <strong style="color:#f6c23e;">{{ number_format(Auth::user()->z_coins ?? 0) }}</strong>
+                    <strong style="color:#f6c23e;">{{ number_format($zAvail) }}</strong>
                     <small class="text-muted ml-1">Z</small>
+                    @if($zFrozen > 0)
+                        <small class="ml-1" style="color:#e74c3c;" title="{{ __('messages.zcoin_frozen') }}: {{ number_format($zFrozen) }} Z">
+                            <i class="fas fa-lock"></i>
+                        </small>
+                    @endif
                 </span>
             </li>
             @endauth

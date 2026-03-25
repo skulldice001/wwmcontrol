@@ -74,6 +74,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::resource('events', EventController::class);
         Route::resource('users', UserController::class);
         Route::post('users/{user}/restore', [UserController::class, 'restore'])->name('users.restore')->withTrashed();
+        Route::post('users/{user}/freeze-coins', [UserController::class, 'freezeCoins'])->name('users.freeze-coins');
         Route::get('/library', [LibraryController::class, 'index'])->name('library.index');
     });
 });
