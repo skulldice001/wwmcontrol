@@ -485,4 +485,32 @@ return [
     'zcoin_set_freeze'    => 'Set freeze amount',
     'zcoin_freeze_success'=> 'Zoo frozen updated.',
     'zcoin_freeze_exceed' => 'Freeze amount cannot exceed total Zoo.',
+
+    // Zoo-coin adjust (master)
+    'zcoin_adjust_title'   => 'Adjust Zoo-coin',
+    'zcoin_adjust_btn'     => 'Apply',
+    'zcoin_adjust_success' => 'Zoo-coin adjusted successfully.',
+
+    // Zoo-coin transfer (user)
+    'zcoin_transfer_recipient'           => 'Recipient account',
+    'zcoin_transfer_account_placeholder' => 'Account ID',
+    'zcoin_transfer_amount'              => 'Amount (Zoo)',
+    'zcoin_transfer_note_placeholder'    => 'Note (optional)',
+    'zcoin_transfer_btn'                 => 'Transfer',
+    'zcoin_transfer_not_found'           => 'Recipient account not found.',
+    'zcoin_transfer_self'                => 'You cannot transfer to yourself.',
+    'zcoin_transfer_insufficient'        => 'Insufficient Zoo (available: :available).',
+    'zcoin_transfer_success'             => 'Successfully transferred :amount Zoo to :recipient.',
+
+    // Zoo-coin history
+    'zcoin_history_title'  => 'Zoo-coin History',
+    'zcoin_tx_time'        => 'Time',
+    'zcoin_tx_type'        => 'Type',
+    'zcoin_tx_amount'      => 'Amount',
+    'zcoin_tx_before'      => 'Before',
+    'zcoin_tx_after'       => 'After',
+    'zcoin_tx_note'        => 'Note',
+    'zcoin_no_transactions'=> 'No transactions yet.',
+
+    'back' => 'Back',
 ];

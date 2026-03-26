@@ -153,7 +153,12 @@
             </div>
             {{-- Z-Coin section --}}
             <div class="modal-body border-top pt-3">
-                <h6 class="mb-3"><i class="fas fa-coins mr-1" style="color:#f6c23e;"></i> Zoo</h6>
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h6 class="mb-0"><i class="fas fa-coins mr-1" style="color:#f6c23e;"></i> Zoo</h6>
+                    <a href="{{ route('admin.users.coin-history', $user->id) }}" class="btn btn-xs btn-outline-warning" target="_blank">
+                        <i class="fas fa-history mr-1"></i>{{ __('messages.zcoin_history_title') }}
+                    </a>
+                </div>
                 <div class="row mb-3">
                     <div class="col-4 text-center">
                         <div class="text-muted small">{{ __('messages.zcoin_total') }}</div>
@@ -168,7 +173,9 @@
                         <strong style="color:#2ecc71;">{{ number_format($user->z_coins - $user->z_coins_frozen) }} Zoo</strong>
                     </div>
                 </div>
-                <form action="{{ route('admin.users.freeze-coins', $user->id) }}" method="POST" class="form-inline justify-content-center">
+
+                {{-- Freeze coins (admin+master) --}}
+                <form action="{{ route('admin.users.freeze-coins', $user->id) }}" method="POST" class="form-inline justify-content-center mb-3">
                     @csrf
                     <label class="mr-2">{{ __('messages.zcoin_set_freeze') }}:</label>
                     <input type="number" name="amount" class="form-control form-control-sm mr-2"
@@ -179,6 +186,27 @@
                         <i class="fas fa-lock mr-1"></i>{{ __('messages.zcoin_freeze') }}
                     </button>
                 </form>
+
+                {{-- Adjust coins (master only) --}}
+                @if(auth()->guard('staff')->user()->isMaster())
+                <div class="border-top pt-3 mt-1">
+                    <p class="small text-muted mb-2"><i class="fas fa-crown mr-1 text-warning"></i>{{ __('messages.zcoin_adjust_title') }} (Master)</p>
+                    <form action="{{ route('admin.users.adjust-coins', $user->id) }}" method="POST" class="form-inline flex-wrap justify-content-center" style="gap:6px;">
+                        @csrf
+                        <select name="adjust_type" class="form-control form-control-sm" style="width:90px;" required>
+                            <option value="add">+ Nạp</option>
+                            <option value="deduct">− Trừ</option>
+                        </select>
+                        <input type="number" name="adjust_amount" class="form-control form-control-sm"
+                               style="width:120px;" min="1" placeholder="Số lượng" required>
+                        <input type="text" name="adjust_note" class="form-control form-control-sm"
+                               style="width:160px;" placeholder="{{ __('messages.zcoin_tx_note') }}">
+                        <button type="submit" class="btn btn-sm btn-success">
+                            <i class="fas fa-check mr-1"></i>{{ __('messages.zcoin_adjust_btn') }}
+                        </button>
+                    </form>
+                </div>
+                @endif
             </div>
         </div>
     </div>

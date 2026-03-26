@@ -447,4 +447,32 @@ return [
     'zcoin_set_freeze'    => 'Số lượng đóng băng',
     'zcoin_freeze_success'=> 'Cập nhật đóng băng thành công.',
     'zcoin_freeze_exceed' => 'Số lượng đóng băng không được vượt quá tổng Zoo.',
+
+    // Zoo-coin adjust (master)
+    'zcoin_adjust_title'   => 'Điều chỉnh Zoo-coin',
+    'zcoin_adjust_btn'     => 'Áp dụng',
+    'zcoin_adjust_success' => 'Điều chỉnh Zoo-coin thành công.',
+
+    // Zoo-coin transfer (user)
+    'zcoin_transfer_recipient'           => 'Tài khoản nhận',
+    'zcoin_transfer_account_placeholder' => 'Account ID',
+    'zcoin_transfer_amount'              => 'Số lượng (Zoo)',
+    'zcoin_transfer_note_placeholder'    => 'Ghi chú (tuỳ chọn)',
+    'zcoin_transfer_btn'                 => 'Chuyển khoản',
+    'zcoin_transfer_not_found'           => 'Không tìm thấy tài khoản người nhận.',
+    'zcoin_transfer_self'                => 'Không thể chuyển Zoo cho chính mình.',
+    'zcoin_transfer_insufficient'        => 'Số Zoo không đủ (khả dụng: :available).',
+    'zcoin_transfer_success'             => 'Chuyển thành công :amount Zoo đến :recipient.',
+
+    // Zoo-coin history
+    'zcoin_history_title'  => 'Lịch sử Zoo-coin',
+    'zcoin_tx_time'        => 'Thời gian',
+    'zcoin_tx_type'        => 'Loại',
+    'zcoin_tx_amount'      => 'Số lượng',
+    'zcoin_tx_before'      => 'Trước',
+    'zcoin_tx_after'       => 'Sau',
+    'zcoin_tx_note'        => 'Ghi chú',
+    'zcoin_no_transactions'=> 'Chưa có giao dịch nào.',
+
+    'back' => 'Quay lại',
 ];

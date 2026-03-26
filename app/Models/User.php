@@ -88,4 +88,14 @@ class User extends Authenticatable
     {
         return $this->hasOne(ThemeSetting::class);
     }
+
+    public function zCoinTransactions()
+    {
+        return $this->hasMany(ZooCoinTransaction::class);
+    }
+
+    public function availableZCoins(): int
+    {
+        return max(0, (int) $this->z_coins - (int) $this->z_coins_frozen);
+    }
 }
