@@ -54,10 +54,10 @@
             <div class="d-flex justify-content-between align-items-center mb-2">
               <small class="text-muted">
                 <i class="fas fa-coins" style="color:#f6c23e;"></i>
-                Buy-in: <strong style="color:#f6c23e;">{{ fmt(table.max_buy_in) }} Z</strong> / ván
+                Buy-in: <strong style="color:#f6c23e;">{{ fmt(table.max_buy_in) }} Zoo</strong> / ván
               </small>
               <small class="text-muted">
-                Số dư: <strong style="color:#f6c23e;">{{ fmtChips(zCoins) }} Z</strong>
+                Số dư: <strong style="color:#f6c23e;">{{ fmtChips(zCoins) }} Zoo</strong>
               </small>
             </div>
             <div v-if="lobbyPlayers.length < 2" class="pk-need-players-notice mb-2">
@@ -261,9 +261,9 @@
         <div v-for="(entry, i) in reversedLog" :key="i" class="log-entry">{{ entry }}</div>
       </div>
       <div class="side-card">
-        <h6><i class="fas fa-coins mr-1" style="color:#f6c23e;"></i> Z-Coin</h6>
+        <h6><i class="fas fa-coins mr-1" style="color:#f6c23e;"></i> Zoo</h6>
         <div style="font-size:18px;font-weight:800;color:#f6c23e;letter-spacing:.5px;">{{ fmtChips(zCoins) }}</div>
-        <div class="text-muted" style="font-size:11px;">Buy-in: {{ fmt(table.max_buy_in) }} Z / ván</div>
+        <div class="text-muted" style="font-size:11px;">Buy-in: {{ fmt(table.max_buy_in) }} Zoo / ván</div>
       </div>
       <div class="side-card">
         <h6><i class="fas fa-trophy mr-1"></i> Hand Rankings</h6>

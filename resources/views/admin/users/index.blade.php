@@ -153,19 +153,19 @@
             </div>
             {{-- Z-Coin section --}}
             <div class="modal-body border-top pt-3">
-                <h6 class="mb-3"><i class="fas fa-coins mr-1" style="color:#f6c23e;"></i> Z-Coin</h6>
+                <h6 class="mb-3"><i class="fas fa-coins mr-1" style="color:#f6c23e;"></i> Zoo</h6>
                 <div class="row mb-3">
                     <div class="col-4 text-center">
                         <div class="text-muted small">{{ __('messages.zcoin_total') }}</div>
-                        <strong style="color:#f6c23e;">{{ number_format($user->z_coins) }} Z</strong>
+                        <strong style="color:#f6c23e;">{{ number_format($user->z_coins) }} Zoo</strong>
                     </div>
                     <div class="col-4 text-center">
                         <div class="text-muted small">{{ __('messages.zcoin_frozen') }}</div>
-                        <strong style="color:#e74c3c;">{{ number_format($user->z_coins_frozen) }} Z</strong>
+                        <strong style="color:#e74c3c;">{{ number_format($user->z_coins_frozen) }} Zoo</strong>
                     </div>
                     <div class="col-4 text-center">
                         <div class="text-muted small">{{ __('messages.zcoin_available') }}</div>
-                        <strong style="color:#2ecc71;">{{ number_format($user->z_coins - $user->z_coins_frozen) }} Z</strong>
+                        <strong style="color:#2ecc71;">{{ number_format($user->z_coins - $user->z_coins_frozen) }} Zoo</strong>
                     </div>
                 </div>
                 <form action="{{ route('admin.users.freeze-coins', $user->id) }}" method="POST" class="form-inline justify-content-center">

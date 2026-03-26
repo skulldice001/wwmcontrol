@@ -22,14 +22,14 @@
       <div class="text-center">
         <span class="bj-header-title">{{ table.name.toUpperCase() }}</span>
         <div style="font-size:11px;color:#6c757d;letter-spacing:1px;">
-          {{ fmt(table.min_bet) }}–{{ fmt(table.max_bet) }} Z &nbsp;·&nbsp;
+          {{ fmt(table.min_bet) }}–{{ fmt(table.max_bet) }} Zoo &nbsp;·&nbsp;
           <span>{{ playerCount }}</span>/{{ table.max_players }} {{ msg.players || 'players' }}
         </div>
       </div>
       <span>
         <i class="fas fa-coins mr-1" style="color:#f6c23e;"></i>
         <span class="font-weight-bold" style="color:#f6c23e;">{{ fmt(balance) }}</span>
-        <small class="text-muted ml-1">Z</small>
+        <small class="text-muted ml-1">Zoo</small>
       </span>
     </div>
 
@@ -120,7 +120,7 @@
         <!-- Center info -->
         <div class="bj-center-info">
           <span v-if="phase !== 'betting'" class="bj-bet-label">{{ msg.yourBet }}</span>
-          <span v-if="phase !== 'betting'" class="bj-bet-amount">{{ bet ? fmt(bet) + ' Z' : '' }}</span>
+          <span v-if="phase !== 'betting'" class="bj-bet-amount">{{ bet ? fmt(bet) + ' Zoo' : '' }}</span>
           <span v-if="phase === 'finished' && result" class="bj-result-text" :class="result">{{ resultLabel }}</span>
           <span v-if="phase === 'finished' && result" class="bj-payout-flash" :class="payoutClass">{{ payoutText }}</span>
         </div>
@@ -183,7 +183,7 @@
           </button>
         </div>
         <div class="text-muted text-center mt-1" style="font-size:11px;">
-          {{ msg.betRange }}: {{ fmt(table.min_bet) }} – {{ fmt(table.max_bet) }} Z
+          {{ msg.betRange }}: {{ fmt(table.min_bet) }} – {{ fmt(table.max_bet) }} Zoo
         </div>
       </template>
 
@@ -288,14 +288,14 @@ export default {
 
     payoutText() {
       if (!this.result) return '';
-      if (this.result === 'push') return '± 0 Z';
+      if (this.result === 'push') return '± 0 Zoo';
       if (['win', 'blackjack', 'dealer_bust'].includes(this.result)) {
         const profit = this.result === 'blackjack'
           ? '+' + Math.round(this.bet * 1.5).toLocaleString()
           : '+' + Number(this.bet).toLocaleString();
-        return profit + ' Z';
+        return profit + ' Zoo';
       }
-      return '–' + Number(this.bet).toLocaleString() + ' Z';
+      return '–' + Number(this.bet).toLocaleString() + ' Zoo';
     },
   },
 
