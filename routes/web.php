@@ -110,11 +110,15 @@ Route::middleware('auth')->group(function () {
     Route::get('/entertainment/poker/{table}', [EntertainmentController::class, 'showTable'])->name('entertainment.poker.show');
     Route::post('/entertainment/poker/{table}/join', [EntertainmentController::class, 'joinTable'])->name('entertainment.poker.join');
     Route::delete('/entertainment/poker/{table}/leave', [EntertainmentController::class, 'leaveTable'])->name('entertainment.poker.leave');
-    Route::get('/entertainment/blackjack', [EntertainmentController::class, 'blackjack'])->name('entertainment.blackjack');
-    Route::get('/entertainment/blackjack/{table}',              [BlackjackController::class, 'show'])->name('entertainment.blackjack.show');
-    Route::get('/entertainment/blackjack/{table}/game/state',   [BlackjackController::class, 'state'])->name('entertainment.blackjack.game.state');
-    Route::post('/entertainment/blackjack/{table}/game/deal',   [BlackjackController::class, 'deal'])->name('entertainment.blackjack.game.deal');
-    Route::post('/entertainment/blackjack/{table}/game/action', [BlackjackController::class, 'action'])->name('entertainment.blackjack.game.action');
+    Route::get('/entertainment/blackjack',                           [EntertainmentController::class, 'blackjack'])->name('entertainment.blackjack');
+    Route::post('/entertainment/blackjack',                          [BlackjackController::class, 'createTable'])->name('entertainment.blackjack.create');
+    Route::get('/entertainment/blackjack/{table}',                   [BlackjackController::class, 'show'])->name('entertainment.blackjack.show');
+    Route::post('/entertainment/blackjack/{table}/join',             [BlackjackController::class, 'joinTable'])->name('entertainment.blackjack.join');
+    Route::delete('/entertainment/blackjack/{table}/leave',          [BlackjackController::class, 'leaveTable'])->name('entertainment.blackjack.leave');
+    Route::post('/entertainment/blackjack/{table}/ready',            [BlackjackController::class, 'ready'])->name('entertainment.blackjack.ready');
+    Route::get('/entertainment/blackjack/{table}/game/state',        [BlackjackController::class, 'state'])->name('entertainment.blackjack.game.state');
+    Route::post('/entertainment/blackjack/{table}/game/deal',        [BlackjackController::class, 'deal'])->name('entertainment.blackjack.game.deal');
+    Route::post('/entertainment/blackjack/{table}/game/action',      [BlackjackController::class, 'action'])->name('entertainment.blackjack.game.action');
 
     // Poker game actions (inside a room)
     Route::post('/entertainment/poker/{table}/ready',        [PokerGameController::class, 'ready'])->name('entertainment.poker.ready');

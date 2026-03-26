@@ -95,8 +95,12 @@ class EntertainmentController extends Controller
             return response()->json(['message' => __('messages.table_full')], 422);
         }
 
-        // Seat the player (unique constraint prevents duplicates at DB level too)
-        $table->players()->attach($user->id, ['joined_at' => now()]);
+        // Seat the player — catch race condition where two requests slip past the exists() check
+        try {
+            $table->players()->attach($user->id, ['joined_at' => now()]);
+        } catch (\Illuminate\Database\UniqueConstraintViolationException $e) {
+            return response()->json(['redirect' => route('entertainment.poker.show', $table)]);
+        }
         $table->current_players = $table->players()->count();
         $table->status = $table->current_players >= $table->max_players ? 'full' : 'playing';
         $table->save();
