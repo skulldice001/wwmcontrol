@@ -20,6 +20,10 @@ class PokerGameController extends Controller
     {
         $humanIds = $table->players()->pluck('users.id')->toArray();
 
+        if (count($humanIds) < 2) {
+            return response()->json(['error' => 'Cần ít nhất 2 người chơi để bắt đầu ván mới.'], 422);
+        }
+
         if (!$this->deductBuyIn($table, $humanIds)) {
             return response()->json([
                 'error' => 'Không đủ Z-Coin để vào ván (cần ' . number_format($table->max_buy_in) . ' Z)',
@@ -60,7 +64,7 @@ class PokerGameController extends Controller
         $table->players()->updateExistingPivot($user->id, ['is_ready' => $newReady]);
 
         $players  = $table->players()->get();
-        $allReady = $players->isNotEmpty() && $players->every(fn($p) => $p->pivot->is_ready);
+        $allReady = $players->count() >= 2 && $players->every(fn($p) => $p->pivot->is_ready);
 
         if ($allReady) {
             $humanIds = $players->pluck('id')->toArray();

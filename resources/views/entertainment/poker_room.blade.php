@@ -260,7 +260,8 @@ window.__pkMsg    = {!! json_encode([
     'leaveTable'     => __('messages.leave_table'),
     'blinds'         => __('messages.blinds'),
     'buyIn'          => __('messages.buy_in'),
-    'loadingPlayers' => __('messages.poker_loading_players'),
+    'loadingPlayers'   => __('messages.poker_loading_players'),
+    'needMorePlayers'  => __('messages.poker_need_more_players'),
 ], JSON_HEX_TAG | JSON_HEX_APOS) !!};
 </script>
 <poker-room
