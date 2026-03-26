@@ -137,11 +137,11 @@
                     <div class="form-row">
                         <div class="form-group col-6">
                             <label>{{ __('messages.min_buy_in') }}</label>
-                            <input type="number" class="form-control" name="min_buy_in"  value="2000"  min="1" required>
+                            <input type="number" class="form-control" name="min_buy_in"  value="100"  min="1" required>
                         </div>
                         <div class="form-group col-6">
                             <label>{{ __('messages.max_buy_in') }}</label>
-                            <input type="number" class="form-control" name="max_buy_in"  value="20000" min="1" required>
+                            <input type="number" class="form-control" name="max_buy_in"  value="1000" min="1" required>
                         </div>
                     </div>
                     <div class="form-group">

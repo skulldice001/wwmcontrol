@@ -123,13 +123,13 @@
                     <div class="col-6">
                         <div class="form-group">
                             <label>{{ __('messages.min_buy_in') }}</label>
-                            <input type="number" id="bj-min-bet" class="form-control" min="1" value="500">
+                            <input type="number" id="bj-min-bet" class="form-control" min="1" value="100">
                         </div>
                     </div>
                     <div class="col-6">
                         <div class="form-group">
                             <label>{{ __('messages.max_buy_in') }}</label>
-                            <input type="number" id="bj-max-bet" class="form-control" min="1" value="10000">
+                            <input type="number" id="bj-max-bet" class="form-control" min="1" value="1000">
                         </div>
                     </div>
                 </div>
