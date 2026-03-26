@@ -64,11 +64,16 @@
           </div>
         </div>
 
+        <!-- Need more players notice -->
+        <div v-if="lobbyPlayers.length < 2" class="bj-need-players-notice">
+          <i class="fas fa-users mr-2"></i>{{ msg.needMorePlayers }}
+        </div>
+
         <!-- Ready button -->
         <div class="text-center mt-4">
           <button
             :class="['btn btn-lg px-5', myIsReady ? 'btn-secondary' : 'btn-success']"
-            :disabled="readyLoading || countdownSec !== null"
+            :disabled="readyLoading || countdownSec !== null || lobbyPlayers.length < 2"
             @click="toggleReady"
           >
             <i :class="['fas mr-1', myIsReady ? 'fa-times' : 'fa-check']"></i>
@@ -622,6 +627,19 @@ export default {
 .bj-lobby-name {
     color: #ddd;
     font-size: 13px;
+}
+
+/* ── Need more players notice ───────────────────────── */
+.bj-need-players-notice {
+    text-align: center;
+    font-size: 12px;
+    letter-spacing: 1px;
+    color: #f6c23e;
+    background: rgba(246, 194, 62, 0.08);
+    border: 1px solid rgba(246, 194, 62, 0.25);
+    border-radius: 8px;
+    padding: 8px 14px;
+    margin-bottom: 8px;
 }
 
 /* ── Countdown ───────────────────────────────────────── */
