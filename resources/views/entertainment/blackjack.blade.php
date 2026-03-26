@@ -63,7 +63,7 @@
                     </td>
                     <td>
                         <span class="badge badge-warning text-dark">
-                            {{ number_format($table->min_bet) }} – {{ number_format($table->max_bet) }} Z
+                            {{ number_format($table->min_bet) }} – {{ number_format($table->max_bet) }} Zoo
                         </span>
                     </td>
                     <td class="project_progress">
