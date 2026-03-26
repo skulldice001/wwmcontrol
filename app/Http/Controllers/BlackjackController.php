@@ -168,7 +168,7 @@ class BlackjackController extends Controller
         $allReady    = $players->every(fn($p) => $p['is_ready']);
         $countdownAt = null;
 
-        if ($allReady && $players->count() >= 1) {
+        if ($allReady && $players->count() >= 2) {
             $countdownAt = now()->addSeconds(5)->timestamp;
             Cache::put("bj_countdown_{$table->id}", $countdownAt, 30);
             event(new BlackjackRoomUpdated($table->id, 'countdown_start', $players->toArray(), $countdownAt));

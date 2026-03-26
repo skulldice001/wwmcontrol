@@ -436,6 +436,7 @@ return [
     'bj_players_ready'      => 'người chơi sẵn sàng',
     'bj_starting_in'        => 'Bắt đầu sau',
     'bj_loading_players'    => 'Đang tải...',
+    'bj_need_more_players'  => 'Cần ít nhất 2 người chơi để bắt đầu.',
 
     // Z-Coin freeze
     'zcoin_total'         => 'Tổng cộng',

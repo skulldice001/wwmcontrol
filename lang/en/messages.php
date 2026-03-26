@@ -474,6 +474,7 @@ return [
     'bj_players_ready'      => 'players ready',
     'bj_starting_in'        => 'Starting in',
     'bj_loading_players'    => 'Loading players...',
+    'bj_need_more_players'  => 'Waiting for at least 2 players to start.',
 
     // Z-Coin freeze
     'zcoin_total'         => 'Total',
