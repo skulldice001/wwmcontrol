@@ -196,7 +196,7 @@
                             'bg-primary', 'bg-secondary', 'bg-info', 'bg-success', 'bg-danger', 'bg-indigo', 'bg-purple', 'bg-pink', 'bg-navy', 'bg-lightblue', 'bg-teal', 'bg-cyan', 'bg-white', 'bg-gray', 'bg-gray-dark'
                         ];
 
-                        function getBgClass($variant, $type) {
+                        if (!function_exists('getBgClass')) { function getBgClass($variant, $type) {
                             if ($type == 'navbar' || $type == 'brand') {
                                  $color = explode(' ', $variant)[0];
                                  $color = str_replace('navbar-', '', $color);
@@ -217,7 +217,7 @@
                                 return $variant;
                             }
                             return 'bg-gray';
-                        }
+                        }} // end function + if (!function_exists)
                     @endphp
 
                     <!-- Dark Mode -->
