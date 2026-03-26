@@ -82,6 +82,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
 use App\Http\Controllers\UserEventController;
 use App\Http\Controllers\EntertainmentController;
 use App\Http\Controllers\PokerGameController;
+use App\Http\Controllers\BlackjackController;
 
 Route::middleware('auth')->group(function () {
     Route::get('/dashboard', function () {
@@ -110,6 +111,10 @@ Route::middleware('auth')->group(function () {
     Route::post('/entertainment/poker/{table}/join', [EntertainmentController::class, 'joinTable'])->name('entertainment.poker.join');
     Route::delete('/entertainment/poker/{table}/leave', [EntertainmentController::class, 'leaveTable'])->name('entertainment.poker.leave');
     Route::get('/entertainment/blackjack', [EntertainmentController::class, 'blackjack'])->name('entertainment.blackjack');
+    Route::get('/entertainment/blackjack/{table}',              [BlackjackController::class, 'show'])->name('entertainment.blackjack.show');
+    Route::get('/entertainment/blackjack/{table}/game/state',   [BlackjackController::class, 'state'])->name('entertainment.blackjack.game.state');
+    Route::post('/entertainment/blackjack/{table}/game/deal',   [BlackjackController::class, 'deal'])->name('entertainment.blackjack.game.deal');
+    Route::post('/entertainment/blackjack/{table}/game/action', [BlackjackController::class, 'action'])->name('entertainment.blackjack.game.action');
 
     // Poker game actions (inside a room)
     Route::post('/entertainment/poker/{table}/ready',        [PokerGameController::class, 'ready'])->name('entertainment.poker.ready');

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\PokerTable;
+use App\Models\BlackjackTable;
 use App\Events\PokerTableUpdated;
 
 class EntertainmentController extends Controller
@@ -29,7 +30,8 @@ class EntertainmentController extends Controller
 
     public function blackjack()
     {
-        return view('entertainment.blackjack');
+        $tables = BlackjackTable::all();
+        return view('entertainment.blackjack', compact('tables'));
     }
 
     public function showTable(PokerTable $table)

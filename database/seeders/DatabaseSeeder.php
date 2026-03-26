@@ -26,6 +26,7 @@ class DatabaseSeeder extends Seeder
             StaffSeeder::class,
             InnerWaySeeder::class,
             SkillSeeder::class,
+            BlackjackTableSeeder::class,
         ]);
     }
 }
