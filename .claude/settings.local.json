@@ -25,7 +25,9 @@
       "Bash(powershell.exe -NoProfile -Command \"Get-ChildItem ''C:\\\\DEV\\\\wwmV3\\\\wwmcontrol\\\\node_modules\\\\@fortawesome\\\\fontawesome-free'' | Select-Object Name\")",
       "Bash(powershell.exe -NoProfile -Command \"Get-ChildItem ''C:\\\\DEV\\\\wwmV3\\\\wwmcontrol\\\\node_modules\\\\@fortawesome\\\\fontawesome-free'' -Recurse | Select-Object FullName | Where-Object { $_.FullName -match ''woff|ttf|eot'' } | Select-Object -First 10\")",
       "Bash(powershell.exe -NoProfile -Command \":*)",
-      "Bash(powershell.exe -NoProfile -Command \"Test-Path ''C:\\\\DEV\\\\wwmV3\\\\wwmcontrol\\\\node_modules\\\\@fortawesome\\\\fontawesome-free\\\\webfonts''; Get-ChildItem ''C:\\\\DEV\\\\wwmV3\\\\wwmcontrol\\\\node_modules\\\\@fortawesome\\\\fontawesome-free\\\\'' | Select-Object Name\")"
+      "Bash(powershell.exe -NoProfile -Command \"Test-Path ''C:\\\\DEV\\\\wwmV3\\\\wwmcontrol\\\\node_modules\\\\@fortawesome\\\\fontawesome-free\\\\webfonts''; Get-ChildItem ''C:\\\\DEV\\\\wwmV3\\\\wwmcontrol\\\\node_modules\\\\@fortawesome\\\\fontawesome-free\\\\'' | Select-Object Name\")",
+      "Bash(\"c:/DEV/wwmV3/wwmcontrol/resources/js/components/PokerRoom.vue\")",
+      "Read(//tmp/**)"
     ]
   }
 }
