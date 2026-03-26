@@ -32,6 +32,7 @@
                     <th>{{ __('messages.main_skill') }}</th>
                     <th>{{ __('messages.role') }}</th>
                     <th>{{ __('messages.sub_skill') }}</th>
+                    <th class="text-center"><i class="fas fa-coins mr-1" style="color:#f6c23e;"></i>Zoo</th>
                     <th>{{ __('messages.actions') }}</th>
                 </tr>
             </thead>
@@ -68,6 +69,12 @@
                             <span class="badge badge-secondary">{{ $user->subSkill->name }}</span>
                         @else
                             <span class="text-muted">{{ __('messages.none') }}</span>
+                        @endif
+                    </td>
+                    <td class="text-right" style="white-space:nowrap;">
+                        <span style="color:#f6c23e; font-weight:600;">{{ number_format($user->z_coins) }}</span>
+                        @if($user->z_coins_frozen > 0)
+                            <br><small class="text-danger"><i class="fas fa-lock"></i> {{ number_format($user->z_coins_frozen) }}</small>
                         @endif
                     </td>
                     <td>
