@@ -37,21 +37,13 @@ class GameEngine
         PokerGame::where('poker_table_id', $table->id)->delete();
 
         $startChips = (int) $table->max_buy_in;
-        $numSeats   = min($table->max_players, self::MAX_SEATS);
-        $numAI      = max(0, $numSeats - count($humanUserIds));
 
-        $aiNames = self::AI_NAMES;
-        shuffle($aiNames);
-
-        // --- Build player seats: humans first, then AI ---
+        // --- Build player seats: humans only, no AI bots ---
         $users   = User::whereIn('id', $humanUserIds)->get()->keyBy('id');
         $players = [];
         foreach ($humanUserIds as $uid) {
             $name      = $users[$uid]->name ?? "Player#{$uid}";
             $players[] = self::makePlayer($uid, $name, $startChips, false);
-        }
-        for ($i = 0; $i < $numAI; $i++) {
-            $players[] = self::makePlayer(null, $aiNames[$i], $startChips, true);
         }
 
         // --- Deal hole cards ---
@@ -103,7 +95,7 @@ class GameEngine
             'state'          => $state,
         ]);
 
-        return self::runAI($game);
+        return $game;
     }
 
     public static function processAction(PokerGame $game, string $action, float $amount, int $userId): PokerGame
@@ -121,7 +113,7 @@ class GameEngine
         $state = self::advance($state);
         $game->update(['state' => $state]);
 
-        return self::runAI($game);
+        return $game->fresh();
     }
 
     // =========================================================================
