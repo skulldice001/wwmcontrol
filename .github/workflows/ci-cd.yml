@@ -2,14 +2,14 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ "setup_poker" ]
+    branches: [ "poker_setup_V3" ]
   pull_request:
-    branches: [ "setup_poker" ]
+    branches: [ "poker_setup_V3" ]
 
 jobs:
-  # -----------------------------------------------------------------------------
-  # Job 1: Build & Test (Continuous Integration)
-  # -----------------------------------------------------------------------------
+  # ---------------------------------------------------------------------------
+  # Job 1: Build & Test (CI)
+  # ---------------------------------------------------------------------------
   build-test:
     runs-on: ubuntu-latest
 
@@ -20,7 +20,7 @@ jobs:
       uses: shivammathur/setup-php@v2
       with:
         php-version: '8.2'
-        extensions: mbstring, xml, ctype, iconv, intl, pdo_sqlite, dom, filter, gd, iconv, json, mbstring, pdo
+        extensions: mbstring, xml, ctype, iconv, intl, pdo_sqlite, dom, filter, gd, json, pdo
         coverage: none
 
     - name: Copy .env
@@ -52,7 +52,6 @@ jobs:
     - name: Build Frontend Assets
       run: npm run build
       env:
-        # Mock env vars for build to pass if they are required
         VITE_REVERB_APP_KEY: mock_key
         VITE_REVERB_HOST: localhost
         VITE_REVERB_PORT: 8080
@@ -71,12 +70,12 @@ jobs:
         DB_DATABASE: ${{ github.workspace }}/database/database.sqlite
       run: php artisan test
 
-  # -----------------------------------------------------------------------------
-  # Job 2: Deploy to Server (Continuous Deployment)
-  # -----------------------------------------------------------------------------
+  # ---------------------------------------------------------------------------
+  # Job 2: Deploy to Server (CD)
+  # ---------------------------------------------------------------------------
   deploy:
     needs: build-test
-    if: github.ref == 'refs/heads/setup_poker'
+    if: github.ref == 'refs/heads/poker_setup_V3'
     runs-on: ubuntu-latest
 
     steps:
@@ -85,24 +84,37 @@ jobs:
       with:
         host: ${{ secrets.HOST }}
         username: ${{ secrets.USERNAME }}
-        key: ${{ secrets.KEY }}
-        port: ${{ secrets.PORT || 22 }}
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        port: 2018
         script: |
-          # Navigate to project directory (Change this path if needed)
           cd /var/www/wwmcontrol
 
           # Pull latest code
           git fetch origin
-          git checkout ${{ github.ref_name }}
-          git pull origin ${{ github.ref_name }}
+          git checkout poker_setup_V3
+          git pull origin poker_setup_V3
 
-          # Clear Caches
+          # Install/update PHP dependencies
+          composer install --no-dev --no-interaction --no-progress --prefer-dist --optimize-autoloader
+
+          # Install NPM & build frontend
+          npm ci --prefer-offline
+          npm run build
+
+          # Run database migrations
+          php artisan migrate --force
+
+          # Clear & rebuild caches
           php artisan optimize:clear
           php artisan config:cache
           php artisan event:cache
           php artisan route:cache
           php artisan view:cache
 
-          # Restart Workers & WebSocket
+          # Fix storage permissions
+          chown -R www-data:www-data storage bootstrap/cache
+          chmod -R 775 storage bootstrap/cache
+
+          # Restart background workers
           php artisan queue:restart
           php artisan reverb:restart
