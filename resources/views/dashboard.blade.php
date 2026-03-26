@@ -72,6 +72,73 @@
     </div>
 
     <div class="col-md-8">
+
+        {{-- Zoo-coin card --}}
+        <div class="card card-warning card-outline mb-3">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i class="fas fa-coins mr-2" style="color:#f6c23e;"></i>
+                    Zoo-coin
+                    <strong class="ml-2" style="color:#f6c23e;">{{ number_format(Auth::user()->z_coins) }} Zoo</strong>
+                    @if(Auth::user()->z_coins_frozen > 0)
+                        <small class="text-danger ml-2">
+                            <i class="fas fa-lock"></i> {{ number_format(Auth::user()->z_coins_frozen) }} Zoo {{ __('messages.zcoin_frozen') }}
+                        </small>
+                    @endif
+                </h3>
+                <div class="card-tools">
+                    <a href="{{ route('zoo.history') }}" class="btn btn-sm btn-outline-warning">
+                        <i class="fas fa-history mr-1"></i>{{ __('messages.zcoin_history_title') }}
+                    </a>
+                </div>
+            </div>
+            <div class="card-body">
+                @if(session('zoo_success'))
+                    <div class="alert alert-success alert-dismissible">
+                        <button type="button" class="close" data-dismiss="alert">&times;</button>
+                        {{ session('zoo_success') }}
+                    </div>
+                @endif
+                @if(session('zoo_error'))
+                    <div class="alert alert-danger alert-dismissible">
+                        <button type="button" class="close" data-dismiss="alert">&times;</button>
+                        {{ session('zoo_error') }}
+                    </div>
+                @endif
+
+                <form action="{{ route('zoo.transfer') }}" method="POST">
+                    @csrf
+                    <div class="form-row align-items-end">
+                        <div class="form-group col-md-4 mb-2">
+                            <label class="small mb-1">{{ __('messages.zcoin_transfer_recipient') }}</label>
+                            <input type="text" name="recipient_account" class="form-control form-control-sm"
+                                   placeholder="{{ __('messages.zcoin_transfer_account_placeholder') }}"
+                                   value="{{ old('recipient_account') }}" required>
+                        </div>
+                        <div class="form-group col-md-3 mb-2">
+                            <label class="small mb-1">{{ __('messages.zcoin_transfer_amount') }}</label>
+                            <input type="number" name="amount" class="form-control form-control-sm"
+                                   placeholder="Zoo" min="1" value="{{ old('amount') }}" required>
+                        </div>
+                        <div class="form-group col-md-3 mb-2">
+                            <label class="small mb-1">{{ __('messages.zcoin_tx_note') }}</label>
+                            <input type="text" name="note" class="form-control form-control-sm"
+                                   placeholder="{{ __('messages.zcoin_transfer_note_placeholder') }}"
+                                   value="{{ old('note') }}">
+                        </div>
+                        <div class="form-group col-md-2 mb-2">
+                            <button type="submit" class="btn btn-warning btn-sm btn-block">
+                                <i class="fas fa-paper-plane mr-1"></i>{{ __('messages.zcoin_transfer_btn') }}
+                            </button>
+                        </div>
+                    </div>
+                    <small class="text-muted">
+                        {{ __('messages.zcoin_available') }}: <strong style="color:#f6c23e;">{{ number_format(Auth::user()->availableZCoins()) }} Zoo</strong>
+                    </small>
+                </form>
+            </div>
+        </div>
+
         <div class="card">
             <div class="card-header">
                 <h3 class="card-title">{{ __('messages.my_inner_ways') }}</h3>

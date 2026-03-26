@@ -75,6 +75,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::resource('users', UserController::class);
         Route::post('users/{user}/restore', [UserController::class, 'restore'])->name('users.restore')->withTrashed();
         Route::post('users/{user}/freeze-coins', [UserController::class, 'freezeCoins'])->name('users.freeze-coins');
+        Route::post('users/{user}/adjust-coins', [UserController::class, 'adjustCoins'])->name('users.adjust-coins');
+        Route::get('users/{user}/coin-history', [UserController::class, 'coinHistory'])->name('users.coin-history');
         Route::get('/library', [LibraryController::class, 'index'])->name('library.index');
     });
 });
@@ -125,6 +127,10 @@ Route::middleware('auth')->group(function () {
     Route::post('/entertainment/poker/{table}/game/start',   [PokerGameController::class, 'start'])->name('entertainment.poker.game.start');
     Route::get('/entertainment/poker/{table}/game/state',    [PokerGameController::class, 'state'])->name('entertainment.poker.game.state');
     Route::post('/entertainment/poker/{table}/game/action',  [PokerGameController::class, 'action'])->name('entertainment.poker.game.action');
+
+    // Zoo-coin routes
+    Route::post('/zoo-coins/transfer', [\App\Http\Controllers\ZooCoinController::class, 'transfer'])->name('zoo.transfer');
+    Route::get('/zoo-coins/history', [\App\Http\Controllers\ZooCoinController::class, 'history'])->name('zoo.history');
 
     // Library Routes
     Route::get('/library', [LibraryController::class, 'index'])->name('library.index');
