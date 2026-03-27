@@ -10,6 +10,7 @@ window.__bjLobby = {
     routes: {
         create:        '{{ route('entertainment.blackjack.create') }}',
         joinBase:      '{{ url('entertainment/blackjack') }}',
+        list:          '{{ route('entertainment.blackjack') }}',
         entertainment: '{{ route('entertainment.index') }}',
     },
     msg: {!! json_encode([
