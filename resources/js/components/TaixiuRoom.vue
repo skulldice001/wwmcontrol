@@ -44,11 +44,14 @@
       <div class="tx-card">
         <div class="tx-dice-area">
 
-          <!-- Betting phase: 3 cubes spinning freely -->
+          <!-- Betting phase: static (or spinning last 4s) -->
           <template v-if="phase !== 'result'">
-            <div v-for="i in 3" :key="`roll-${i}`" class="tx-die-scene">
-              <div class="tx-die-cube rolling"
-                   :style="{ animationDuration: (0.60 + (i-1)*0.18) + 's', animationDelay: ((i-1)*-0.22) + 's' }">
+            <div v-for="i in 3" :key="`bet-${i}`" class="tx-die-scene">
+              <div class="tx-die-cube"
+                   :class="diceAnimClass === 'pre-rolling' ? 'rolling' : ''"
+                   :style="diceAnimClass === 'pre-rolling'
+                     ? { animationDuration: (0.60 + (i-1)*0.18) + 's', animationDelay: ((i-1)*-0.22) + 's' }
+                     : {}">
                 <div v-for="fv in cubeFaces" :key="fv" :class="`tx-face tx-face-${fv}`">
                   <div v-for="n in 9" :key="n" class="tx-dot" :class="dotClass(fv, n)"></div>
                 </div>
@@ -56,7 +59,7 @@
             </div>
           </template>
 
-          <!-- Result phase: cubes land on correct face -->
+          <!-- Result phase: land on correct face then hold -->
           <template v-else>
             <div
               v-for="(d, i) in dice"
@@ -68,8 +71,10 @@
               ]"
               :style="diceAnimClass === 'landing' ? { animationDelay: (i * 0.15) + 's' } : {}"
             >
-              <div class="tx-die-cube" :class="diceAnimClass" :data-val="d"
-                   :style="diceAnimClass === 'landing' ? { animationDelay: (i * 0.15) + 's' } : {}">
+              <div class="tx-die-cube"
+                   :style="diceAnimClass === 'landing'  ? landingStyle(d, i)
+                         : diceAnimClass === 'revealed' ? revealedStyle(d)
+                         : {}">
                 <div v-for="fv in cubeFaces" :key="fv" :class="`tx-face tx-face-${fv}`">
                   <div v-for="n in 9" :key="n" class="tx-dot" :class="dotClass(fv, n)"></div>
                 </div>
@@ -300,7 +305,7 @@ export default {
             chatInput:    '',
             chatSending:  false,
             _countdownTimer: null,
-            diceAnimClass:  'rolling',
+            diceAnimClass:  'static',   // static | pre-rolling | landing | revealed
             diceRevealKey:  0,
             cubeFaces:      [1, 2, 3, 4, 5, 6],
         };
@@ -340,6 +345,16 @@ export default {
         },
     },
 
+    watch: {
+        // Start spinning when ≤ 4 seconds remain in betting phase
+        countdown(val) {
+            if (val !== null && val <= 4 && val > 0 &&
+                this.phase === 'betting' && this.diceAnimClass === 'static') {
+                this.diceAnimClass = 'pre-rolling';
+            }
+        },
+    },
+
     mounted() {
         this._intentionalLeave = false;
         window.addEventListener('beforeunload', this.onBeforeUnload);
@@ -365,6 +380,26 @@ export default {
             if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
             if (n >= 1000)    return (n / 1000).toFixed(1) + 'k';
             return Number(n).toLocaleString();
+        },
+
+        // ── Dice animation helpers ─────────────────────────────────────────
+        landingStyle(d, i) {
+            // Named keyframe per face value; stagger delay per die index
+            return {
+                animation: `cube-land-${d} 0.9s cubic-bezier(0.22,0.85,0.36,1) ${i * 0.15}s both`,
+            };
+        },
+
+        revealedStyle(d) {
+            const finals = {
+                1: 'rotateX(  0deg) rotateY(  0deg)',
+                2: 'rotateX(  0deg) rotateY(-90deg)',
+                3: 'rotateX(-90deg) rotateY(  0deg)',
+                4: 'rotateX( 90deg) rotateY(  0deg)',
+                5: 'rotateX(  0deg) rotateY( 90deg)',
+                6: 'rotateX(  0deg) rotateY(180deg)',
+            };
+            return { transform: finals[d] || 'rotateX(0deg) rotateY(0deg)' };
         },
 
         // ── Dice dot layout ────────────────────────────────────────────────
@@ -403,16 +438,17 @@ export default {
             // Dice animation state machine
             if (s.phase === 'result' && this.dice.length === 3) {
                 if (prevPhase !== 'result') {
-                    // Dice just rolled: trigger 3D landing animation
+                    // Fresh roll: spin 3× then land on correct face
                     this.diceRevealKey++;
                     this.diceAnimClass = 'landing';
-                    // 850ms animation + 280ms stagger on last die = ~1150ms total
-                    setTimeout(() => { this.diceAnimClass = 'revealed'; }, 1150);
+                    // 900ms anim + 300ms stagger (last die) = 1200ms
+                    setTimeout(() => { this.diceAnimClass = 'revealed'; }, 1200);
                 } else {
                     this.diceAnimClass = 'revealed';
                 }
             } else {
-                this.diceAnimClass = 'rolling';
+                // New betting round: reset to static (watch will trigger pre-rolling at ≤4s)
+                this.diceAnimClass = 'static';
             }
         },
 
