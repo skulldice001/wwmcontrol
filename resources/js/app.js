@@ -28,6 +28,7 @@ import InnerWaysCell from './components/InnerWaysCell.vue';
 import AddParticipants from './components/AddParticipants.vue';
 import TeamMemberSelector from './components/TeamMemberSelector.vue';
 import BlackjackRoom from './components/BlackjackRoom.vue';
+import BlackjackLobby from './components/BlackjackLobby.vue';
 import PokerRoom from './components/PokerRoom.vue';
 
 const app = createApp({});
@@ -37,5 +38,6 @@ app.component('inner-ways-cell', InnerWaysCell);
 app.component('add-participants', AddParticipants);
 app.component('team-member-selector', TeamMemberSelector);
 app.component('blackjack-room', BlackjackRoom);
+app.component('blackjack-lobby', BlackjackLobby);
 app.component('poker-room', PokerRoom);
 app.mount('#app');

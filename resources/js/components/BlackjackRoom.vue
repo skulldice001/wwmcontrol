@@ -354,7 +354,7 @@ export default {
             this.lobbyLoading = false;
             this.updateLobby(data.players || []);
             if (data.countdown_at) this.startCountdown(data.countdown_at);
-            this.startLobbyPoll();
+            if (!window.Echo) this.startLobbyPoll();
           } else if (data.state) {
             this.inLobby = false;
             this.stopLobbyPoll();
