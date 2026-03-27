@@ -12,7 +12,7 @@
             <i class="fas fa-plus"></i> {{ __('messages.create_table') }}
         </button>
         <button id="refresh-tables-btn" class="btn btn-outline-info float-right">
-            <i class="fas fa-sync-alt mr-1"></i> Làm mới danh sách bàn
+            <i class="fas fa-sync-alt mr-1"></i> {{ __('messages.refresh_tables') }}
         </button>
     </div>
 </div>
@@ -33,7 +33,7 @@
                             {{ __('messages.blinds') }}
                         </th>
                         <th style="width: 20%">
-                            {{ __('messages.buy_in') }}
+                            {{ __('messages.entry_fee') }}
                         </th>
                         <th style="width: 15%">
                             {{ __('messages.players') }}
@@ -61,7 +61,7 @@
                             <span class="badge badge-info">{{ number_format($table->small_blind) }} / {{ number_format($table->big_blind) }}</span>
                         </td>
                         <td>
-                            {{ number_format($table->min_buy_in) }} - {{ number_format($table->max_buy_in) }}
+                            {{ number_format($table->big_blind) }} Zoo
                         </td>
                         <td class="project_progress">
                             <div class="progress progress-sm">
@@ -134,15 +134,10 @@
                             <input type="number" class="form-control" name="big_blind"   value="200" min="2" required>
                         </div>
                     </div>
-                    <div class="form-row">
-                        <div class="form-group col-6">
-                            <label>{{ __('messages.min_buy_in') }}</label>
-                            <input type="number" class="form-control" name="min_buy_in"  value="100"  min="1" required>
-                        </div>
-                        <div class="form-group col-6">
-                            <label>{{ __('messages.max_buy_in') }}</label>
-                            <input type="number" class="form-control" name="max_buy_in"  value="1000" min="1" required>
-                        </div>
+                    <div class="form-group">
+                        <label>{{ __('messages.min_balance') }}</label>
+                        <input type="number" class="form-control" name="min_buy_in" value="1000" min="1" required>
+                        <small class="form-text text-muted">{{ __('messages.entry_fee') }} = Big Blind</small>
                     </div>
                     <div class="form-group">
                         <label>{{ __('messages.max_players') }}</label>

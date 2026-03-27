@@ -54,10 +54,10 @@
             <div class="d-flex justify-content-between align-items-center mb-2">
               <small class="text-muted">
                 <i class="fas fa-coins" style="color:#f6c23e;"></i>
-                Buy-in: <strong style="color:#f6c23e;">{{ fmt(table.max_buy_in) }} Zoo</strong> / ván
+                {{ msg.entryFeeLabel }}: <strong style="color:#f6c23e;">{{ fmt(table.big_blind) }} Zoo</strong> {{ msg.perHand }}
               </small>
               <small class="text-muted">
-                Số dư: <strong style="color:#f6c23e;">{{ fmtChips(zCoins) }} Zoo</strong>
+                {{ msg.balanceLabel }} <strong style="color:#f6c23e;">{{ fmtChips(zCoins) }} Zoo</strong>
               </small>
             </div>
             <div v-if="lobbyPlayers.length < 2" class="pk-need-players-notice mb-2">
@@ -82,24 +82,24 @@
         <!-- Chat panel (lobby view) -->
         <div class="pk-chat-panel lobby-card mt-3">
           <div class="card-header" style="padding:8px 14px;">
-            <h6 class="mb-0" style="font-size:13px;"><i class="fas fa-comments mr-1"></i> Chat</h6>
+            <h6 class="mb-0" style="font-size:13px;"><i class="fas fa-comments mr-1"></i> {{ msg.chatPanel }}</h6>
           </div>
           <div class="pk-chat-messages" ref="chatBox" style="max-height:180px;">
             <div v-for="m in chatMessages" :key="m.id"
                  :class="['pk-chat-msg', m.user_id === myUserId ? 'pk-chat-mine' : '']">
               <div class="pk-chat-meta">
-                <span class="pk-chat-name">{{ m.user_id === myUserId ? 'Bạn' : m.name }}</span>
+                <span class="pk-chat-name">{{ m.user_id === myUserId ? msg.chatMe : m.name }}</span>
                 <span class="pk-chat-time">{{ m.time }}</span>
               </div>
               <div class="pk-chat-bubble">{{ m.message }}</div>
             </div>
-            <div v-if="chatMessages.length === 0" class="pk-chat-empty">Chưa có tin nhắn...</div>
+            <div v-if="chatMessages.length === 0" class="pk-chat-empty">{{ msg.chatEmpty }}</div>
           </div>
           <div class="pk-chat-input-row" style="border-top:1px solid rgba(255,255,255,.1);">
             <input
               v-model="chatInput"
               class="pk-chat-input"
-              placeholder="Nhập tin nhắn..."
+              :placeholder="msg.chatPlaceholder"
               maxlength="500"
               @keydown.enter.prevent="sendChatMessage"
               :disabled="chatSending"
@@ -173,10 +173,10 @@
                   class="mt-1" style="font-size:10px;color:#ffd700"
                 >{{ seat.handName }}</div>
               </div>
-              <div v-if="seat.isCurrent && seat.isAI && phase !== 'showdown'" class="thinking mt-1">thinking...</div>
-              <div v-if="seat.status === 'all-in'" class="status-badge" style="font-size:10px;color:#e74c3c;font-weight:700">ALL-IN</div>
-              <div v-if="seat.status === 'folded'" class="status-badge" style="font-size:10px;color:#888">FOLDED</div>
-              <div v-if="phase === 'showdown' && seat.isWinner" class="status-badge" style="font-size:11px;color:#ffe34d;font-weight:800">WINNER</div>
+              <div v-if="seat.isCurrent && seat.isAI && phase !== 'showdown'" class="thinking mt-1">{{ msg.aiThinking }}</div>
+              <div v-if="seat.status === 'all-in'" class="status-badge" style="font-size:10px;color:#e74c3c;font-weight:700">{{ msg.statusAllin }}</div>
+              <div v-if="seat.status === 'folded'" class="status-badge" style="font-size:10px;color:#888">{{ msg.statusFolded }}</div>
+              <div v-if="phase === 'showdown' && seat.isWinner" class="status-badge" style="font-size:11px;color:#ffe34d;font-weight:800">{{ msg.statusWinner }}</div>
             </div>
           </div>
 
@@ -209,9 +209,9 @@
               <div v-else class="card-back"></div>
             </template>
           </div>
-          <div v-if="mySeat.status === 'all-in'" class="status-badge" style="font-size:10px;color:#e74c3c;font-weight:700">ALL-IN</div>
-          <div v-if="mySeat.status === 'folded'" class="status-badge" style="font-size:10px;color:#888">FOLDED</div>
-          <div v-if="phase === 'showdown' && mySeat.isWinner" class="status-badge" style="font-size:11px;color:#ffe34d;font-weight:800">WINNER</div>
+          <div v-if="mySeat.status === 'all-in'" class="status-badge" style="font-size:10px;color:#e74c3c;font-weight:700">{{ msg.statusAllin }}</div>
+          <div v-if="mySeat.status === 'folded'" class="status-badge" style="font-size:10px;color:#888">{{ msg.statusFolded }}</div>
+          <div v-if="phase === 'showdown' && mySeat.isWinner" class="status-badge" style="font-size:11px;color:#ffe34d;font-weight:800">{{ msg.statusWinner }}</div>
         </div>
       </div>
 
@@ -236,23 +236,23 @@
         <div v-if="isMyTurn && phase !== 'showdown'">
           <div class="d-flex gap-2 flex-wrap justify-content-center">
             <button class="btn btn-danger" @click="sendAction('fold')">
-              <i class="fas fa-times"></i> Fold
+              <i class="fas fa-times"></i> {{ msg.actionFold }}
             </button>
             <button v-show="canCheck" class="btn btn-secondary" @click="sendAction('check')">
-              <i class="fas fa-hand-paper"></i> Check
+              <i class="fas fa-hand-paper"></i> {{ msg.actionCheck }}
             </button>
             <button v-show="canCall" class="btn btn-warning" @click="sendAction('call')">
-              <i class="fas fa-hand-holding-usd"></i> Call {{ callAmountText }}
+              <i class="fas fa-hand-holding-usd"></i> {{ msg.actionCall }} {{ callAmountText }}
             </button>
             <button v-show="canRaise" class="btn btn-primary" @click="doRaise">
-              <i class="fas fa-chevron-up"></i> Raise
+              <i class="fas fa-chevron-up"></i> {{ msg.actionRaise }}
             </button>
             <button v-show="canAllin" class="btn btn-outline-warning" @click="sendAction('allin')">
-              All-in
+              {{ msg.actionAllin }}
             </button>
           </div>
           <div class="raise-row" v-show="showRaiseRow">
-            <span class="text-white small">Raise to:</span>
+            <span class="text-white small">{{ msg.raiseTo }}</span>
             <input type="range" v-model.number="raiseValue"
                    :min="raiseMin" :max="raiseMax" :step="raiseStep">
             <input type="number" v-model.number="raiseValue"
@@ -265,14 +265,14 @@
 
         <!-- Opponent's turn -->
         <div v-else-if="phase !== 'showdown'" class="text-center text-muted small py-2">
-          <span class="thinking">Opponent thinking...</span>
+          <span class="thinking">{{ msg.opponentThinking }}</span>
         </div>
 
         <!-- Showdown: auto-return to lobby countdown -->
         <div v-if="phase === 'showdown'" class="text-center py-2">
           <div class="text-muted small">
             <i class="fas fa-hourglass-half mr-1"></i>
-            Quay về sảnh trong <strong class="text-warning">{{ lobbyCountdown }}</strong> giây...
+            {{ msg.returningLobbyPre }} <strong class="text-warning">{{ lobbyCountdown }}</strong> {{ msg.returningLobbyPost }}
           </div>
         </div>
 
@@ -283,39 +283,39 @@
     <!-- Side Panel -->
     <div class="side-col">
       <div class="side-card">
-        <h6><i class="fas fa-info-circle mr-1"></i> Table</h6>
+        <h6><i class="fas fa-info-circle mr-1"></i> {{ msg.sideTable }}</h6>
         <div>{{ table.name }}</div>
         <div class="text-muted">{{ msg.blinds }}: {{ fmt(table.small_blind) }}/{{ fmt(table.big_blind) }}</div>
-        <div class="text-muted">{{ msg.buyIn }}: {{ fmt(table.min_buy_in) }}-{{ fmt(table.max_buy_in) }}</div>
+        <div class="text-muted">{{ msg.entryFeeLabel }}: {{ fmt(table.big_blind) }} Zoo</div>
       </div>
       <div class="side-card" style="flex:1;overflow-y:auto;">
-        <h6><i class="fas fa-scroll mr-1"></i> Log</h6>
+        <h6><i class="fas fa-scroll mr-1"></i> {{ msg.sideLog }}</h6>
         <div v-for="(entry, i) in reversedLog" :key="i" class="log-entry">{{ entry }}</div>
       </div>
       <div class="side-card">
-        <h6><i class="fas fa-coins mr-1" style="color:#f6c23e;"></i> Zoo</h6>
+        <h6><i class="fas fa-coins mr-1" style="color:#f6c23e;"></i> {{ msg.sideZoo }}</h6>
         <div style="font-size:18px;font-weight:800;color:#f6c23e;letter-spacing:.5px;">{{ fmtChips(zCoins) }}</div>
-        <div class="text-muted" style="font-size:11px;">Buy-in: {{ fmt(table.max_buy_in) }} Zoo / ván</div>
+        <div class="text-muted" style="font-size:11px;">{{ msg.entryFeeLabel }}: {{ fmt(table.big_blind) }} Zoo {{ msg.perHand }}</div>
       </div>
       <!-- Chat panel (game view) -->
       <div class="side-card pk-chat-panel">
-        <h6><i class="fas fa-comments mr-1"></i> Chat</h6>
+        <h6><i class="fas fa-comments mr-1"></i> {{ msg.chatPanel }}</h6>
         <div class="pk-chat-messages" ref="chatBox">
           <div v-for="m in chatMessages" :key="m.id"
                :class="['pk-chat-msg', m.user_id === myUserId ? 'pk-chat-mine' : '']">
             <div class="pk-chat-meta">
-              <span class="pk-chat-name">{{ m.user_id === myUserId ? 'Bạn' : m.name }}</span>
+              <span class="pk-chat-name">{{ m.user_id === myUserId ? msg.chatMe : m.name }}</span>
               <span class="pk-chat-time">{{ m.time }}</span>
             </div>
             <div class="pk-chat-bubble">{{ m.message }}</div>
           </div>
-          <div v-if="chatMessages.length === 0" class="pk-chat-empty">Chưa có tin nhắn...</div>
+          <div v-if="chatMessages.length === 0" class="pk-chat-empty">{{ msg.chatEmpty }}</div>
         </div>
         <div class="pk-chat-input-row">
           <input
             v-model="chatInput"
             class="pk-chat-input"
-            placeholder="Nhập tin nhắn..."
+            :placeholder="msg.chatPlaceholder"
             maxlength="500"
             @keydown.enter.prevent="sendChatMessage"
             :disabled="chatSending"
@@ -439,7 +439,7 @@ export default {
         },
         potText() {
             const pot = this.gameState ? (this.gameState.pot || 0) : 0;
-            return pot > 0 ? `POT: ${this.fmtChips(pot)}` : '';
+            return pot > 0 ? `${this.msg.potDisplay} ${this.fmtChips(pot)}` : '';
         },
         seatData() {
             const empty = Array.from({ length: 6 }, (_, i) => ({
@@ -455,7 +455,7 @@ export default {
                 seat.visible   = true;
                 seat.name      = p.name;
                 seat.chips     = this.fmtChips(p.chips);
-                seat.bet       = p.bet > 0 ? `Bet: ${this.fmtChips(p.bet)}` : '';
+                seat.bet       = p.bet > 0 ? `${this.msg.betLabel} ${this.fmtChips(p.bet)}` : '';
                 seat.folded    = p.status === 'folded';
                 seat.activeTurn = !!p.is_current && s.phase !== 'showdown';
                 seat.isAI      = !!p.is_ai;
@@ -489,9 +489,9 @@ export default {
         winnerDesc() {
             if (!this.winnerInfo) return '';
             const hand = this.winnerInfo.folded_win
-                ? 'Opponents folded'
-                : `Hand: <strong>${this.escHtml(this.winnerInfo.hand_name)}</strong>`;
-            return `${hand} &mdash; Pot: <strong>${this.fmtChips(this.winnerInfo.pot)}</strong>`;
+                ? this.msg.opponentsFolded
+                : `${this.msg.handLabel} <strong>${this.escHtml(this.winnerInfo.hand_name)}</strong>`;
+            return `${hand} &mdash; ${this.msg.potLabel} <strong>${this.fmtChips(this.winnerInfo.pot)}</strong>`;
         },
         reversedLog() {
             return (this.actionLog || []).slice().reverse();
@@ -644,7 +644,11 @@ export default {
             this.gameState   = s;
             this.winnerInfo  = s.winner_info || null;
             this.actionLog   = s.log || [];
-            if (s.z_coins !== undefined) this.zCoins = s.z_coins;
+            if (s.z_coins !== undefined) {
+                this.zCoins = s.z_coins;
+                const navEl = document.getElementById('nav-zcoin-balance');
+                if (navEl) navEl.textContent = s.z_coins.toLocaleString();
+            }
             this.renderTurnTimer(s);
 
             if (s.phase === 'showdown') {
