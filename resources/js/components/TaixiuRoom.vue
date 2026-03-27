@@ -44,14 +44,26 @@
       <div class="tx-card">
         <div class="tx-dice-area">
           <template v-if="phase === 'result' && dice.length === 3">
-            <div v-for="(d, i) in dice" :key="i" class="tx-die" :data-val="d">
+            <div
+              v-for="(d, i) in dice"
+              :key="`${diceRevealKey}-${i}`"
+              class="tx-die"
+              :class="[diceAnimClass, diceAnimClass === 'revealed' ? `glow-${outcome}` : '']"
+              :data-val="d"
+              :style="diceAnimClass === 'revealing' ? { animationDelay: (i * 0.14) + 's' } : {}"
+            >
               <template v-for="n in 9" :key="n">
                 <div class="tx-dot" :class="dotClass(d, n)"></div>
               </template>
             </div>
           </template>
           <template v-else>
-            <div v-for="i in 3" :key="i" class="tx-die rolling" data-val="?">
+            <div
+              v-for="i in 3" :key="i"
+              class="tx-die rolling"
+              data-val="?"
+              :style="{ animationDuration: (0.13 + (i-1)*0.04) + 's', animationDelay: ((i-1)*-0.05) + 's' }"
+            >
               <template v-for="n in 9" :key="n">
                 <div class="tx-dot" :class="n === 5 ? '' : 'hidden'"></div>
               </template>
@@ -280,6 +292,8 @@ export default {
             chatInput:    '',
             chatSending:  false,
             _countdownTimer: null,
+            diceAnimClass:  'rolling',
+            diceRevealKey:  0,
         };
     },
 
@@ -361,6 +375,7 @@ export default {
         // ── Game state ─────────────────────────────────────────────────────
         applyState(s) {
             if (!s) return;
+            const prevPhase = this.phase;
             this.phase   = s.phase;
             this.gameId  = s.game_id;
             this.dice    = s.dice   || [];
@@ -375,6 +390,20 @@ export default {
                 if (el) el.textContent = s.z_coins.toLocaleString();
             }
             if (s.deadline) this.startCountdown(s.deadline);
+
+            // Dice animation state machine
+            if (s.phase === 'result' && this.dice.length === 3) {
+                if (prevPhase !== 'result') {
+                    // Fresh reveal: fly-in bounce animation
+                    this.diceRevealKey++;
+                    this.diceAnimClass = 'revealing';
+                    setTimeout(() => { this.diceAnimClass = 'revealed'; }, 900);
+                } else {
+                    this.diceAnimClass = 'revealed';
+                }
+            } else {
+                this.diceAnimClass = 'rolling';
+            }
         },
 
         loadState() {

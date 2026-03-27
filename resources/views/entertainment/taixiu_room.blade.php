@@ -25,36 +25,67 @@
     color: #fff;
 }
 
-/* ── Dice ─────────────────────────────────────────────── */
+/* ── Dice area ────────────────────────────────────────── */
 .tx-dice-area {
     display: flex; justify-content: center; align-items: center;
-    gap: 20px; padding: 28px 0;
+    gap: 28px; padding: 36px 0;
+    perspective: 900px;
 }
+
+/* Die base */
 .tx-die {
-    width: 72px; height: 72px;
-    background: #fff; border-radius: 12px;
-    box-shadow: 0 4px 14px rgba(0,0,0,.5);
+    width: 82px; height: 82px;
+    background: linear-gradient(145deg, #ffffff 0%, #e6e6e6 100%);
+    border-radius: 15px;
+    box-shadow: 0 8px 24px rgba(0,0,0,.65), inset 0 1px 0 rgba(255,255,255,.9), inset 0 -1px 0 rgba(0,0,0,.15);
     display: grid; grid-template-columns: 1fr 1fr 1fr;
     grid-template-rows: 1fr 1fr 1fr;
-    padding: 8px; gap: 4px;
-    transition: transform .3s;
+    padding: 9px; gap: 5px;
+    will-change: transform, box-shadow;
+    position: relative;
 }
-.tx-die.rolling { animation: tx-roll .5s ease-in-out infinite; }
-@keyframes tx-roll { 0%,100% { transform: rotate(-8deg) scale(1.05); } 50% { transform: rotate(8deg) scale(.95); } }
+
+/* ── Rolling: chaotic shake ─── */
+.tx-die.rolling { animation: tx-shake 0.14s ease-in-out infinite; }
+.tx-die:nth-child(1).rolling { animation-duration: 0.13s; animation-delay:  0s; }
+.tx-die:nth-child(2).rolling { animation-duration: 0.17s; animation-delay: -0.06s; }
+.tx-die:nth-child(3).rolling { animation-duration: 0.15s; animation-delay: -0.10s; }
+@keyframes tx-shake {
+    0%   { transform: translate(-3px,-2px) rotate(-6deg) scale(1.03); }
+    20%  { transform: translate( 3px, 3px) rotate( 6deg) scale(0.96); }
+    40%  { transform: translate(-2px, 2px) rotate(-4deg) scaleX(0.95); }
+    60%  { transform: translate( 2px,-3px) rotate( 5deg) scale(1.05); }
+    80%  { transform: translate(-1px, 1px) rotate(-3deg) scaleY(0.96); }
+    100% { transform: translate(-3px,-2px) rotate(-6deg) scale(1.03); }
+}
+
+/* ── Revealing: fly down & bounce ─── */
+.tx-die.revealing { animation: tx-land 0.62s cubic-bezier(0.34,1.56,0.64,1) both; }
+.tx-die:nth-child(1).revealing { animation-delay: 0s; }
+.tx-die:nth-child(2).revealing { animation-delay: 0.14s; }
+.tx-die:nth-child(3).revealing { animation-delay: 0.28s; }
+@keyframes tx-land {
+    0%   { transform: translateY(-70px) rotate(540deg) scale(0.25); opacity: 0; }
+    65%  { transform: translateY( 8px)  rotate(-12deg) scale(1.15); opacity: 1; }
+    82%  { transform: translateY(-3px)  rotate(  4deg) scale(0.96); }
+    100% { transform: translateY(  0)   rotate(   0deg) scale(1); }
+}
+
+/* ── Revealed: glow by outcome ─── */
+.tx-die.revealed { transition: box-shadow .4s ease; }
+.tx-die.revealed.glow-tai    { box-shadow: 0 0 28px rgba(46,204,113,.7), 0 8px 24px rgba(0,0,0,.5); }
+.tx-die.revealed.glow-xiu    { box-shadow: 0 0 28px rgba(52,152,219,.7), 0 8px 24px rgba(0,0,0,.5); }
+.tx-die.revealed.glow-triple { box-shadow: 0 0 28px rgba(231,76,60,.8),  0 8px 24px rgba(0,0,0,.5); }
+
+/* ── Dots ─── */
 .tx-dot {
-    width: 10px; height: 10px;
-    background: #1a1a1a; border-radius: 50%;
+    width: 12px; height: 12px;
+    background: radial-gradient(circle at 38% 32%, #444, #111);
+    border-radius: 50%;
     margin: auto;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,.5), 0 1px 0 rgba(255,255,255,.15);
 }
 .tx-dot.hidden { visibility: hidden; }
-
-/* Dot layouts per face value */
-.tx-die[data-val="1"] .d1 { display: block; }
-.tx-die[data-val="2"] .d2a,.tx-die[data-val="2"] .d2b { display: block; }
-.tx-die[data-val="3"] .d3a,.tx-die[data-val="3"] .d3b,.tx-die[data-val="3"] .d3c { display: block; }
-.tx-die[data-val="4"] .d4a,.tx-die[data-val="4"] .d4b,.tx-die[data-val="4"] .d4c,.tx-die[data-val="4"] .d4d { display: block; }
-.tx-die[data-val="5"] .d4a,.tx-die[data-val="5"] .d4b,.tx-die[data-val="5"] .d4c,.tx-die[data-val="5"] .d4d,.tx-die[data-val="5"] .d1 { display: block; }
-.tx-die[data-val="6"] .d6a,.tx-die[data-val="6"] .d6b,.tx-die[data-val="6"] .d6c,.tx-die[data-val="6"] .d6d,.tx-die[data-val="6"] .d6e,.tx-die[data-val="6"] .d6f { display: block; }
 
 /* ── Outcome banner ───────────────────────────────────── */
 .tx-outcome {
