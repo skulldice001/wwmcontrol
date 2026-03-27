@@ -439,6 +439,7 @@ export default {
     },
 
     mounted() {
+        this._intentionalLeave = false;
         this.loadState();
 
         if (typeof window.initEcho === 'function') window.initEcho();
@@ -661,9 +662,22 @@ export default {
             if (window.Echo) window.Echo.leave(`poker.room.${this.table.id}`);
             this.stopPoll();
             if (this._turnInterval) clearInterval(this._turnInterval);
+
+            if (!this._intentionalLeave) {
+                fetch(this.routes.leave, {
+                    method: 'POST',
+                    keepalive: true,
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'X-CSRF-TOKEN': this.csrf,
+                    },
+                    body: '_method=DELETE',
+                });
+            }
         },
 
         confirmLeave() {
+            this._intentionalLeave = true;
             if (window.confirmDialog) {
                 window.confirmDialog(this.msg.confirmLeave, () => this.$refs.leaveForm.submit());
             } else {
