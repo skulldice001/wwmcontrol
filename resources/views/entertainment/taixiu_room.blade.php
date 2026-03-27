@@ -25,110 +25,16 @@
     color: #fff;
 }
 
-/* ── Dice area ────────────────────────────────────────── */
-.tx-dice-area {
-    display: flex; justify-content: center; align-items: center;
-    gap: 36px; padding: 40px 0;
+/* ── Three.js dice canvas ─────────────────────────────── */
+.tx-dice-canvas-wrap {
+    position: relative; width: 100%; height: 190px;
+    overflow: hidden; border-radius: 0 0 12px 12px;
+    transition: filter .5s ease;
 }
-
-/* Scene = perspective container per die */
-.tx-die-scene {
-    width: 82px; height: 82px;
-    perspective: 280px;
-    perspective-origin: 50% 30%;
-    flex-shrink: 0;
-}
-
-/* Drop-in when dice are revealed */
-.tx-die-scene.dropping {
-    animation: die-drop 0.5s ease-out both;
-}
-@keyframes die-drop {
-    from { opacity: 0; transform: translateY(-28px) scale(0.8); }
-    to   { opacity: 1; transform: translateY(0)     scale(1); }
-}
-
-/* Outcome glow (filter works on 3D elements, box-shadow doesn't) */
-.tx-die-scene.glow-tai    { filter: drop-shadow(0 0 14px rgba(46,204,113,.85)); transition: filter .4s; }
-.tx-die-scene.glow-xiu    { filter: drop-shadow(0 0 14px rgba(52,152,219,.85)); transition: filter .4s; }
-.tx-die-scene.glow-triple { filter: drop-shadow(0 0 14px rgba(231,76,60,.9));   transition: filter .4s; }
-
-/* ── 3D Cube ────────────────────────────────────────── */
-.tx-die-cube {
-    width: 82px; height: 82px;
-    position: relative;
-    transform-style: preserve-3d;
-    transform-origin: 41px 41px 41px;
-}
-
-/* Six faces */
-.tx-face {
-    position: absolute; width: 82px; height: 82px;
-    background: linear-gradient(145deg, #fdfdfd 0%, #e2e2e2 100%);
-    border-radius: 14px;
-    border: 1px solid rgba(0,0,0,.10);
-    display: grid; grid-template-columns: 1fr 1fr 1fr;
-    grid-template-rows: 1fr 1fr 1fr;
-    padding: 9px; gap: 5px;
-    box-shadow:
-        inset 0 2px 5px rgba(255,255,255,.95),
-        inset 0 -2px 5px rgba(0,0,0,.12),
-        0 0 0 1px rgba(0,0,0,.06);
-    backface-visibility: visible;
-}
-/* Face positions – standard dice layout:
-   1 opposite 6, 2 opposite 5, 3 opposite 4 */
-.tx-face-1 { transform: rotateY(  0deg) translateZ(41px); }  /* front  */
-.tx-face-6 { transform: rotateY(180deg) translateZ(41px); }  /* back   */
-.tx-face-2 { transform: rotateY( 90deg) translateZ(41px); }  /* right  */
-.tx-face-5 { transform: rotateY(-90deg) translateZ(41px); }  /* left   */
-.tx-face-3 { transform: rotateX( 90deg) translateZ(41px); }  /* top    */
-.tx-face-4 { transform: rotateX(-90deg) translateZ(41px); }  /* bottom */
-
-/* Dots */
-.tx-dot {
-    width: 12px; height: 12px;
-    background: radial-gradient(circle at 38% 32%, #444, #0d0d0d);
-    border-radius: 50%; margin: auto;
-    box-shadow: inset 0 1px 2px rgba(0,0,0,.5), 0 1px 0 rgba(255,255,255,.15);
-}
-.tx-dot.hidden { visibility: hidden; }
-
-/* ── Rolling: continuous diagonal spin ──────────────── */
-.tx-die-cube.rolling {
-    animation: cube-spin 0.75s linear infinite;
-}
-@keyframes cube-spin {
-    0%   { transform: rotateX(  0deg) rotateY(  0deg); }
-    100% { transform: rotateX(360deg) rotateY(360deg); }
-}
-
-/* ── Landing: 6 named animations, one per face value ─── */
-/* from = final + 1080° so the die always spins 3× before landing */
-@keyframes cube-land-1 {
-    from { transform: rotateX(1080deg) rotateY(1080deg); }
-    to   { transform: rotateX(   0deg) rotateY(   0deg); }
-}
-@keyframes cube-land-2 {
-    from { transform: rotateX(1080deg) rotateY( 990deg); }
-    to   { transform: rotateX(   0deg) rotateY( -90deg); }
-}
-@keyframes cube-land-3 {
-    from { transform: rotateX( 990deg) rotateY(1080deg); }
-    to   { transform: rotateX( -90deg) rotateY(   0deg); }
-}
-@keyframes cube-land-4 {
-    from { transform: rotateX(1170deg) rotateY(1080deg); }
-    to   { transform: rotateX(  90deg) rotateY(   0deg); }
-}
-@keyframes cube-land-5 {
-    from { transform: rotateX(1080deg) rotateY(1170deg); }
-    to   { transform: rotateX(   0deg) rotateY(  90deg); }
-}
-@keyframes cube-land-6 {
-    from { transform: rotateX(1080deg) rotateY(1260deg); }
-    to   { transform: rotateX(   0deg) rotateY( 180deg); }
-}
+.tx-dice-canvas { display: block; width: 100%; height: 100%; }
+.tx-dice-canvas-wrap.glow-outcome.glow-tai    { filter: drop-shadow(0 0 18px rgba(46,204,113,.7)); }
+.tx-dice-canvas-wrap.glow-outcome.glow-xiu    { filter: drop-shadow(0 0 18px rgba(52,152,219,.7)); }
+.tx-dice-canvas-wrap.glow-outcome.glow-triple { filter: drop-shadow(0 0 18px rgba(231,76,60,.85)); }
 
 /* ── Outcome banner ───────────────────────────────────── */
 .tx-outcome {
