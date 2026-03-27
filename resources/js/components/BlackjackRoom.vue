@@ -168,8 +168,8 @@
             <span v-if="phase === 'betting'" class="text-warning" style="font-size:13px;">
               <i class="fas fa-coins mr-1"></i> Đặt cược
             </span>
-            <span v-else-if="phase === 'dealer_turn'" class="text-info" style="font-size:13px;">
-              <i class="fas fa-sync fa-spin mr-1"></i> Nhà cái đang rút bài...
+            <span v-else-if="phase === 'dealer_turn' && myRole !== 'dealer'" class="text-info" style="font-size:13px;">
+              <i class="fas fa-hourglass-half mr-1"></i> Chờ nhà cái rút bài...
             </span>
           </div>
 
@@ -268,9 +268,22 @@
         <span v-else-if="phase === 'player_turns'" class="text-muted">
           <i class="fas fa-clock mr-1"></i> Nhà con đang chơi...
         </span>
-        <span v-else-if="phase === 'dealer_turn'" class="text-info">
-          <i class="fas fa-sync fa-spin mr-1"></i> Đang xử lý...
-        </span>
+        <div v-else-if="phase === 'dealer_turn'" class="bj-action-panel">
+          <div class="bj-action-btns">
+            <button class="btn btn-success" :disabled="acting || roundDealer.score >= 17"
+                    @click="doDealerAction('hit')">
+              <i class="fas fa-plus mr-1"></i> Rút bài
+            </button>
+            <button class="btn btn-warning" :disabled="acting || roundDealer.score < 17"
+                    @click="doDealerAction('stand')">
+              <i class="fas fa-hand-paper mr-1"></i> Dừng
+            </button>
+          </div>
+          <div class="text-muted" style="font-size:12px;">
+            <template v-if="roundDealer.score < 17">Điểm &lt; 17 — phải rút bài</template>
+            <template v-else>Điểm ≥ 17 — nhấn Dừng để kết thúc</template>
+          </div>
+        </div>
         <button v-if="phase === 'finished'" class="btn btn-warning px-5" @click="nextRound" :disabled="starting">
           <i class="fas fa-redo mr-1"></i> Ván tiếp theo
         </button>
@@ -541,6 +554,23 @@ export default {
     doAction(action) {
       this.acting = true;
       fetch(this.routes.action, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': this.csrf },
+        body: JSON.stringify({ action }),
+      })
+        .then(r => r.json())
+        .then(data => {
+          if (data.error) { if (window.notify) window.notify('error', data.error); return; }
+          this.applyRoundState(data.round);
+        })
+        .catch(() => { if (window.notify) window.notify('error', 'Connection error.'); })
+        .finally(() => { this.acting = false; });
+    },
+
+    // ── Dealer turn ──
+    doDealerAction(action) {
+      this.acting = true;
+      fetch(this.routes.dealerAction, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': this.csrf },
         body: JSON.stringify({ action }),

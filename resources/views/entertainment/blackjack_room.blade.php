@@ -244,8 +244,9 @@ window.__bjRoutes = {!! json_encode([
     'state'  => route('entertainment.blackjack.game.state',  $table),
     'start'  => route('entertainment.blackjack.game.start',  $table),
     'deal'   => route('entertainment.blackjack.game.deal',   $table),
-    'action' => route('entertainment.blackjack.game.action', $table),
-    'next'   => route('entertainment.blackjack.game.next',   $table),
+    'action'       => route('entertainment.blackjack.game.action',        $table),
+    'next'         => route('entertainment.blackjack.game.next',          $table),
+    'dealerAction' => route('entertainment.blackjack.game.dealer-action', $table),
     'leave'  => route('entertainment.blackjack.leave',       $table),
 ], JSON_HEX_TAG | JSON_HEX_APOS) !!};
 window.__bjMsg    = {!! json_encode([
