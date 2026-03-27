@@ -299,6 +299,13 @@ export default {
     },
   },
 
+  watch: {
+    balance(val) {
+      const el = document.getElementById('nav-zcoin-balance');
+      if (el) el.textContent = Number(val).toLocaleString();
+    },
+  },
+
   methods: {
     fmt(n) {
       return Number(n).toLocaleString();
