@@ -545,15 +545,34 @@ export default {
     leaveTable() {
       if (window.confirmDialog) {
         window.confirmDialog(this.msg.confirmLeave, () => {
+          this._intentionalLeave = true;
           this.$refs.leaveForm.submit();
         });
       } else {
+        this._intentionalLeave = true;
         this.$refs.leaveForm.submit();
       }
+    },
+
+    _sendLeaveBeacon() {
+      if (this._intentionalLeave) return;
+      fetch(this.routes.leave, {
+        method: 'POST',
+        keepalive: true,
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'X-CSRF-TOKEN': this.csrf,
+        },
+        body: '_method=DELETE',
+      });
     },
   },
 
   mounted() {
+    this._intentionalLeave = false;
+    this._onBeforeUnload = () => this._sendLeaveBeacon();
+    window.addEventListener('beforeunload', this._onBeforeUnload);
+
     this.loadState();
 
     if (typeof window.initEcho === 'function') window.initEcho();
@@ -564,6 +583,7 @@ export default {
   },
 
   beforeUnmount() {
+    window.removeEventListener('beforeunload', this._onBeforeUnload);
     if (window.Echo) window.Echo.leave(`blackjack.room.${this.table.id}`);
     this.clearCountdown();
     this.stopLobbyPoll();
