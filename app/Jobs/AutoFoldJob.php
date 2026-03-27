@@ -42,15 +42,18 @@ class AutoFoldJob implements ShouldQueue
         // Auto-fold the timed-out player
         $game = GameEngine::processAction($game, 'fold', 0, (int) $p['id']);
 
-        // Settle Z-Coins if the hand reached showdown
+        // Settle Z-Coins if the hand reached showdown (chips are 100× entry fee)
         if ($game->state['phase'] === 'showdown') {
-            $table    = PokerTable::find($this->tableId);
-            $humanIds = $table?->players()->pluck('users.id')->toArray() ?? [];
+            $table      = PokerTable::find($this->tableId);
+            $humanIds   = $table?->players()->pluck('users.id')->toArray() ?? [];
+            $bigBlind   = (int) ($game->state['big_blind'] ?? 1);
+            $startStack = $bigBlind * 100;
             foreach ($game->state['players'] as $player) {
                 if ($player['is_ai'] || !in_array($player['id'], $humanIds)) continue;
                 $finalChips = (int) $player['chips'];
-                if ($finalChips > 0) {
-                    User::where('id', $player['id'])->increment('z_coins', $finalChips);
+                $payout     = (int) floor($finalChips * $bigBlind / $startStack);
+                if ($payout > 0) {
+                    User::where('id', $player['id'])->increment('z_coins', $payout);
                 }
             }
         }

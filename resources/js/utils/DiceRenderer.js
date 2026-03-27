@@ -250,12 +250,16 @@ export class DiceRenderer {
         die.mode = 'landing';
 
         const targetQuat = new THREE.Quaternion().setFromEuler(FACE_EULER[value]);
-        const startQuat  = die.mesh.quaternion.clone();
-        const startVel   = die.angVel.clone();
 
-        // Duration splits: 60% decelerate, 40% slerp to exact face
-        const totalMs   = 1100;
-        const splitAt   = 0.60;
+        // Capture spin axis/speed as quaternion parameters (avoids gimbal lock in Phase 1)
+        const angSpeed = die.angVel.length();
+        const angAxis  = angSpeed > 0.0001
+            ? die.angVel.clone().normalize()
+            : new THREE.Vector3(0, 1, 0);
+
+        // Duration: 55% spin-down, 45% settle to exact face
+        const totalMs   = 1200;
+        const splitAt   = 0.55;
         const startTime = performance.now();
 
         let phase2StartQuat = null;
@@ -266,26 +270,28 @@ export class DiceRenderer {
             const t = Math.min((now - startTime) / totalMs, 1);
 
             if (t < splitAt) {
-                // Phase 1 – damped free rotation
-                const p = t / splitAt;                    // 0→1 within phase 1
-                const damp = Math.pow(1 - p, 1.6);       // velocity envelope
-                die.mesh.rotation.x += startVel.x * damp;
-                die.mesh.rotation.y += startVel.y * damp;
-                die.mesh.rotation.z += startVel.z * damp;
+                // Phase 1 – quaternion-based spin-down (no gimbal lock)
+                const p    = t / splitAt;             // 0→1 within phase 1
+                const damp = Math.pow(1 - p, 1.6);   // velocity envelope
+                const step = angSpeed * damp;
+                if (step > 0.0001) {
+                    const delta = new THREE.Quaternion().setFromAxisAngle(angAxis, step);
+                    die.mesh.quaternion.premultiply(delta);
+                }
             } else {
-                // Phase 2 – slerp to target with easeOutBack
+                // Phase 2 – slerp to target; allow natural easeOutBack overshoot
                 if (!phase2StartQuat) {
                     phase2StartQuat = die.mesh.quaternion.clone();
                 }
                 const p     = (t - splitAt) / (1 - splitAt); // 0→1 within phase 2
-                const eased = Math.max(0, Math.min(easeOutBack(p), 1));
+                const eased = easeOutBack(p);                 // natural bounce, no clamp
                 die.mesh.quaternion.slerpQuaternions(phase2StartQuat, targetQuat, eased);
             }
 
             if (t < 1) {
                 requestAnimationFrame(animate);
             } else {
-                die.mesh.quaternion.copy(targetQuat);
+                die.mesh.quaternion.copy(targetQuat); // guarantee exact face
                 die.angVel.set(0, 0, 0);
                 die.mode = 'static';
                 if (onDone) onDone();

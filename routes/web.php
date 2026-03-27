@@ -110,12 +110,14 @@ Route::middleware('auth')->group(function () {
     Route::get('/entertainment/poker',  [EntertainmentController::class, 'poker'])->name('entertainment.poker');
     Route::post('/entertainment/poker', [EntertainmentController::class, 'createTable'])->name('entertainment.poker.create');
     Route::get('/entertainment/poker/test-update', [EntertainmentController::class, 'testUpdate'])->name('entertainment.poker.test-update');
-    Route::get('/entertainment/poker/{table}', [EntertainmentController::class, 'showTable'])->name('entertainment.poker.show');
+    Route::get('/entertainment/poker/{table}', [EntertainmentController::class, 'showTable'])->name('entertainment.poker.show')
+        ->missing(fn () => redirect()->route('entertainment.poker'));
     Route::post('/entertainment/poker/{table}/join', [EntertainmentController::class, 'joinTable'])->name('entertainment.poker.join');
     Route::delete('/entertainment/poker/{table}/leave', [EntertainmentController::class, 'leaveTable'])->name('entertainment.poker.leave');
     Route::get('/entertainment/blackjack',                           [EntertainmentController::class, 'blackjack'])->name('entertainment.blackjack');
     Route::post('/entertainment/blackjack',                          [BlackjackController::class, 'createTable'])->name('entertainment.blackjack.create');
-    Route::get('/entertainment/blackjack/{table}',                   [BlackjackController::class, 'show'])->name('entertainment.blackjack.show');
+    Route::get('/entertainment/blackjack/{table}',                   [BlackjackController::class, 'show'])->name('entertainment.blackjack.show')
+        ->missing(fn () => redirect()->route('entertainment.blackjack'));
     Route::post('/entertainment/blackjack/{table}/join',             [BlackjackController::class, 'joinTable'])->name('entertainment.blackjack.join');
     Route::delete('/entertainment/blackjack/{table}/leave',          [BlackjackController::class, 'leaveTable'])->name('entertainment.blackjack.leave');
     Route::post('/entertainment/blackjack/{table}/role',             [BlackjackController::class, 'chooseRole'])->name('entertainment.blackjack.role');
@@ -140,7 +142,8 @@ Route::middleware('auth')->group(function () {
     // Tài Xỉu
     Route::get('/entertainment/taixiu',                              [TaixiuController::class, 'index'])->name('entertainment.taixiu');
     Route::post('/entertainment/taixiu',                             [TaixiuController::class, 'createTable'])->name('entertainment.taixiu.create');
-    Route::get('/entertainment/taixiu/{table}',                      [TaixiuController::class, 'show'])->name('entertainment.taixiu.show');
+    Route::get('/entertainment/taixiu/{table}',                      [TaixiuController::class, 'show'])->name('entertainment.taixiu.show')
+        ->missing(fn () => redirect()->route('entertainment.taixiu'));
     Route::post('/entertainment/taixiu/{table}/join',                [TaixiuController::class, 'joinTable'])->name('entertainment.taixiu.join');
     Route::delete('/entertainment/taixiu/{table}/leave',             [TaixiuController::class, 'leaveTable'])->name('entertainment.taixiu.leave');
     Route::get('/entertainment/taixiu/{table}/game/state',           [TaixiuController::class, 'state'])->name('entertainment.taixiu.game.state');

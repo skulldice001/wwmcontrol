@@ -369,22 +369,29 @@ class PokerGameController extends Controller
         return response()->json(['message' => $payload['chat_message']]);
     }
 
-    /** Credit each human player their final chip count at showdown. */
+    /** Credit each human player their proportional z-coin payout at showdown.
+     *  Chips are scaled 100× entry fee (big_blind), so we convert back:
+     *  payout_z = floor(final_chips * big_blind / (big_blind * 100)) = floor(final_chips / 100)
+     */
     private function settleZCoins(PokerGame $game, array $humanIds): void
     {
+        $bigBlind   = (int) ($game->state['big_blind'] ?? 1);
+        $startStack = $bigBlind * 100; // matches max_buy_in set at table creation
+
         foreach ($game->state['players'] as $p) {
             if ($p['is_ai'] || !in_array($p['id'], $humanIds)) continue;
             $finalChips = (int) $p['chips'];
-            if ($finalChips > 0) {
+            $payout     = (int) floor($finalChips * $bigBlind / $startStack);
+            if ($payout > 0) {
                 $user      = User::find($p['id']);
                 $balBefore = $user->z_coins;
-                $user->increment('z_coins', $finalChips);
+                $user->increment('z_coins', $payout);
                 ZooCoinTransaction::create([
                     'user_id'        => $user->id,
                     'type'           => 'poker_payout',
-                    'amount'         => $finalChips,
+                    'amount'         => $payout,
                     'balance_before' => $balBefore,
-                    'balance_after'  => $balBefore + $finalChips,
+                    'balance_after'  => $balBefore + $payout,
                     'note'           => 'Poker payout',
                 ]);
             }

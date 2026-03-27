@@ -75,8 +75,8 @@ class EntertainmentController extends Controller
             'max_players' => 'required|integer|min:2|max:9',
         ]);
 
-        // Entry fee per hand = big blind; starting chip stack = big blind
-        $data['max_buy_in']      = $data['big_blind'];
+        // Entry fee per hand = big blind; starting chip stack = 100 big blinds
+        $data['max_buy_in']      = $data['big_blind'] * 100;
         $data['status']          = 'waiting';
         $data['current_players'] = 0;
 
