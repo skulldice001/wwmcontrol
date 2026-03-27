@@ -11,8 +11,8 @@
         <button data-toggle="modal" data-target="#create-table-modal" class="btn btn-success float-right ml-2">
             <i class="fas fa-plus"></i> {{ __('messages.create_table') }}
         </button>
-        <button id="test-update-btn" class="btn btn-outline-info float-right">
-            <i class="fas fa-sync"></i> {{ __('messages.test_update') }}
+        <button id="refresh-tables-btn" class="btn btn-outline-info float-right">
+            <i class="fas fa-sync-alt mr-1"></i> Làm mới danh sách bàn
         </button>
     </div>
 </div>
@@ -255,18 +255,18 @@
             $('#create-table-submit').prop('disabled', false);
         });
 
-        $('#test-update-btn').click(function() {
-            $.get("{{ route('entertainment.poker.test-update') }}", function(data) {
-                console.log('Test update triggered:', data);
-                if (!window.Echo) {
-                    refreshTables(); // Manually refresh if no socket
-                }
+        $('#refresh-tables-btn').click(function() {
+            const $btn = $(this).prop('disabled', true);
+            $(this).find('i').addClass('fa-spin');
+            refreshTables().always(function() {
+                $btn.prop('disabled', false);
+                $btn.find('i').removeClass('fa-spin');
             });
         });
 
         // Function to refresh table list
         function refreshTables() {
-            $.get("{{ route('entertainment.poker') }}", function(data) {
+            return $.get("{{ route('entertainment.poker') }}", function(data) {
                 var newBody = $(data).find('#poker-table-body').html();
                 $('#poker-table-body').html(newBody);
             }).fail(function() {

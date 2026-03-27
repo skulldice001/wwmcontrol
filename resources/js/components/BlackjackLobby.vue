@@ -14,7 +14,7 @@
         <h4 class="mb-0">{{ msg.bjLobby }}</h4>
         <div class="d-flex gap-2">
           <button class="btn btn-outline-info btn-sm mr-2" @click="refresh" :disabled="refreshing">
-            <i :class="['fas fa-sync-alt', refreshing ? 'fa-spin' : '']"></i>
+            <i :class="['fas fa-sync-alt mr-1', refreshing ? 'fa-spin' : '']"></i>Làm mới danh sách bàn
           </button>
           <button class="btn btn-success btn-sm" @click="showCreateModal = true">
             <i class="fas fa-plus"></i> {{ msg.bjCreateTable }}
