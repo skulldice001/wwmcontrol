@@ -7,7 +7,9 @@ return new class extends Migration
 {
     public function up(): void
     {
-        DB::statement('ALTER TABLE zoo_coin_transactions DROP CONSTRAINT IF EXISTS zoo_coin_transactions_type_check');
+        if (DB::getDriverName() === 'pgsql') {
+            DB::statement('ALTER TABLE zoo_coin_transactions DROP CONSTRAINT IF EXISTS zoo_coin_transactions_type_check');
+        }
     }
 
     public function down(): void
