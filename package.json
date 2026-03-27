@@ -29,6 +29,7 @@
     },
     "dependencies": {
         "select2": "^4.1.0-rc.0",
+        "three": "^0.183.2",
         "vue": "^3.5.27"
     },
     "overrides": {
