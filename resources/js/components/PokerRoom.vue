@@ -268,11 +268,12 @@
           <span class="thinking">Opponent thinking...</span>
         </div>
 
-        <!-- Showdown: new hand -->
+        <!-- Showdown: auto-return to lobby countdown -->
         <div v-if="phase === 'showdown'" class="text-center py-2">
-          <button class="btn btn-success" @click="dealHand">
-            <i class="fas fa-redo"></i> New Hand
-          </button>
+          <div class="text-muted small">
+            <i class="fas fa-hourglass-half mr-1"></i>
+            Quay về sảnh trong <strong class="text-warning">{{ lobbyCountdown }}</strong> giây...
+          </div>
         </div>
 
       </div><!-- /action-panel -->
@@ -387,6 +388,9 @@ export default {
             chatMessages: [],
             chatInput:    '',
             chatSending:  false,
+
+            // Lobby countdown after showdown
+            lobbyCountdown: 5,
         };
     },
 
@@ -643,11 +647,32 @@ export default {
             if (s.z_coins !== undefined) this.zCoins = s.z_coins;
             this.renderTurnTimer(s);
 
-            if (!window.Echo && s.phase !== 'showdown' && !s.is_my_turn) {
+            if (s.phase === 'showdown') {
+                this.startLobbyTimer();
+                this.stopPoll();
+                return;
+            }
+
+            if (!window.Echo && !s.is_my_turn) {
                 this.startPoll();
             } else {
                 this.stopPoll();
             }
+        },
+
+        startLobbyTimer() {
+            if (this._lobbyTimer) return; // already running
+            this.lobbyCountdown = 5;
+            this._lobbyTimer = setInterval(() => {
+                this.lobbyCountdown--;
+                if (this.lobbyCountdown <= 0) {
+                    clearInterval(this._lobbyTimer);
+                    this._lobbyTimer = null;
+                    this.inGame    = false;
+                    this.gameState = null;
+                    this.loadState();
+                }
+            }, 1000);
         },
 
         renderTurnTimer(s) {
@@ -706,7 +731,11 @@ export default {
                 this.updateLobby(e.players);
             } else if (e.type === 'game_started') {
                 const myState = e.seats && e.seats[this.myUserId];
-                if (myState) { this.inGame = true; this.render(myState); }
+                if (myState) {
+                    if (this._lobbyTimer) { clearInterval(this._lobbyTimer); this._lobbyTimer = null; }
+                    this.inGame = true;
+                    this.render(myState);
+                }
             } else if (e.type === 'game_update') {
                 const myState = e.seats && e.seats[this.myUserId];
                 if (myState) this.render(myState);
@@ -721,6 +750,7 @@ export default {
             if (window.Echo) window.Echo.leave(`poker.room.${this.table.id}`);
             this.stopPoll();
             if (this._turnInterval) clearInterval(this._turnInterval);
+            if (this._lobbyTimer) { clearInterval(this._lobbyTimer); this._lobbyTimer = null; }
 
             if (!this._intentionalLeave) {
                 fetch(this.routes.leave, {
