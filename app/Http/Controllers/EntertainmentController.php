@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Events\PokerRoomUpdated;
 use App\Events\PokerTableUpdated;
 use App\Models\BlackjackTable;
+use App\Models\TaixiuTable;
 use Illuminate\Support\Facades\DB;
 use App\Models\PokerGame;
 use App\Models\PokerTable;
@@ -17,7 +18,21 @@ class EntertainmentController extends Controller
 {
     public function index()
     {
-        return view('entertainment.index');
+        $stats = [
+            'poker'    => $this->tableStats(PokerTable::all()),
+            'blackjack'=> $this->tableStats(BlackjackTable::all()),
+            'taixiu'   => $this->tableStats(TaixiuTable::all()),
+        ];
+        return view('entertainment.index', compact('stats'));
+    }
+
+    private function tableStats($tables): array
+    {
+        return [
+            'total'   => $tables->count(),
+            'playing' => $tables->where('status', 'playing')->count(),
+            'waiting' => $tables->where('status', 'waiting')->count(),
+        ];
     }
 
     public function poker()
