@@ -43,7 +43,10 @@
       "Bash(ssh -p 2018 -o StrictHostKeyChecking=no root@61.14.234.57 \"cd /var/www/wwmcontrol && php artisan config:clear && php artisan view:clear && php artisan cache:clear\")",
       "Bash(grep -n \"window\\\\.$\\\\|window\\\\.jQuery\\\\|global.*jquery\\\\|globalThis\" \"c:/DEV/wwmV3/wwmcontrol/resources/js/bootstrap.js\")",
       "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:5173/)",
-      "Bash(php artisan tinker --execute=\":*)"
+      "Bash(php artisan tinker --execute=\":*)",
+      "Bash(ssh -p 2018 root@thezootopia.online \"echo ''=== PHP ==='' && php -v | head -1 && echo ''=== Node ==='' && node -v && echo ''=== NPM ==='' && npm -v && echo ''=== Composer ==='' && composer --version 2>/dev/null | head -1 && echo ''=== Nginx ==='' && nginx -v 2>&1 && echo ''=== PHP-FPM ==='' && php-fpm -v 2>/dev/null | head -1 && echo ''=== Reverb process ==='' && ps aux | grep reverb | grep -v grep && echo ''=== Queue worker ==='' && ps aux | grep queue:work | grep -v grep && echo ''=== .env REVERB ==='' && grep REVERB /var/www/wwmcontrol/.env && echo ''=== .env QUEUE ==='' && grep QUEUE_CONNECTION /var/www/wwmcontrol/.env\")",
+      "Bash(timeout 20 ssh -p 2018 -o ConnectTimeout=10 -o StrictHostKeyChecking=no root@thezootopia.online \"php -v | head -1; node -v; nginx -v 2>&1; ps aux | grep -E ''reverb|queue'' | grep -v grep; cat /var/www/wwmcontrol/.env | grep -E ''REVERB|QUEUE_CONNECTION|APP_ENV|BROADCAST''\")",
+      "Bash(ping -n 2 thezootopia.online)"
     ]
   }
 }
