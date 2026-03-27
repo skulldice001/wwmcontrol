@@ -38,7 +38,7 @@ class BlackjackEngine
             ZooCoinTransaction::create([
                 'user_id'        => $user->id,
                 'type'           => 'blackjack_bet',
-                'amount'         => -$bet,
+                'amount'         => $bet,
                 'balance_before' => $balBefore,
                 'balance_after'  => $balBefore - $bet,
                 'note'           => "Blackjack đặt cược (bàn #{$table->id})",
@@ -133,7 +133,7 @@ class BlackjackEngine
                         ZooCoinTransaction::create([
                             'user_id'        => $game->user_id,
                             'type'           => 'blackjack_bet',
-                            'amount'         => -$extraBet,
+                            'amount'         => $extraBet,
                             'balance_before' => $balBefore,
                             'balance_after'  => $balBefore - $extraBet,
                             'note'           => "Blackjack đôi (bàn #{$game->blackjack_table_id})",
