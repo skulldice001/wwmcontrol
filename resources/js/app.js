@@ -30,6 +30,8 @@ import TeamMemberSelector from './components/TeamMemberSelector.vue';
 import BlackjackRoom from './components/BlackjackRoom.vue';
 import BlackjackLobby from './components/BlackjackLobby.vue';
 import PokerRoom from './components/PokerRoom.vue';
+import TaixiuLobby from './components/TaixiuLobby.vue';
+import TaixiuRoom from './components/TaixiuRoom.vue';
 
 const app = createApp({});
 app.config.globalProperties.window = window;
@@ -40,4 +42,6 @@ app.component('team-member-selector', TeamMemberSelector);
 app.component('blackjack-room', BlackjackRoom);
 app.component('blackjack-lobby', BlackjackLobby);
 app.component('poker-room', PokerRoom);
+app.component('taixiu-lobby', TaixiuLobby);
+app.component('taixiu-room', TaixiuRoom);
 app.mount('#app');
