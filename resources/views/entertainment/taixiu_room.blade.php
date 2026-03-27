@@ -28,64 +28,102 @@
 /* ── Dice area ────────────────────────────────────────── */
 .tx-dice-area {
     display: flex; justify-content: center; align-items: center;
-    gap: 28px; padding: 36px 0;
-    perspective: 900px;
+    gap: 36px; padding: 40px 0;
 }
 
-/* Die base */
-.tx-die {
+/* Scene = perspective container per die */
+.tx-die-scene {
     width: 82px; height: 82px;
-    background: linear-gradient(145deg, #ffffff 0%, #e6e6e6 100%);
-    border-radius: 15px;
-    box-shadow: 0 8px 24px rgba(0,0,0,.65), inset 0 1px 0 rgba(255,255,255,.9), inset 0 -1px 0 rgba(0,0,0,.15);
+    perspective: 280px;
+    perspective-origin: 50% 30%;
+    flex-shrink: 0;
+}
+
+/* Drop-in when dice are revealed */
+.tx-die-scene.dropping {
+    animation: die-drop 0.5s ease-out both;
+}
+@keyframes die-drop {
+    from { opacity: 0; transform: translateY(-28px) scale(0.8); }
+    to   { opacity: 1; transform: translateY(0)     scale(1); }
+}
+
+/* Outcome glow (filter works on 3D elements, box-shadow doesn't) */
+.tx-die-scene.glow-tai    { filter: drop-shadow(0 0 14px rgba(46,204,113,.85)); transition: filter .4s; }
+.tx-die-scene.glow-xiu    { filter: drop-shadow(0 0 14px rgba(52,152,219,.85)); transition: filter .4s; }
+.tx-die-scene.glow-triple { filter: drop-shadow(0 0 14px rgba(231,76,60,.9));   transition: filter .4s; }
+
+/* ── 3D Cube ────────────────────────────────────────── */
+.tx-die-cube {
+    width: 82px; height: 82px;
+    position: relative;
+    transform-style: preserve-3d;
+    transform-origin: 41px 41px 41px;
+}
+
+/* Six faces */
+.tx-face {
+    position: absolute; width: 82px; height: 82px;
+    background: linear-gradient(145deg, #fdfdfd 0%, #e2e2e2 100%);
+    border-radius: 14px;
+    border: 1px solid rgba(0,0,0,.10);
     display: grid; grid-template-columns: 1fr 1fr 1fr;
     grid-template-rows: 1fr 1fr 1fr;
     padding: 9px; gap: 5px;
-    will-change: transform, box-shadow;
-    position: relative;
+    box-shadow:
+        inset 0 2px 5px rgba(255,255,255,.95),
+        inset 0 -2px 5px rgba(0,0,0,.12),
+        0 0 0 1px rgba(0,0,0,.06);
+    backface-visibility: visible;
 }
+/* Face positions – standard dice layout:
+   1 opposite 6, 2 opposite 5, 3 opposite 4 */
+.tx-face-1 { transform: rotateY(  0deg) translateZ(41px); }  /* front  */
+.tx-face-6 { transform: rotateY(180deg) translateZ(41px); }  /* back   */
+.tx-face-2 { transform: rotateY( 90deg) translateZ(41px); }  /* right  */
+.tx-face-5 { transform: rotateY(-90deg) translateZ(41px); }  /* left   */
+.tx-face-3 { transform: rotateX( 90deg) translateZ(41px); }  /* top    */
+.tx-face-4 { transform: rotateX(-90deg) translateZ(41px); }  /* bottom */
 
-/* ── Rolling: chaotic shake ─── */
-.tx-die.rolling { animation: tx-shake 0.14s ease-in-out infinite; }
-.tx-die:nth-child(1).rolling { animation-duration: 0.13s; animation-delay:  0s; }
-.tx-die:nth-child(2).rolling { animation-duration: 0.17s; animation-delay: -0.06s; }
-.tx-die:nth-child(3).rolling { animation-duration: 0.15s; animation-delay: -0.10s; }
-@keyframes tx-shake {
-    0%   { transform: translate(-3px,-2px) rotate(-6deg) scale(1.03); }
-    20%  { transform: translate( 3px, 3px) rotate( 6deg) scale(0.96); }
-    40%  { transform: translate(-2px, 2px) rotate(-4deg) scaleX(0.95); }
-    60%  { transform: translate( 2px,-3px) rotate( 5deg) scale(1.05); }
-    80%  { transform: translate(-1px, 1px) rotate(-3deg) scaleY(0.96); }
-    100% { transform: translate(-3px,-2px) rotate(-6deg) scale(1.03); }
-}
-
-/* ── Revealing: fly down & bounce ─── */
-.tx-die.revealing { animation: tx-land 0.62s cubic-bezier(0.34,1.56,0.64,1) both; }
-.tx-die:nth-child(1).revealing { animation-delay: 0s; }
-.tx-die:nth-child(2).revealing { animation-delay: 0.14s; }
-.tx-die:nth-child(3).revealing { animation-delay: 0.28s; }
-@keyframes tx-land {
-    0%   { transform: translateY(-70px) rotate(540deg) scale(0.25); opacity: 0; }
-    65%  { transform: translateY( 8px)  rotate(-12deg) scale(1.15); opacity: 1; }
-    82%  { transform: translateY(-3px)  rotate(  4deg) scale(0.96); }
-    100% { transform: translateY(  0)   rotate(   0deg) scale(1); }
-}
-
-/* ── Revealed: glow by outcome ─── */
-.tx-die.revealed { transition: box-shadow .4s ease; }
-.tx-die.revealed.glow-tai    { box-shadow: 0 0 28px rgba(46,204,113,.7), 0 8px 24px rgba(0,0,0,.5); }
-.tx-die.revealed.glow-xiu    { box-shadow: 0 0 28px rgba(52,152,219,.7), 0 8px 24px rgba(0,0,0,.5); }
-.tx-die.revealed.glow-triple { box-shadow: 0 0 28px rgba(231,76,60,.8),  0 8px 24px rgba(0,0,0,.5); }
-
-/* ── Dots ─── */
+/* Dots */
 .tx-dot {
     width: 12px; height: 12px;
-    background: radial-gradient(circle at 38% 32%, #444, #111);
-    border-radius: 50%;
-    margin: auto;
+    background: radial-gradient(circle at 38% 32%, #444, #0d0d0d);
+    border-radius: 50%; margin: auto;
     box-shadow: inset 0 1px 2px rgba(0,0,0,.5), 0 1px 0 rgba(255,255,255,.15);
 }
 .tx-dot.hidden { visibility: hidden; }
+
+/* ── Rolling: continuous diagonal spin ──────────────── */
+.tx-die-cube.rolling {
+    animation: cube-spin 0.75s linear infinite;
+}
+@keyframes cube-spin {
+    0%   { transform: rotateX(  0deg) rotateY(  0deg); }
+    100% { transform: rotateX(360deg) rotateY(360deg); }
+}
+
+/* ── Face target rotations (CSS custom props) ────────── */
+.tx-die-cube[data-val="1"] { --rx:   0deg; --ry:   0deg; }
+.tx-die-cube[data-val="2"] { --rx:   0deg; --ry: -90deg; }
+.tx-die-cube[data-val="3"] { --rx: -90deg; --ry:   0deg; }
+.tx-die-cube[data-val="4"] { --rx:  90deg; --ry:   0deg; }
+.tx-die-cube[data-val="5"] { --rx:   0deg; --ry:  90deg; }
+.tx-die-cube[data-val="6"] { --rx:   0deg; --ry: 180deg; }
+
+/* ── Landing: spin 3× then settle on correct face ────── */
+.tx-die-cube.landing {
+    animation: cube-land 0.85s cubic-bezier(0.22, 0.85, 0.36, 1) both;
+}
+@keyframes cube-land {
+    from { transform: rotateX(calc(var(--rx) + 1080deg)) rotateY(calc(var(--ry) + 1080deg)); }
+    to   { transform: rotateX(var(--rx)) rotateY(var(--ry)); }
+}
+
+/* ── Revealed: hold at correct face ─────────────────── */
+.tx-die-cube.revealed {
+    transform: rotateX(var(--rx)) rotateY(var(--ry));
+}
 
 /* ── Outcome banner ───────────────────────────────────── */
 .tx-outcome {
