@@ -644,7 +644,7 @@ export default {
             this.gameState   = s;
             this.winnerInfo  = s.winner_info || null;
             this.actionLog   = s.log || [];
-            if (s.z_coins !== undefined) {
+            if (s.z_coins != null) {
                 this.zCoins = s.z_coins;
                 const navEl = document.getElementById('nav-zcoin-balance');
                 if (navEl) navEl.textContent = s.z_coins.toLocaleString();
