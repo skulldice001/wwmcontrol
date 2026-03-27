@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Events\PokerRoomUpdated;
 use App\Events\PokerTableUpdated;
 use App\Models\BlackjackTable;
+use Illuminate\Support\Facades\DB;
 use App\Models\PokerGame;
 use App\Models\PokerTable;
 use App\Models\User;
@@ -139,6 +140,10 @@ class EntertainmentController extends Controller
                             User::where('id', $p['id'])->increment('z_coins', $finalChips);
                         }
                     }
+                    // Reset ready flags so remaining players can start next hand
+                    DB::table('poker_table_players')
+                        ->where('poker_table_id', $table->id)
+                        ->update(['is_ready' => false]);
                 }
 
                 // Tell remaining clients to refresh their state

@@ -43,7 +43,7 @@ class PokerGameController extends Controller
     {
         $players = $table->players()->get();
         $game    = PokerGame::where('poker_table_id', $table->id)->latest()->first();
-        if (!$game) {
+        if (!$game || $game->state['phase'] === 'showdown') {
             return response()->json(['state' => null, 'players' => $this->playerData($players)]);
         }
         return response()->json([
@@ -136,6 +136,10 @@ class PokerGameController extends Controller
         if ($game->state['phase'] === 'showdown') {
             $humanIds = $table->players()->pluck('users.id')->toArray();
             $this->settleZCoins($game, $humanIds);
+            // Reset ready flags — players must re-ready for next hand
+            DB::table('poker_table_players')
+                ->where('poker_table_id', $table->id)
+                ->update(['is_ready' => false]);
         } else {
             $this->dispatchTurnTimer($table, $game);
         }
