@@ -373,7 +373,7 @@ export default {
             this.allBets = s.bets   || [];
             this.myBet   = s.my_bet || null;
             this.log     = s.log    || [];
-            if (s.z_coins !== undefined) {
+            if (s.z_coins != null) {
                 this.balance = s.z_coins;
                 const el = document.getElementById('nav-zcoin-balance');
                 if (el) el.textContent = s.z_coins.toLocaleString();
