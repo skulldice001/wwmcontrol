@@ -10,7 +10,9 @@ return new class extends Migration
     public function up(): void
     {
         // PostgreSQL keeps a CHECK constraint when enum() was used — drop it first
-        DB::statement('ALTER TABLE zoo_coin_transactions DROP CONSTRAINT IF EXISTS zoo_coin_transactions_type_check');
+        if (DB::getDriverName() === 'pgsql') {
+            DB::statement('ALTER TABLE zoo_coin_transactions DROP CONSTRAINT IF EXISTS zoo_coin_transactions_type_check');
+        }
 
         Schema::table('zoo_coin_transactions', function (Blueprint $table) {
             $table->string('type', 50)->change();
