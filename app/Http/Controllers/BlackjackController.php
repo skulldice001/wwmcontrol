@@ -88,6 +88,20 @@ class BlackjackController extends Controller
     {
         $user = Auth::user();
 
+        // Get pivot role before detaching
+        $pivotPlayer = $table->players()->where('user_id', $user->id)->first();
+        $pivotRole   = $pivotPlayer?->pivot->role ?? 'player';
+
+        // Handle active round before removing the player
+        $round = $table->activeRound();
+        if ($round) {
+            $round = BlackjackEngine::handlePlayerLeave($round, $user->id, $pivotRole);
+
+            $clientState = BlackjackEngine::clientState($round, $user);
+            $eventType   = $round->phase === 'finished' ? 'round_finished' : 'player_acted';
+            event(new BlackjackRoomUpdated($table->id, $eventType, [], null, $clientState));
+        }
+
         $table->players()->detach($user->id);
         $table->current_players = $table->players()->count();
 

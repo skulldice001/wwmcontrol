@@ -2,11 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\PokerRoomUpdated;
+use App\Events\PokerTableUpdated;
+use App\Models\BlackjackTable;
+use App\Models\PokerGame;
+use App\Models\PokerTable;
+use App\Models\User;
+use App\Services\Poker\GameEngine;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use App\Models\PokerTable;
-use App\Models\BlackjackTable;
-use App\Events\PokerTableUpdated;
 
 class EntertainmentController extends Controller
 {
@@ -118,6 +122,29 @@ class EntertainmentController extends Controller
     public function leaveTable(PokerTable $table)
     {
         $user = Auth::user();
+
+        // Handle active game: force-fold the leaving player
+        $game = PokerGame::where('poker_table_id', $table->id)->latest()->first();
+        if ($game && $game->state['phase'] !== 'showdown') {
+            $humanIds  = $table->players()->pluck('users.id')->toArray();
+            $updatedGame = GameEngine::forceLeave($game, $user->id);
+
+            if ($updatedGame) {
+                // Settle Z-coins if the force-fold triggered showdown
+                if ($updatedGame->state['phase'] === 'showdown') {
+                    foreach ($updatedGame->state['players'] as $p) {
+                        if ($p['is_ai'] || !in_array($p['id'], $humanIds)) continue;
+                        $finalChips = (int) $p['chips'];
+                        if ($finalChips > 0) {
+                            User::where('id', $p['id'])->increment('z_coins', $finalChips);
+                        }
+                    }
+                }
+
+                // Tell remaining clients to refresh their state
+                event(new PokerRoomUpdated($table->id, ['type' => 'refresh']));
+            }
+        }
 
         $table->players()->detach($user->id);
         $table->current_players = $table->players()->count();
