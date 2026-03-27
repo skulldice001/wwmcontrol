@@ -239,10 +239,13 @@
 <script>
 window.__bjTable  = {!! json_encode($table, JSON_HEX_TAG | JSON_HEX_APOS) !!};
 window.__bjRoutes = {!! json_encode([
+    'role'   => route('entertainment.blackjack.role',        $table),
     'ready'  => route('entertainment.blackjack.ready',       $table),
     'state'  => route('entertainment.blackjack.game.state',  $table),
+    'start'  => route('entertainment.blackjack.game.start',  $table),
     'deal'   => route('entertainment.blackjack.game.deal',   $table),
     'action' => route('entertainment.blackjack.game.action', $table),
+    'next'   => route('entertainment.blackjack.game.next',   $table),
     'leave'  => route('entertainment.blackjack.leave',       $table),
 ], JSON_HEX_TAG | JSON_HEX_APOS) !!};
 window.__bjMsg    = {!! json_encode([
@@ -280,8 +283,9 @@ window.__bjMsg    = {!! json_encode([
 </script>
 <blackjack-room
     :table="window.__bjTable"
-    :init-players="{{ $players->count() }}"
     :my-user-id="{{ Auth::id() }}"
+    my-role="{{ $myRole }}"
+    :my-seat="{{ $mySeat ?? 'null' }}"
     :routes="window.__bjRoutes"
     :msg="window.__bjMsg"
     csrf="{{ csrf_token() }}"
