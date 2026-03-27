@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Events\BlackjackRoomUpdated;
 use App\Events\BlackjackTableUpdated;
+use App\Models\BlackjackMessage;
 use App\Models\BlackjackRound;
 use App\Models\BlackjackTable;
 use App\Services\Blackjack\BlackjackEngine;
@@ -404,6 +405,65 @@ class BlackjackController extends Controller
         event(new BlackjackRoomUpdated($table->id, 'round_started', [], null, $clientState));
 
         return response()->json(['round' => $clientState]);
+    }
+
+    // ── Chat ──────────────────────────────────────────────────────────────
+
+    /**
+     * GET {table}/chat — fetch last 100 messages
+     */
+    public function messages(BlackjackTable $table)
+    {
+        $messages = BlackjackMessage::where('table_id', $table->id)
+            ->with('user:id,name,discord_avatar')
+            ->latest()
+            ->take(100)
+            ->get()
+            ->reverse()
+            ->values()
+            ->map(fn($m) => [
+                'id'      => $m->id,
+                'user_id' => $m->user_id,
+                'name'    => $m->user?->name ?? 'Unknown',
+                'avatar'  => $m->user?->discord_avatar ?? null,
+                'message' => $m->message,
+                'time'    => $m->created_at->format('H:i'),
+            ]);
+
+        return response()->json(['messages' => $messages]);
+    }
+
+    /**
+     * POST {table}/chat — send a chat message
+     */
+    public function sendMessage(Request $request, BlackjackTable $table)
+    {
+        $request->validate(['message' => 'required|string|max:500']);
+
+        $user = Auth::user();
+
+        if (!$table->players()->where('user_id', $user->id)->exists()) {
+            return response()->json(['error' => 'Not at table'], 403);
+        }
+
+        $msg = BlackjackMessage::create([
+            'table_id' => $table->id,
+            'user_id'  => $user->id,
+            'message'  => $request->message,
+        ]);
+
+        $payload = [
+            'id'      => $msg->id,
+            'user_id' => $user->id,
+            'name'    => $user->name,
+            'avatar'  => $user->discord_avatar ?? null,
+            'message' => $msg->message,
+            'time'    => $msg->created_at->format('H:i'),
+        ];
+
+        event(new BlackjackRoomUpdated($table->id, 'chat_message', [], null, [], $payload));
+
+        return response()->json(['message' => $payload]);
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────

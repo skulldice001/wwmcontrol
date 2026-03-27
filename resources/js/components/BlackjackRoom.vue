@@ -291,6 +291,39 @@
 
     </template>
 
+    <!-- ── Chat panel ── -->
+    <div class="bj-chat-panel">
+      <div class="bj-chat-header">
+        <i class="fas fa-comments mr-1"></i> Chat
+      </div>
+      <div class="bj-chat-messages" ref="chatBox">
+        <div v-for="m in chatMessages" :key="m.id"
+             :class="['bj-chat-msg', m.user_id === myUserId ? 'bj-chat-mine' : '']">
+          <div class="bj-chat-meta">
+            <span class="bj-chat-name">{{ m.user_id === myUserId ? 'Bạn' : m.name }}</span>
+            <span class="bj-chat-time">{{ m.time }}</span>
+          </div>
+          <div class="bj-chat-bubble">{{ m.message }}</div>
+        </div>
+        <div v-if="chatMessages.length === 0" class="bj-chat-empty">
+          Chưa có tin nhắn nào...
+        </div>
+      </div>
+      <div class="bj-chat-input-row">
+        <input
+          v-model="chatInput"
+          class="bj-chat-input"
+          placeholder="Nhập tin nhắn..."
+          maxlength="500"
+          @keydown.enter.prevent="sendChatMessage"
+          :disabled="chatSending"
+        >
+        <button class="bj-chat-send" @click="sendChatMessage" :disabled="chatSending || !chatInput.trim()">
+          <i class="fas fa-paper-plane"></i>
+        </button>
+      </div>
+    </div>
+
     <!-- ── Seat selection modal ── -->
     <div v-if="showSeatModal" class="bj-modal-backdrop" @click.self="showSeatModal = false">
       <div class="modal-dialog mt-5">
@@ -357,6 +390,11 @@ export default {
       acting:           false,
       balance:          0,
       loading:          true,
+
+      // Chat
+      chatMessages:  [],
+      chatInput:     '',
+      chatSending:   false,
     };
   },
 
@@ -614,6 +652,8 @@ export default {
           this.applyRoundState(e.round_state);
         }
         if (e.type === 'round_started') this.phase = 'betting';
+      } else if (e.type === 'chat_message' && e.chat_message) {
+        this.pushChatMessage(e.chat_message);
       }
     },
 
@@ -634,6 +674,42 @@ export default {
     clearCountdown() {
       if (this._countdownTimer) { clearTimeout(this._countdownTimer); this._countdownTimer = null; }
       this.countdownSec = null;
+    },
+
+    // ── Chat ──
+    loadChatMessages() {
+      fetch(this.routes.chatMessages)
+        .then(r => r.json())
+        .then(data => {
+          this.chatMessages = data.messages || [];
+          this.$nextTick(() => this.scrollChatToBottom());
+        });
+    },
+    sendChatMessage() {
+      const text = this.chatInput.trim();
+      if (!text) return;
+      this.chatSending = true;
+      this.chatInput   = '';
+      fetch(this.routes.chatSend, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': this.csrf },
+        body:    JSON.stringify({ message: text }),
+      })
+        .then(r => r.json())
+        .then(data => {
+          if (data.error) { if (window.notify) window.notify('error', data.error); }
+        })
+        .catch(() => { if (window.notify) window.notify('error', 'Không thể gửi tin nhắn.'); })
+        .finally(() => { this.chatSending = false; });
+    },
+    pushChatMessage(msg) {
+      this.chatMessages.push(msg);
+      if (this.chatMessages.length > 200) this.chatMessages.shift();
+      this.$nextTick(() => this.scrollChatToBottom());
+    },
+    scrollChatToBottom() {
+      const box = this.$refs.chatBox;
+      if (box) box.scrollTop = box.scrollHeight;
     },
 
     // ── Leave ──
@@ -679,6 +755,8 @@ export default {
         }
       })
       .finally(() => { this.loading = false; });
+
+    this.loadChatMessages();
 
     if (typeof window.initEcho === 'function') window.initEcho();
     if (window.Echo) {
@@ -847,6 +925,109 @@ export default {
 .bj-result-text.win, .bj-result-text.dealer_bust, .bj-result-text.blackjack { color: #2ecc71; }
 .bj-result-text.push { color: #bdc3c7; }
 .bj-result-text.bust, .bj-result-text.lose { color: #e74c3c; }
+
+/* ── Chat ────────────────────────────────────────── */
+.bj-chat-panel {
+  margin-top: 16px;
+  border: 1px solid #2d3f55;
+  border-radius: 10px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  max-height: 280px;
+}
+.bj-chat-header {
+  padding: 6px 12px;
+  background: rgba(255,255,255,.04);
+  border-bottom: 1px solid #2d3f55;
+  font-size: 12px;
+  font-weight: 600;
+  color: #adb5bd;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+.bj-chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-height: 160px;
+  max-height: 200px;
+}
+.bj-chat-empty {
+  color: #6c757d;
+  font-size: 12px;
+  text-align: center;
+  margin: auto;
+}
+.bj-chat-msg {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-width: 85%;
+}
+.bj-chat-msg.bj-chat-mine {
+  align-self: flex-end;
+  align-items: flex-end;
+}
+.bj-chat-meta {
+  display: flex;
+  gap: 6px;
+  align-items: baseline;
+}
+.bj-chat-name {
+  font-size: 11px;
+  font-weight: 600;
+  color: #63b3ed;
+}
+.bj-chat-mine .bj-chat-name {
+  color: #f6c23e;
+}
+.bj-chat-time {
+  font-size: 10px;
+  color: #6c757d;
+}
+.bj-chat-bubble {
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 10px;
+  padding: 5px 10px;
+  font-size: 13px;
+  color: #e0e0e0;
+  word-break: break-word;
+}
+.bj-chat-mine .bj-chat-bubble {
+  background: rgba(246,194,62,.12);
+  border-color: rgba(246,194,62,.2);
+}
+.bj-chat-input-row {
+  display: flex;
+  gap: 0;
+  border-top: 1px solid #2d3f55;
+}
+.bj-chat-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #e0e0e0;
+  padding: 8px 12px;
+  font-size: 13px;
+}
+.bj-chat-input::placeholder { color: #6c757d; }
+.bj-chat-send {
+  background: transparent;
+  border: none;
+  border-left: 1px solid #2d3f55;
+  color: #f6c23e;
+  padding: 8px 14px;
+  cursor: pointer;
+  transition: background .15s;
+}
+.bj-chat-send:hover:not(:disabled) { background: rgba(246,194,62,.1); }
+.bj-chat-send:disabled { color: #6c757d; cursor: default; }
 
 /* ── Loading ─────────────────────────────────────── */
 .bj-loading-overlay {

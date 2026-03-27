@@ -16,19 +16,22 @@ class BlackjackRoomUpdated implements ShouldBroadcastNow
     public array  $players;
     public ?int   $countdownAt;
     public array  $roundState;
+    public array  $chatMessage;
 
     public function __construct(
         int    $tableId,
         string $type,
         array  $players      = [],
         ?int   $countdownAt  = null,
-        array  $roundState   = []
+        array  $roundState   = [],
+        array  $chatMessage  = []
     ) {
         $this->tableId     = $tableId;
         $this->type        = $type;
         $this->players     = $players;
         $this->countdownAt = $countdownAt;
         $this->roundState  = $roundState;
+        $this->chatMessage = $chatMessage;
     }
 
     public function broadcastOn(): array
@@ -43,6 +46,7 @@ class BlackjackRoomUpdated implements ShouldBroadcastNow
             'players'      => $this->players,
             'countdown_at' => $this->countdownAt,
             'round_state'  => $this->roundState,
+            'chat_message' => $this->chatMessage,
         ];
     }
 }

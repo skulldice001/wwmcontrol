@@ -247,6 +247,8 @@ window.__bjRoutes = {!! json_encode([
     'action'       => route('entertainment.blackjack.game.action',        $table),
     'next'         => route('entertainment.blackjack.game.next',          $table),
     'dealerAction' => route('entertainment.blackjack.game.dealer-action', $table),
+    'chatMessages' => route('entertainment.blackjack.chat.index',         $table),
+    'chatSend'     => route('entertainment.blackjack.chat.send',          $table),
     'leave'  => route('entertainment.blackjack.leave',       $table),
 ], JSON_HEX_TAG | JSON_HEX_APOS) !!};
 window.__bjMsg    = {!! json_encode([
