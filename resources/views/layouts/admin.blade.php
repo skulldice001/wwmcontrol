@@ -77,7 +77,7 @@
             <li class="nav-item d-none d-sm-inline-block">
                 <span class="nav-link" title="{{ $zFrozen > 0 ? __('messages.zcoin_frozen').': '.number_format($zFrozen).' Zoo' : 'Zoo' }}">
                     <i class="fas fa-coins" style="color:#f6c23e;"></i>
-                    <strong style="color:#f6c23e;">{{ number_format($zAvail) }}</strong>
+                    <strong id="nav-zcoin-balance" style="color:#f6c23e;">{{ number_format($zAvail) }}</strong>
                     <small class="text-muted ml-1">Zoo</small>
                     @if($zFrozen > 0)
                         <small class="ml-1" style="color:#e74c3c;" title="{{ __('messages.zcoin_frozen') }}: {{ number_format($zFrozen) }} Zoo">
