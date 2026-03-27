@@ -97,8 +97,12 @@ jobs:
           # Install/update PHP dependencies
           composer install --no-dev --no-interaction --no-progress --prefer-dist --optimize-autoloader
 
-          # Install NPM & build frontend
+          # Install NPM & build frontend (với đúng env production)
           npm ci --prefer-offline
+          VITE_REVERB_APP_KEY=$(grep REVERB_APP_KEY .env | cut -d '=' -f2) \
+          VITE_REVERB_HOST=api.thezotopia.online \
+          VITE_REVERB_PORT=443 \
+          VITE_REVERB_SCHEME=https \
           npm run build
 
           # Run database migrations
