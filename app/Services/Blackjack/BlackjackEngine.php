@@ -182,14 +182,8 @@ class BlackjackEngine
 
         if ($allDone) {
             // All players have blackjack or busted immediately — go to dealer turn
-            $state['phase']                = 'dealer_turn';
-            $state['current_turn_user_id'] = null;
-            $round->update([
-                'phase'                => 'dealer_turn',
-                'state'                => $state,
-                'current_turn_user_id' => null,
-            ]);
-            return self::playDealer($round->fresh());
+            $round->update(['state' => $state]);
+            return self::initDealerTurn($round->fresh());
         }
 
         // Set first active player's turn
@@ -204,6 +198,54 @@ class BlackjackEngine
         ]);
 
         return $round->fresh();
+    }
+
+    /**
+     * Dealer manually hits or stands during dealer_turn phase.
+     */
+    public static function dealerAction(BlackjackRound $round, int $userId, string $action): array
+    {
+        return DB::transaction(function () use ($round, $userId, $action) {
+            $round = BlackjackRound::where('id', $round->id)->lockForUpdate()->first();
+
+            if ($round->phase !== 'dealer_turn') {
+                return ['ok' => false, 'error' => 'Not in dealer turn phase.'];
+            }
+
+            $state = $round->state;
+
+            if ((int) ($state['dealer']['user_id'] ?? 0) !== $userId) {
+                return ['ok' => false, 'error' => 'Only the dealer can perform this action.'];
+            }
+
+            $score = self::score($state['dealer']['cards']);
+
+            if ($action === 'hit') {
+                if ($score >= 17) {
+                    return ['ok' => false, 'error' => 'Dealer must stand at 17 or above.'];
+                }
+                $state['dealer']['cards'][] = array_shift($state['deck']);
+                $newScore = self::score($state['dealer']['cards']);
+                $state['dealer']['score'] = $newScore;
+                if ($newScore > 21) {
+                    $state['dealer']['busted'] = true;
+                }
+                $round->update(['state' => $state]);
+                $round = $round->fresh();
+                if ($state['dealer']['busted']) {
+                    $round = self::resolveAll($round);
+                }
+            } elseif ($action === 'stand') {
+                if ($score < 17) {
+                    return ['ok' => false, 'error' => 'Dealer must hit below 17.'];
+                }
+                $state['dealer']['score'] = $score;
+                $round->update(['state' => $state]);
+                $round = self::resolveAll($round->fresh());
+            }
+
+            return ['ok' => true, 'round' => $round->fresh()];
+        });
     }
 
     /**
@@ -278,9 +320,9 @@ class BlackjackEngine
             ]);
             $round = $round->fresh();
 
-            // If we transitioned to dealer_turn, auto-play dealer
+            // If we transitioned to dealer_turn, reveal hole card and wait for dealer actions
             if ($round->phase === 'dealer_turn') {
-                $round = self::playDealer($round);
+                $round = self::initDealerTurn($round);
             }
 
             return ['ok' => true, 'round' => $round->fresh()];
@@ -336,13 +378,13 @@ class BlackjackEngine
 
     // ── Private helpers ─────────────────────────────────────────────────────
 
-    private static function playDealer(BlackjackRound $round): BlackjackRound
+    private static function initDealerTurn(BlackjackRound $round): BlackjackRound
     {
         $state = $round->state;
 
-        // Reveal hole card
+        // Reveal hole card so all players can see it
         if ($state['dealer']['hole_card']) {
-            $state['dealer']['cards'][]  = $state['dealer']['hole_card'];
+            $state['dealer']['cards'][]   = $state['dealer']['hole_card'];
             $state['dealer']['hole_card'] = null;
         }
         $state['dealer']['is_revealed'] = true;
@@ -350,26 +392,23 @@ class BlackjackEngine
         // Check dealer blackjack
         if (count($state['dealer']['cards']) === 2 && self::isBlackjack($state['dealer']['cards'])) {
             $state['dealer']['blackjack'] = true;
-        } else {
-            // Draw until >= 17
-            while (self::score($state['dealer']['cards']) < 17) {
-                $state['dealer']['cards'][] = array_shift($state['deck']);
-            }
         }
 
-        $dealerScore = self::score($state['dealer']['cards']);
-        if ($dealerScore > 21) {
-            $state['dealer']['busted'] = true;
-        }
-        $state['dealer']['score'] = $dealerScore;
+        $state['dealer']['score'] = self::score($state['dealer']['cards']);
         $state['phase']           = 'dealer_turn';
 
         $round->update([
-            'phase' => 'dealer_turn',
-            'state' => $state,
+            'phase'                => 'dealer_turn',
+            'state'                => $state,
+            'current_turn_user_id' => null,
         ]);
 
-        return self::resolveAll($round->fresh());
+        // Dealer blackjack: resolve immediately without manual action
+        if ($state['dealer']['blackjack']) {
+            return self::resolveAll($round->fresh());
+        }
+
+        return $round->fresh();
     }
 
     private static function resolveAll(BlackjackRound $round): BlackjackRound

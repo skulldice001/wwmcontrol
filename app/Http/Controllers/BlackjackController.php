@@ -355,6 +355,33 @@ class BlackjackController extends Controller
     }
 
     /**
+     * POST {table}/game/dealer-action — dealer hits or stands manually
+     */
+    public function dealerAction(Request $request, BlackjackTable $table)
+    {
+        $request->validate(['action' => 'required|in:hit,stand']);
+
+        $round = $table->activeRound();
+        if (!$round) {
+            return response()->json(['error' => 'No active round'], 422);
+        }
+
+        $result = BlackjackEngine::dealerAction($round, Auth::id(), $request->action);
+
+        if (!$result['ok']) {
+            return response()->json(['error' => $result['error']], 422);
+        }
+
+        $round       = $result['round'];
+        $clientState = BlackjackEngine::clientState($round, Auth::user());
+
+        $eventType = $round->phase === 'finished' ? 'round_finished' : 'dealer_turn';
+        event(new BlackjackRoomUpdated($table->id, $eventType, [], null, $clientState));
+
+        return response()->json(['round' => $clientState]);
+    }
+
+    /**
      * POST {table}/game/next — dealer starts next round
      */
     public function nextRound(BlackjackTable $table)
