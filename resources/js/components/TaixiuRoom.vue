@@ -43,32 +43,40 @@
       <!-- Dice display -->
       <div class="tx-card">
         <div class="tx-dice-area">
-          <template v-if="phase === 'result' && dice.length === 3">
+
+          <!-- Betting phase: 3 cubes spinning freely -->
+          <template v-if="phase !== 'result'">
+            <div v-for="i in 3" :key="`roll-${i}`" class="tx-die-scene">
+              <div class="tx-die-cube rolling"
+                   :style="{ animationDuration: (0.60 + (i-1)*0.18) + 's', animationDelay: ((i-1)*-0.22) + 's' }">
+                <div v-for="fv in cubeFaces" :key="fv" :class="`tx-face tx-face-${fv}`">
+                  <div v-for="n in 9" :key="n" class="tx-dot" :class="dotClass(fv, n)"></div>
+                </div>
+              </div>
+            </div>
+          </template>
+
+          <!-- Result phase: cubes land on correct face -->
+          <template v-else>
             <div
               v-for="(d, i) in dice"
               :key="`${diceRevealKey}-${i}`"
-              class="tx-die"
-              :class="[diceAnimClass, diceAnimClass === 'revealed' ? `glow-${outcome}` : '']"
-              :data-val="d"
-              :style="diceAnimClass === 'revealing' ? { animationDelay: (i * 0.14) + 's' } : {}"
+              class="tx-die-scene"
+              :class="[
+                diceAnimClass === 'landing'  ? 'dropping'        : '',
+                diceAnimClass === 'revealed' ? `glow-${outcome}` : ''
+              ]"
+              :style="diceAnimClass === 'landing' ? { animationDelay: (i * 0.15) + 's' } : {}"
             >
-              <template v-for="n in 9" :key="n">
-                <div class="tx-dot" :class="dotClass(d, n)"></div>
-              </template>
+              <div class="tx-die-cube" :class="diceAnimClass" :data-val="d"
+                   :style="diceAnimClass === 'landing' ? { animationDelay: (i * 0.15) + 's' } : {}">
+                <div v-for="fv in cubeFaces" :key="fv" :class="`tx-face tx-face-${fv}`">
+                  <div v-for="n in 9" :key="n" class="tx-dot" :class="dotClass(fv, n)"></div>
+                </div>
+              </div>
             </div>
           </template>
-          <template v-else>
-            <div
-              v-for="i in 3" :key="i"
-              class="tx-die rolling"
-              data-val="?"
-              :style="{ animationDuration: (0.13 + (i-1)*0.04) + 's', animationDelay: ((i-1)*-0.05) + 's' }"
-            >
-              <template v-for="n in 9" :key="n">
-                <div class="tx-dot" :class="n === 5 ? '' : 'hidden'"></div>
-              </template>
-            </div>
-          </template>
+
         </div>
 
         <!-- Outcome banner -->
@@ -294,6 +302,7 @@ export default {
             _countdownTimer: null,
             diceAnimClass:  'rolling',
             diceRevealKey:  0,
+            cubeFaces:      [1, 2, 3, 4, 5, 6],
         };
     },
 
@@ -394,10 +403,11 @@ export default {
             // Dice animation state machine
             if (s.phase === 'result' && this.dice.length === 3) {
                 if (prevPhase !== 'result') {
-                    // Fresh reveal: fly-in bounce animation
+                    // Dice just rolled: trigger 3D landing animation
                     this.diceRevealKey++;
-                    this.diceAnimClass = 'revealing';
-                    setTimeout(() => { this.diceAnimClass = 'revealed'; }, 900);
+                    this.diceAnimClass = 'landing';
+                    // 850ms animation + 280ms stagger on last die = ~1150ms total
+                    setTimeout(() => { this.diceAnimClass = 'revealed'; }, 1150);
                 } else {
                     this.diceAnimClass = 'revealed';
                 }
