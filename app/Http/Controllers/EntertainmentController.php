@@ -31,6 +31,11 @@ class EntertainmentController extends Controller
     public function blackjack()
     {
         $tables = BlackjackTable::all();
+
+        if (request()->expectsJson()) {
+            return response()->json(['tables' => $tables->values()]);
+        }
+
         return view('entertainment.blackjack', compact('tables'));
     }
 

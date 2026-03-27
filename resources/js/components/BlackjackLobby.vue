@@ -12,9 +12,14 @@
           <i class="fas fa-arrow-left"></i> {{ msg.entertainmentHall }}
         </a>
         <h4 class="mb-0">{{ msg.bjLobby }}</h4>
-        <button class="btn btn-success btn-sm" @click="showCreateModal = true">
-          <i class="fas fa-plus"></i> {{ msg.bjCreateTable }}
-        </button>
+        <div class="d-flex gap-2">
+          <button class="btn btn-outline-info btn-sm mr-2" @click="refresh" :disabled="refreshing">
+            <i :class="['fas fa-sync-alt', refreshing ? 'fa-spin' : '']"></i>
+          </button>
+          <button class="btn btn-success btn-sm" @click="showCreateModal = true">
+            <i class="fas fa-plus"></i> {{ msg.bjCreateTable }}
+          </button>
+        </div>
       </div>
     </div>
 
@@ -133,6 +138,7 @@ export default {
     return {
       tables:          [...this.initTables],
       loading:         false,
+      refreshing:      false,
       joiningId:       null,
       showCreateModal: false,
       creating:        false,
@@ -198,6 +204,15 @@ export default {
         })
         .catch(() => { if (window.notify) window.notify('error', 'Connection error.'); })
         .finally(() => { this.creating = false; this.loading = false; });
+    },
+
+    refresh() {
+      this.refreshing = true;
+      fetch(this.routes.list, { headers: { 'Accept': 'application/json' } })
+        .then(r => r.json())
+        .then(data => { this.tables = data.tables || []; })
+        .catch(() => { if (window.notify) window.notify('error', 'Connection error.'); })
+        .finally(() => { this.refreshing = false; });
     },
 
     updateRow(t) {
