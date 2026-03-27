@@ -28,7 +28,7 @@ class PokerGameController extends Controller
 
         if (!$this->deductBuyIn($table, $humanIds)) {
             return response()->json([
-                'error' => 'Không đủ Z-Coin để vào ván (cần ' . number_format($table->max_buy_in) . ' Z)',
+                'error' => 'Không đủ Z-Coin để vào ván (cần ít nhất ' . number_format($table->min_buy_in) . ' Z)',
             ], 422);
         }
 
@@ -83,7 +83,7 @@ class PokerGameController extends Controller
 
                 return response()->json([
                     'game_started' => false,
-                    'error'        => 'Một hoặc nhiều người chơi không đủ Z-Coin (cần ' . number_format($table->max_buy_in) . ' Z)',
+                    'error'        => 'Một hoặc nhiều người chơi không đủ Z-Coin (cần ít nhất ' . number_format($table->min_buy_in) . ' Z)',
                     'players'      => $playersData,
                 ]);
             }
@@ -286,24 +286,25 @@ class PokerGameController extends Controller
     private function deductBuyIn(PokerTable $table, array $humanIds): bool
     {
         if (empty($humanIds)) return true;
-        $buyIn = (int) $table->max_buy_in;
+        $minBalance = (int) $table->min_buy_in;  // minimum z_coins required to enter
+        $entryFee   = (int) $table->big_blind;    // amount deducted = first-turn bet
 
-        return DB::transaction(function () use ($humanIds, $buyIn) {
+        return DB::transaction(function () use ($humanIds, $minBalance, $entryFee) {
             $users = User::whereIn('id', $humanIds)->lockForUpdate()->get();
             foreach ($users as $user) {
                 $available = $user->z_coins - $user->z_coins_frozen;
-                if ($available < $buyIn) return false;
+                if ($available < $minBalance) return false;
             }
             foreach ($users as $user) {
                 $balBefore = $user->z_coins;
-                $user->decrement('z_coins', $buyIn);
+                $user->decrement('z_coins', $entryFee);
                 ZooCoinTransaction::create([
-                    'user_id'       => $user->id,
-                    'type'          => 'poker_bet',
-                    'amount'        => $buyIn,
-                    'balance_before'=> $balBefore,
-                    'balance_after' => $balBefore - $buyIn,
-                    'note'          => 'Poker buy-in',
+                    'user_id'        => $user->id,
+                    'type'           => 'poker_bet',
+                    'amount'         => $entryFee,
+                    'balance_before' => $balBefore,
+                    'balance_after'  => $balBefore - $entryFee,
+                    'note'           => 'Poker buy-in',
                 ]);
             }
             return true;

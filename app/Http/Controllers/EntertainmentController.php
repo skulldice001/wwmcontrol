@@ -57,10 +57,11 @@ class EntertainmentController extends Controller
             'small_blind' => 'required|numeric|min:1',
             'big_blind'   => 'required|numeric|min:2',
             'min_buy_in'  => 'required|numeric|min:1',
-            'max_buy_in'  => 'required|numeric|min:1',
             'max_players' => 'required|integer|min:2|max:9',
         ]);
 
+        // Entry fee per hand = big blind; starting chip stack = big blind
+        $data['max_buy_in']      = $data['big_blind'];
         $data['status']          = 'waiting';
         $data['current_players'] = 0;
 
