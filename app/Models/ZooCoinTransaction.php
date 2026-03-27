@@ -42,6 +42,8 @@ class ZooCoinTransaction extends Model
             'daily_bonus'       => 'Thưởng ngày',
             'blackjack_bet'     => 'Blackjack cược',
             'blackjack_payout'  => 'Blackjack thắng',
+            'poker_bet'         => 'Poker buy-in',
+            'poker_payout'      => 'Poker thắng',
             default             => $this->type,
         };
     }
@@ -49,8 +51,8 @@ class ZooCoinTransaction extends Model
     public function typeBadgeClass(): string
     {
         return match ($this->type) {
-            'add', 'transfer_in', 'daily_bonus', 'blackjack_payout' => 'badge-success',
-            'deduct', 'transfer_out', 'blackjack_bet'               => 'badge-danger',
+            'add', 'transfer_in', 'daily_bonus', 'blackjack_payout', 'poker_payout' => 'badge-success',
+            'deduct', 'transfer_out', 'blackjack_bet', 'poker_bet'                 => 'badge-danger',
             default                                                  => 'badge-secondary',
         };
     }
