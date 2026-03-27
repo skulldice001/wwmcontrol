@@ -19,6 +19,11 @@ class User extends Authenticatable
      *
      * @var list<string>
      */
+    protected $attributes = [
+        'z_coins'        => 5000,
+        'z_coins_frozen' => 0,
+    ];
+
     protected $fillable = [
         'name',
         'account',
