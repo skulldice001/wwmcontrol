@@ -22,8 +22,8 @@ class TaixiuTable extends Model
     public function activeGame(): ?TaixiuGame
     {
         return $this->games()
-            ->whereJsonNotContains('state->phase', 'finished')
             ->latest()
-            ->first();
+            ->get()
+            ->first(fn($g) => ($g->state['phase'] ?? '') !== 'finished');
     }
 }
