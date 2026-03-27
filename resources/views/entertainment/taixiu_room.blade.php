@@ -103,26 +103,31 @@
     100% { transform: rotateX(360deg) rotateY(360deg); }
 }
 
-/* ── Face target rotations (CSS custom props) ────────── */
-.tx-die-cube[data-val="1"] { --rx:   0deg; --ry:   0deg; }
-.tx-die-cube[data-val="2"] { --rx:   0deg; --ry: -90deg; }
-.tx-die-cube[data-val="3"] { --rx: -90deg; --ry:   0deg; }
-.tx-die-cube[data-val="4"] { --rx:  90deg; --ry:   0deg; }
-.tx-die-cube[data-val="5"] { --rx:   0deg; --ry:  90deg; }
-.tx-die-cube[data-val="6"] { --rx:   0deg; --ry: 180deg; }
-
-/* ── Landing: spin 3× then settle on correct face ────── */
-.tx-die-cube.landing {
-    animation: cube-land 0.85s cubic-bezier(0.22, 0.85, 0.36, 1) both;
+/* ── Landing: 6 named animations, one per face value ─── */
+/* from = final + 1080° so the die always spins 3× before landing */
+@keyframes cube-land-1 {
+    from { transform: rotateX(1080deg) rotateY(1080deg); }
+    to   { transform: rotateX(   0deg) rotateY(   0deg); }
 }
-@keyframes cube-land {
-    from { transform: rotateX(calc(var(--rx) + 1080deg)) rotateY(calc(var(--ry) + 1080deg)); }
-    to   { transform: rotateX(var(--rx)) rotateY(var(--ry)); }
+@keyframes cube-land-2 {
+    from { transform: rotateX(1080deg) rotateY( 990deg); }
+    to   { transform: rotateX(   0deg) rotateY( -90deg); }
 }
-
-/* ── Revealed: hold at correct face ─────────────────── */
-.tx-die-cube.revealed {
-    transform: rotateX(var(--rx)) rotateY(var(--ry));
+@keyframes cube-land-3 {
+    from { transform: rotateX( 990deg) rotateY(1080deg); }
+    to   { transform: rotateX( -90deg) rotateY(   0deg); }
+}
+@keyframes cube-land-4 {
+    from { transform: rotateX(1170deg) rotateY(1080deg); }
+    to   { transform: rotateX(  90deg) rotateY(   0deg); }
+}
+@keyframes cube-land-5 {
+    from { transform: rotateX(1080deg) rotateY(1170deg); }
+    to   { transform: rotateX(   0deg) rotateY(  90deg); }
+}
+@keyframes cube-land-6 {
+    from { transform: rotateX(1080deg) rotateY(1260deg); }
+    to   { transform: rotateX(   0deg) rotateY( 180deg); }
 }
 
 /* ── Outcome banner ───────────────────────────────────── */
