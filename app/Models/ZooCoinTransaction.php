@@ -35,21 +35,23 @@ class ZooCoinTransaction extends Model
     public function typeLabel(): string
     {
         return match ($this->type) {
-            'add'          => 'Nạp',
-            'deduct'       => 'Trừ',
-            'transfer_in'  => 'Nhận',
-            'transfer_out' => 'Chuyển',
-            'daily_bonus'  => 'Thưởng ngày',
-            default        => $this->type,
+            'add'               => 'Nạp',
+            'deduct'            => 'Trừ',
+            'transfer_in'       => 'Nhận',
+            'transfer_out'      => 'Chuyển',
+            'daily_bonus'       => 'Thưởng ngày',
+            'blackjack_bet'     => 'Blackjack cược',
+            'blackjack_payout'  => 'Blackjack thắng',
+            default             => $this->type,
         };
     }
 
     public function typeBadgeClass(): string
     {
         return match ($this->type) {
-            'add', 'transfer_in', 'daily_bonus' => 'badge-success',
-            'deduct', 'transfer_out'             => 'badge-danger',
-            default                              => 'badge-secondary',
+            'add', 'transfer_in', 'daily_bonus', 'blackjack_payout' => 'badge-success',
+            'deduct', 'transfer_out', 'blackjack_bet'               => 'badge-danger',
+            default                                                  => 'badge-secondary',
         };
     }
 }

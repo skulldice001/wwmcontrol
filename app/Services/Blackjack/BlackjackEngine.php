@@ -5,6 +5,7 @@ namespace App\Services\Blackjack;
 use App\Models\BlackjackGame;
 use App\Models\BlackjackTable;
 use App\Models\User;
+use App\Models\ZooCoinTransaction;
 use Illuminate\Support\Facades\DB;
 
 class BlackjackEngine
@@ -32,7 +33,16 @@ class BlackjackEngine
                 return ['ok' => false, 'error' => __('messages.bj_insufficient_funds')];
             }
 
+            $balBefore = $user->z_coins;
             $user->decrement('z_coins', $bet);
+            ZooCoinTransaction::create([
+                'user_id'        => $user->id,
+                'type'           => 'blackjack_bet',
+                'amount'         => -$bet,
+                'balance_before' => $balBefore,
+                'balance_after'  => $balBefore - $bet,
+                'note'           => "Blackjack đặt cược (bàn #{$table->id})",
+            ]);
 
             $deck        = self::freshDeck();
             $playerCards = [array_shift($deck), array_shift($deck)];
@@ -57,7 +67,16 @@ class BlackjackEngine
             if ($isBlackjack) {
                 $state = self::resolve($state);
                 if ($state['payout'] > 0) {
+                    $balBefore = $user->z_coins;
                     $user->increment('z_coins', $state['payout']);
+                    ZooCoinTransaction::create([
+                        'user_id'        => $user->id,
+                        'type'           => 'blackjack_payout',
+                        'amount'         => $state['payout'],
+                        'balance_before' => $balBefore,
+                        'balance_after'  => $balBefore + $state['payout'],
+                        'note'           => "Blackjack thắng: {$state['result']} +{$state['payout']} Zoo (bàn #{$table->id})",
+                    ]);
                     $state['payout'] = 0;
                 }
             }
@@ -108,7 +127,17 @@ class BlackjackEngine
                     $user  = User::where('id', $game->user_id)->lockForUpdate()->first();
                     $avail = $user->z_coins - $user->z_coins_frozen;
                     if ($avail >= $state['bet']) {
-                        $user->decrement('z_coins', $state['bet']);
+                        $extraBet  = $state['bet'];
+                        $balBefore = $user->z_coins;
+                        $user->decrement('z_coins', $extraBet);
+                        ZooCoinTransaction::create([
+                            'user_id'        => $game->user_id,
+                            'type'           => 'blackjack_bet',
+                            'amount'         => -$extraBet,
+                            'balance_before' => $balBefore,
+                            'balance_after'  => $balBefore - $extraBet,
+                            'note'           => "Blackjack đôi (bàn #{$game->blackjack_table_id})",
+                        ]);
                         $state['bet'] *= 2;
                     }
                     $state['can_double']     = false;
@@ -124,7 +153,17 @@ class BlackjackEngine
 
             // Credit payout immediately on finish
             if (($state['payout'] ?? 0) > 0) {
-                User::where('id', $game->user_id)->increment('z_coins', $state['payout']);
+                $payer     = User::where('id', $game->user_id)->lockForUpdate()->first();
+                $balBefore = $payer->z_coins;
+                $payer->increment('z_coins', $state['payout']);
+                ZooCoinTransaction::create([
+                    'user_id'        => $game->user_id,
+                    'type'           => 'blackjack_payout',
+                    'amount'         => $state['payout'],
+                    'balance_before' => $balBefore,
+                    'balance_after'  => $balBefore + $state['payout'],
+                    'note'           => "Blackjack thắng: {$state['result']} +{$state['payout']} Zoo (bàn #{$game->blackjack_table_id})",
+                ]);
                 $state['payout'] = 0;
             }
 
