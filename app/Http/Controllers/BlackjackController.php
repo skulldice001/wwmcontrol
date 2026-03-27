@@ -74,6 +74,7 @@ class BlackjackController extends Controller
         $table->save();
 
         event(new BlackjackTableUpdated($table));
+        event(new BlackjackRoomUpdated($table->id, 'ready_update', $this->getPlayersData($table)->toArray()));
 
         return response()->json(['redirect' => route('entertainment.blackjack.show', $table)]);
     }
@@ -95,6 +96,7 @@ class BlackjackController extends Controller
         $table->status = $table->current_players <= 0 ? 'waiting' : 'playing';
         $table->save();
         event(new BlackjackTableUpdated($table));
+        event(new BlackjackRoomUpdated($table->id, 'ready_update', $this->getPlayersData($table)->toArray()));
 
         return redirect()->route('entertainment.blackjack');
     }
