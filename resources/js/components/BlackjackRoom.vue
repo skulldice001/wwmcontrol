@@ -49,7 +49,7 @@
         </h5>
 
         <!-- Role selection -->
-        <div v-if="!myRole || myRole === ''" class="bj-role-select mb-3">
+        <div v-if="!currentRole || currentRole === ''" class="bj-role-select mb-3">
           <p class="text-muted text-center mb-2" style="font-size:13px;">Chọn vai trò của bạn</p>
           <div class="d-flex justify-content-center gap-2">
             <button class="btn btn-outline-warning btn-sm mr-2"
@@ -66,11 +66,11 @@
 
         <!-- Current role badge -->
         <div v-else class="text-center mb-2">
-          <span v-if="myRole === 'dealer'" class="badge badge-warning px-3 py-2">
+          <span v-if="currentRole === 'dealer'" class="badge badge-warning px-3 py-2">
             <i class="fas fa-crown mr-1"></i> Nhà cái
           </span>
           <span v-else class="badge badge-info px-3 py-2">
-            <i class="fas fa-chair mr-1"></i> Nhà con – Ghế {{ mySeat }}
+            <i class="fas fa-chair mr-1"></i> Nhà con – Ghế {{ currentSeat }}
           </span>
           <button class="btn btn-link btn-sm text-muted ml-2" @click="resetRole">Đổi</button>
         </div>
@@ -121,7 +121,7 @@
         <div class="text-center mt-3">
           <button
             :class="['btn btn-lg px-5', myIsReady ? 'btn-secondary' : 'btn-success']"
-            :disabled="readyLoading || countdownSec !== null || !myRole"
+            :disabled="readyLoading || countdownSec !== null || !currentRole"
             @click="toggleReady">
             <i :class="['fas mr-1', myIsReady ? 'fa-times' : 'fa-check']"></i>
             {{ myIsReady ? msg.cancelReady : msg.imReady }}
@@ -129,7 +129,7 @@
         </div>
 
         <!-- Dealer start button -->
-        <div v-if="myRole === 'dealer' && dealerReady && readyPlayerCount >= 1 && countdownSec === null"
+        <div v-if="currentRole === 'dealer' && dealerReady && readyPlayerCount >= 1 && countdownSec === null"
              class="text-center mt-2">
           <button class="btn btn-warning btn-sm" @click="startRound" :disabled="starting">
             <i class="fas fa-play mr-1"></i> Bắt đầu ngay
@@ -168,7 +168,7 @@
             <span v-if="phase === 'betting'" class="text-warning" style="font-size:13px;">
               <i class="fas fa-coins mr-1"></i> Đặt cược
             </span>
-            <span v-else-if="phase === 'dealer_turn' && myRole !== 'dealer'" class="text-info" style="font-size:13px;">
+            <span v-else-if="phase === 'dealer_turn' && currentRole !== 'dealer'" class="text-info" style="font-size:13px;">
               <i class="fas fa-hourglass-half mr-1"></i> Chờ nhà cái rút bài...
             </span>
           </div>
@@ -220,7 +220,7 @@
       </div>
 
       <!-- ── Betting panel (for current user, player role) ── -->
-      <div v-if="phase === 'betting' && myRole === 'player' && !myBetPlaced" class="bj-action-panel">
+      <div v-if="phase === 'betting' && currentRole === 'player' && !myBetPlaced" class="bj-action-panel">
         <div class="bj-chip-row">
           <button v-for="v in chips" :key="v"
                   :class="['bj-chip', currentBet === v ? 'active' : '']"
@@ -236,7 +236,7 @@
           </button>
         </div>
       </div>
-      <div v-else-if="phase === 'betting' && myRole === 'player' && myBetPlaced" class="text-center py-3 text-muted">
+      <div v-else-if="phase === 'betting' && currentRole === 'player' && myBetPlaced" class="text-center py-3 text-muted">
         <i class="fas fa-check-circle text-success mr-2"></i> Đã đặt cược – chờ người chơi khác...
       </div>
 
@@ -255,13 +255,13 @@
           </button>
         </div>
       </div>
-      <div v-else-if="phase === 'player_turns' && currentTurnUserId !== myUserId && myRole === 'player'"
+      <div v-else-if="phase === 'player_turns' && currentTurnUserId !== myUserId && currentRole === 'player'"
            class="text-center py-3 text-muted">
         <i class="fas fa-clock mr-2"></i> Chờ lượt của bạn...
       </div>
 
       <!-- ── Dealer controls ── -->
-      <div v-if="myRole === 'dealer'" class="text-center py-3">
+      <div v-if="currentRole === 'dealer'" class="text-center py-3">
         <span v-if="phase === 'betting'" class="text-muted">
           <i class="fas fa-info-circle mr-1"></i> Chờ tất cả nhà con đặt cược...
         </span>
@@ -504,7 +504,6 @@ export default {
         .catch(() => { if (window.notify) window.notify('error', 'Connection error.'); });
     },
     resetRole() {
-      this.chooseRole('player', null);
       this.currentRole = '';
       this.currentSeat = null;
     },
