@@ -98,6 +98,43 @@ class GameEngine
         return $game;
     }
 
+    /**
+     * Force-fold a player who left the table mid-hand.
+     * If only one non-folded player remains, triggers showdown automatically.
+     * Returns null if the game was not active or player was not found.
+     */
+    public static function forceLeave(PokerGame $game, int $userId): ?PokerGame
+    {
+        $state = $game->state;
+
+        if ($state['phase'] === 'showdown') {
+            return null;
+        }
+
+        // Find the leaving player
+        $idx = null;
+        foreach ($state['players'] as $i => $p) {
+            if (!$p['is_ai'] && $p['id'] === $userId) {
+                $idx = $i;
+                break;
+            }
+        }
+
+        if ($idx === null || $state['players'][$idx]['status'] === 'folded') {
+            return null;
+        }
+
+        // Force fold
+        $state['players'][$idx]['status']  = 'folded';
+        $state['players'][$idx]['pending'] = false;
+        $state['log'][] = "{$state['players'][$idx]['name']} rời bàn (bỏ bài).";
+
+        $state = self::advance($state);
+        $game->update(['state' => $state]);
+
+        return $game->fresh();
+    }
+
     public static function processAction(PokerGame $game, string $action, float $amount, int $userId): PokerGame
     {
         $state = $game->state;

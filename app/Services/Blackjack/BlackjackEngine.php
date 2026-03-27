@@ -376,6 +376,128 @@ class BlackjackEngine
         ];
     }
 
+    // ── Leave handling ──────────────────────────────────────────────────────
+
+    /**
+     * Handle a player leaving mid-round.
+     *
+     * Dealer leaves  → cancel round, refund all player bets.
+     * Player leaves  → forfeit (treated as bust, bet lost).
+     *                  If it was their turn, advance.
+     *                  If all remaining players are done, initiate dealer turn.
+     */
+    public static function handlePlayerLeave(BlackjackRound $round, int $userId, string $pivotRole): BlackjackRound
+    {
+        return DB::transaction(function () use ($round, $userId, $pivotRole) {
+            $round = BlackjackRound::where('id', $round->id)->lockForUpdate()->first();
+
+            if ($round->phase === 'finished') {
+                return $round;
+            }
+
+            if ($pivotRole === 'dealer') {
+                return self::cancelRound($round);
+            }
+
+            $state = $round->state;
+            $uid   = (string) $userId;
+
+            if (!isset($state['players'][$uid])) {
+                return $round;
+            }
+
+            // Mark as forfeited: busted so resolveAll gives payout = 0
+            if (!$state['players'][$uid]['bet_placed']) {
+                // Hasn't bet yet — remove from turn order entirely so no cards are dealt
+                $state['turn_order'] = array_values(
+                    array_filter($state['turn_order'], fn($u) => $u !== $userId)
+                );
+                $state['players'][$uid]['bet_placed'] = true; // so allBet check passes
+                $state['players'][$uid]['bet']        = 0;
+            }
+            $state['players'][$uid]['busted'] = true;
+            $state['players'][$uid]['stood']  = true;
+
+            // Betting phase: check if all remaining players have placed bets
+            if ($round->phase === 'betting') {
+                $allBet = collect($state['players'])->every(fn($p) => $p['bet_placed']);
+                if ($allBet) {
+                    $round->update(['state' => $state]);
+                    return self::dealCards($round->fresh());
+                }
+                $round->update(['state' => $state]);
+                return $round->fresh();
+            }
+
+            // Player_turns phase: advance if it was their turn
+            if ($round->phase === 'player_turns' && (int) $round->current_turn_user_id === $userId) {
+                $state = self::advanceTurn($state);
+            }
+
+            // If all remaining players are now stood/busted, move to dealer turn
+            $allDone = empty($state['turn_order']) || collect($state['turn_order'])->every(
+                fn($u) => $state['players'][(string) $u]['stood'] || $state['players'][(string) $u]['busted']
+            );
+
+            if ($allDone && in_array($round->phase, ['player_turns'])) {
+                $state['phase'] = 'dealer_turn';
+            }
+
+            $round->update([
+                'phase'                => $state['phase'],
+                'state'                => $state,
+                'current_turn_user_id' => $state['current_turn_user_id'] ?? null,
+            ]);
+            $round = $round->fresh();
+
+            if ($round->phase === 'dealer_turn') {
+                $round = self::initDealerTurn($round);
+            }
+
+            return $round->fresh();
+        });
+    }
+
+    /**
+     * Cancel an active round (dealer left or no players remain).
+     * Refunds bets for players who had placed one and haven't been resolved yet.
+     */
+    private static function cancelRound(BlackjackRound $round): BlackjackRound
+    {
+        $state = $round->state;
+
+        foreach ($state['players'] as $uid => &$p) {
+            if ($p['result'] !== null) continue; // already resolved
+            if ($p['bet'] > 0) {
+                $user = User::where('id', $p['user_id'])->lockForUpdate()->first();
+                if ($user) {
+                    $balBefore = $user->z_coins;
+                    $user->increment('z_coins', $p['bet']);
+                    ZooCoinTransaction::create([
+                        'user_id'        => $p['user_id'],
+                        'type'           => 'blackjack_payout',
+                        'amount'         => $p['bet'],
+                        'balance_before' => $balBefore,
+                        'balance_after'  => $balBefore + $p['bet'],
+                        'note'           => "Blackjack hoàn tiền (ván bị hủy, bàn #{$round->blackjack_table_id})",
+                    ]);
+                }
+            }
+            $p['result'] = 'push';
+            $p['payout'] = $p['bet'];
+        }
+        unset($p);
+
+        $state['phase'] = 'finished';
+        $round->update([
+            'phase'                => 'finished',
+            'state'                => $state,
+            'current_turn_user_id' => null,
+        ]);
+
+        return $round->fresh();
+    }
+
     // ── Private helpers ─────────────────────────────────────────────────────
 
     private static function initDealerTurn(BlackjackRound $round): BlackjackRound
