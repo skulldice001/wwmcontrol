@@ -21,7 +21,7 @@
   <!-- ── Lobby section ───────────────────────────────── -->
   <div v-if="!inGame">
     <div class="row justify-content-center mt-3">
-      <div class="col-md-5 col-lg-4">
+      <div class="col-md-5 col-lg-4 d-flex flex-column gap-3">
         <div class="lobby-card card">
           <div class="card-header">
             <h5 class="mb-0 text-white">
@@ -75,6 +75,37 @@
               <template v-else>
                 <i class="fas fa-check mr-1"></i> {{ msg.imReady }}
               </template>
+            </button>
+          </div>
+        </div>
+
+        <!-- Chat panel (lobby view) -->
+        <div class="pk-chat-panel lobby-card mt-3">
+          <div class="card-header" style="padding:8px 14px;">
+            <h6 class="mb-0" style="font-size:13px;"><i class="fas fa-comments mr-1"></i> Chat</h6>
+          </div>
+          <div class="pk-chat-messages" ref="chatBox" style="max-height:180px;">
+            <div v-for="m in chatMessages" :key="m.id"
+                 :class="['pk-chat-msg', m.user_id === myUserId ? 'pk-chat-mine' : '']">
+              <div class="pk-chat-meta">
+                <span class="pk-chat-name">{{ m.user_id === myUserId ? 'Bạn' : m.name }}</span>
+                <span class="pk-chat-time">{{ m.time }}</span>
+              </div>
+              <div class="pk-chat-bubble">{{ m.message }}</div>
+            </div>
+            <div v-if="chatMessages.length === 0" class="pk-chat-empty">Chưa có tin nhắn...</div>
+          </div>
+          <div class="pk-chat-input-row" style="border-top:1px solid rgba(255,255,255,.1);">
+            <input
+              v-model="chatInput"
+              class="pk-chat-input"
+              placeholder="Nhập tin nhắn..."
+              maxlength="500"
+              @keydown.enter.prevent="sendChatMessage"
+              :disabled="chatSending"
+            >
+            <button class="pk-chat-send" @click="sendChatMessage" :disabled="chatSending || !chatInput.trim()">
+              <i class="fas fa-paper-plane"></i>
             </button>
           </div>
         </div>
@@ -265,12 +296,32 @@
         <div style="font-size:18px;font-weight:800;color:#f6c23e;letter-spacing:.5px;">{{ fmtChips(zCoins) }}</div>
         <div class="text-muted" style="font-size:11px;">Buy-in: {{ fmt(table.max_buy_in) }} Zoo / ván</div>
       </div>
-      <div class="side-card">
-        <h6><i class="fas fa-trophy mr-1"></i> Hand Rankings</h6>
-        <div style="font-size:11px;line-height:1.8;color:#bbb;">
-          <div>Royal Flush</div><div>Straight Flush</div><div>4 of a Kind</div>
-          <div>Full House</div><div>Flush</div><div>Straight</div>
-          <div>3 of a Kind</div><div>Two Pair</div><div>One Pair</div><div>High Card</div>
+      <!-- Chat panel (game view) -->
+      <div class="side-card pk-chat-panel">
+        <h6><i class="fas fa-comments mr-1"></i> Chat</h6>
+        <div class="pk-chat-messages" ref="chatBox">
+          <div v-for="m in chatMessages" :key="m.id"
+               :class="['pk-chat-msg', m.user_id === myUserId ? 'pk-chat-mine' : '']">
+            <div class="pk-chat-meta">
+              <span class="pk-chat-name">{{ m.user_id === myUserId ? 'Bạn' : m.name }}</span>
+              <span class="pk-chat-time">{{ m.time }}</span>
+            </div>
+            <div class="pk-chat-bubble">{{ m.message }}</div>
+          </div>
+          <div v-if="chatMessages.length === 0" class="pk-chat-empty">Chưa có tin nhắn...</div>
+        </div>
+        <div class="pk-chat-input-row">
+          <input
+            v-model="chatInput"
+            class="pk-chat-input"
+            placeholder="Nhập tin nhắn..."
+            maxlength="500"
+            @keydown.enter.prevent="sendChatMessage"
+            :disabled="chatSending"
+          >
+          <button class="pk-chat-send" @click="sendChatMessage" :disabled="chatSending || !chatInput.trim()">
+            <i class="fas fa-paper-plane"></i>
+          </button>
         </div>
       </div>
     </div>
@@ -331,6 +382,11 @@ export default {
             raiseMin:     0,
             raiseMax:     10000,
             raiseStep:    100,
+
+            // Chat
+            chatMessages: [],
+            chatInput:    '',
+            chatSending:  false,
         };
     },
 
@@ -441,6 +497,7 @@ export default {
     mounted() {
         this._intentionalLeave = false;
         this.loadState();
+        this.loadChatMessages();
 
         if (typeof window.initEcho === 'function') window.initEcho();
         if (window.Echo) {
@@ -655,6 +712,8 @@ export default {
                 if (myState) this.render(myState);
             } else if (e.type === 'refresh') {
                 this.loadState();
+            } else if (e.type === 'chat_message' && e.chat_message) {
+                this.pushChatMessage(e.chat_message);
             }
         },
 
@@ -684,6 +743,42 @@ export default {
                 this.$refs.leaveForm.submit();
             }
         },
+
+        // ── Chat ───────────────────────────────────────────────────────────
+        loadChatMessages() {
+            fetch(this.routes.chatMessages)
+                .then(r => r.json())
+                .then(data => {
+                    this.chatMessages = data.messages || [];
+                    this.$nextTick(() => this.scrollChatToBottom());
+                });
+        },
+        sendChatMessage() {
+            const text = this.chatInput.trim();
+            if (!text) return;
+            this.chatSending = true;
+            this.chatInput   = '';
+            fetch(this.routes.chatSend, {
+                method:  'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': this.csrf },
+                body:    JSON.stringify({ message: text }),
+            })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.error) window.notify && window.notify('error', data.error);
+                })
+                .catch(() => window.notify && window.notify('error', 'Không thể gửi tin nhắn.'))
+                .finally(() => { this.chatSending = false; });
+        },
+        pushChatMessage(msg) {
+            this.chatMessages.push(msg);
+            if (this.chatMessages.length > 200) this.chatMessages.shift();
+            this.$nextTick(() => this.scrollChatToBottom());
+        },
+        scrollChatToBottom() {
+            const box = this.$refs.chatBox;
+            if (box) box.scrollTop = box.scrollHeight;
+        },
     },
 };
 </script>
@@ -699,6 +794,70 @@ export default {
     border-radius: 8px;
     padding: 8px 14px;
 }
+/* ── Chat ───────────────────────────────────────────────── */
+.pk-chat-panel {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.pk-chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-height: 100px;
+  max-height: 150px;
+}
+.pk-chat-empty { color: #6c757d; font-size: 11px; text-align: center; margin: auto; }
+.pk-chat-msg { display: flex; flex-direction: column; gap: 2px; max-width: 90%; }
+.pk-chat-msg.pk-chat-mine { align-self: flex-end; align-items: flex-end; }
+.pk-chat-meta { display: flex; gap: 5px; align-items: baseline; }
+.pk-chat-name { font-size: 10px; font-weight: 700; color: #63b3ed; }
+.pk-chat-mine .pk-chat-name { color: #f6c23e; }
+.pk-chat-time { font-size: 9px; color: #6c757d; }
+.pk-chat-bubble {
+  background: rgba(255,255,255,.07);
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 8px;
+  padding: 4px 8px;
+  font-size: 12px;
+  color: #ddd;
+  word-break: break-word;
+}
+.pk-chat-mine .pk-chat-bubble {
+  background: rgba(246,194,62,.1);
+  border-color: rgba(246,194,62,.2);
+}
+.pk-chat-input-row {
+  display: flex;
+  border-top: 1px solid rgba(255,255,255,.08);
+  margin-top: 4px;
+}
+.pk-chat-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #ddd;
+  padding: 6px 8px;
+  font-size: 12px;
+}
+.pk-chat-input::placeholder { color: #6c757d; font-size: 11px; }
+.pk-chat-send {
+  background: transparent;
+  border: none;
+  border-left: 1px solid rgba(255,255,255,.08);
+  color: #f6c23e;
+  padding: 6px 10px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: background .15s;
+}
+.pk-chat-send:hover:not(:disabled) { background: rgba(246,194,62,.1); }
+.pk-chat-send:disabled { color: #555; cursor: default; }
+
 .pk-loading-overlay {
     position: fixed;
     inset: 0;

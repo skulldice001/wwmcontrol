@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Events\PokerRoomUpdated;
 use App\Jobs\AutoFoldJob;
 use App\Models\PokerGame;
+use App\Models\PokerMessage;
 use App\Models\PokerTable;
 use App\Models\User;
 use App\Services\Poker\HandEvaluator;
@@ -291,6 +292,64 @@ class PokerGameController extends Controller
             User::whereIn('id', $humanIds)->decrement('z_coins', $buyIn);
             return true;
         });
+    }
+
+    // ── Chat ──────────────────────────────────────────────────────────────
+
+    /** GET {table}/chat — fetch last 100 messages */
+    public function messages(PokerTable $table)
+    {
+        $messages = PokerMessage::where('table_id', $table->id)
+            ->with('user:id,name,discord_avatar')
+            ->latest()
+            ->take(100)
+            ->get()
+            ->reverse()
+            ->values()
+            ->map(fn($m) => [
+                'id'      => $m->id,
+                'user_id' => $m->user_id,
+                'name'    => $m->user?->name ?? 'Unknown',
+                'avatar'  => $m->user?->discord_avatar ?? null,
+                'message' => $m->message,
+                'time'    => $m->created_at->format('H:i'),
+            ]);
+
+        return response()->json(['messages' => $messages]);
+    }
+
+    /** POST {table}/chat — send a chat message */
+    public function sendMessage(Request $request, PokerTable $table)
+    {
+        $request->validate(['message' => 'required|string|max:500']);
+
+        $user = Auth::user();
+
+        if (!$table->players()->where('user_id', $user->id)->exists()) {
+            return response()->json(['error' => 'Not at table'], 403);
+        }
+
+        $msg = PokerMessage::create([
+            'table_id' => $table->id,
+            'user_id'  => $user->id,
+            'message'  => $request->message,
+        ]);
+
+        $payload = [
+            'type'    => 'chat_message',
+            'chat_message' => [
+                'id'      => $msg->id,
+                'user_id' => $user->id,
+                'name'    => $user->name,
+                'avatar'  => $user->discord_avatar ?? null,
+                'message' => $msg->message,
+                'time'    => $msg->created_at->format('H:i'),
+            ],
+        ];
+
+        event(new PokerRoomUpdated($table->id, $payload));
+
+        return response()->json(['message' => $payload['chat_message']]);
     }
 
     /** Credit each human player their final chip count at showdown. */

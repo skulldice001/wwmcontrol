@@ -133,6 +133,8 @@ Route::middleware('auth')->group(function () {
     Route::post('/entertainment/poker/{table}/game/start',   [PokerGameController::class, 'start'])->name('entertainment.poker.game.start');
     Route::get('/entertainment/poker/{table}/game/state',    [PokerGameController::class, 'state'])->name('entertainment.poker.game.state');
     Route::post('/entertainment/poker/{table}/game/action',  [PokerGameController::class, 'action'])->name('entertainment.poker.game.action');
+    Route::get('/entertainment/poker/{table}/chat',          [PokerGameController::class, 'messages'])->name('entertainment.poker.chat.index');
+    Route::post('/entertainment/poker/{table}/chat',         [PokerGameController::class, 'sendMessage'])->name('entertainment.poker.chat.send');
 
     // Zoo-coin routes
     Route::post('/zoo-coins/transfer', [\App\Http\Controllers\ZooCoinController::class, 'transfer'])->name('zoo.transfer');

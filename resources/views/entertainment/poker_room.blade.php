@@ -242,12 +242,14 @@
 <script>
 window.__pkTable  = {!! json_encode($table, JSON_HEX_TAG | JSON_HEX_APOS) !!};
 window.__pkRoutes = {!! json_encode([
-    'lobby'  => route('entertainment.poker'),
-    'leave'  => route('entertainment.poker.leave',       $table),
-    'ready'  => route('entertainment.poker.ready',       $table),
-    'start'  => route('entertainment.poker.game.start',  $table),
-    'state'  => route('entertainment.poker.game.state',  $table),
-    'action' => route('entertainment.poker.game.action', $table),
+    'lobby'        => route('entertainment.poker'),
+    'leave'        => route('entertainment.poker.leave',       $table),
+    'ready'        => route('entertainment.poker.ready',       $table),
+    'start'        => route('entertainment.poker.game.start',  $table),
+    'state'        => route('entertainment.poker.game.state',  $table),
+    'action'       => route('entertainment.poker.game.action', $table),
+    'chatMessages' => route('entertainment.poker.chat.index',  $table),
+    'chatSend'     => route('entertainment.poker.chat.send',   $table),
 ], JSON_HEX_TAG | JSON_HEX_APOS) !!};
 window.__pkMsg    = {!! json_encode([
     'confirmLeave'   => __('messages.poker_confirm_leave'),
