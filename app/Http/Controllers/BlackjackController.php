@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Events\BlackjackRoomUpdated;
 use App\Events\BlackjackTableUpdated;
-use App\Models\BlackjackGame;
+use App\Models\BlackjackRound;
 use App\Models\BlackjackTable;
 use App\Services\Blackjack\BlackjackEngine;
 use Illuminate\Http\Request;
@@ -30,7 +30,7 @@ class BlackjackController extends Controller
 
         $table = BlackjackTable::create($data);
 
-        // Auto-join creator
+        // Auto-join creator (no role yet)
         $user = Auth::user();
         $table->players()->attach($user->id, ['joined_at' => now()]);
         $table->current_players = 1;
@@ -46,7 +46,6 @@ class BlackjackController extends Controller
     {
         $user = Auth::user();
 
-        // Already at this table → redirect in
         if ($table->players()->where('user_id', $user->id)->exists()) {
             return response()->json(['redirect' => route('entertainment.blackjack.show', $table)]);
         }
@@ -64,13 +63,18 @@ class BlackjackController extends Controller
             event(new BlackjackTableUpdated($other));
         }
 
-        if ($table->current_players >= $table->max_players) {
+        // max_players = player seats only (dealer is extra)
+        $playerCount = $table->players()
+            ->wherePivot('role', 'player')
+            ->count();
+
+        if ($playerCount >= $table->max_players) {
             return response()->json(['message' => __('messages.table_full')], 422);
         }
 
-        $table->players()->attach($user->id, ['joined_at' => now()]);
+        $table->players()->attach($user->id, ['joined_at' => now(), 'role' => 'player']);
         $table->current_players = $table->players()->count();
-        $table->status          = $table->current_players >= $table->max_players ? 'full' : 'playing';
+        $table->status          = 'playing';
         $table->save();
 
         event(new BlackjackTableUpdated($table));
@@ -86,7 +90,6 @@ class BlackjackController extends Controller
         $table->players()->detach($user->id);
         $table->current_players = $table->players()->count();
 
-        // Delete user-created tables when empty; keep preset tables
         if ($table->current_players <= 0 && !$table->is_preset) {
             event(new BlackjackTableUpdated($table->fill(['status' => 'closed'])));
             $table->delete();
@@ -105,54 +108,80 @@ class BlackjackController extends Controller
     {
         $user = Auth::user();
 
-        // Must be seated at the table
         if (!$table->players()->where('user_id', $user->id)->exists()) {
             return redirect()->route('entertainment.blackjack')
                 ->with('error', __('messages.bj_not_at_table'));
         }
 
-        $players = $table->players()->get();
-        return view('entertainment.blackjack_room', compact('table', 'players'));
+        $pivot = $table->players()->where('user_id', $user->id)->first()->pivot;
+
+        return view('entertainment.blackjack_room', [
+            'table'   => $table,
+            'myRole'  => $pivot->role  ?? 'player',
+            'mySeat'  => $pivot->seat  ?? null,
+        ]);
     }
 
-    // ── Gameplay ──────────────────────────────────────────────────────────
+    // ── Lobby: role/seat selection + ready ────────────────────────────────
 
-    public function state(BlackjackTable $table)
+    /**
+     * POST {table}/role — choose role and seat before ready
+     */
+    public function chooseRole(Request $request, BlackjackTable $table)
     {
-        $user  = Auth::user();
-        $fresh = $user->fresh();
-        $base  = [
-            'z_coins' => $fresh->z_coins - $fresh->z_coins_frozen,
-            'min_bet' => $table->min_bet,
-            'max_bet' => $table->max_bet,
-        ];
+        $request->validate([
+            'role' => 'required|in:player,dealer',
+            'seat' => 'nullable|integer|min:1|max:7',
+        ]);
 
-        $game = BlackjackGame::where('user_id', $user->id)
-            ->where('blackjack_table_id', $table->id)
-            ->latest()->first();
+        $user = Auth::user();
+        $role = $request->role;
+        $seat = $role === 'dealer' ? 0 : (int) $request->seat;
 
-        if (!$game) {
-            // Check if this player has already gone through the lobby
-            $pivotPlayer = $table->players()->where('user_id', $user->id)->first();
-            $isReady = $pivotPlayer && $pivotPlayer->pivot->is_ready;
-
-            if (!$isReady) {
-                // Show lobby waiting room
-                return response()->json(array_merge($base, [
-                    'phase'        => 'lobby',
-                    'players'      => $this->getPlayersData($table),
-                    'countdown_at' => Cache::get("bj_countdown_{$table->id}"),
-                ]));
-            }
-
-            // Player ready but no game yet → straight to betting
-            return response()->json(array_merge($base, ['phase' => 'betting']));
+        if (!$table->players()->where('user_id', $user->id)->exists()) {
+            return response()->json(['error' => 'Not at table'], 403);
         }
 
-        $state = BlackjackEngine::clientState($game, $user);
-        return response()->json(array_merge($base, ['state' => $state]));
+        // Validate dealer slot availability
+        if ($role === 'dealer') {
+            $existingDealer = $table->players()
+                ->wherePivot('role', 'dealer')
+                ->where('user_id', '!=', $user->id)
+                ->exists();
+            if ($existingDealer) {
+                return response()->json(['error' => __('messages.bj_dealer_taken')], 422);
+            }
+        }
+
+        // Validate seat availability for player
+        if ($role === 'player') {
+            if (!$seat || $seat < 1 || $seat > 7) {
+                return response()->json(['error' => 'Invalid seat number'], 422);
+            }
+            $seatTaken = $table->players()
+                ->wherePivot('seat', $seat)
+                ->where('user_id', '!=', $user->id)
+                ->exists();
+            if ($seatTaken) {
+                return response()->json(['error' => __('messages.bj_seat_taken')], 422);
+            }
+        }
+
+        $table->players()->updateExistingPivot($user->id, [
+            'role'     => $role,
+            'seat'     => $seat,
+            'is_ready' => false, // reset ready on role change
+        ]);
+
+        $players = $this->getPlayersData($table);
+        event(new BlackjackRoomUpdated($table->id, 'ready_update', $players->toArray()));
+
+        return response()->json(['players' => $players]);
     }
 
+    /**
+     * POST {table}/ready — toggle ready
+     */
     public function ready(BlackjackTable $table)
     {
         $user        = Auth::user();
@@ -162,15 +191,22 @@ class BlackjackController extends Controller
             return response()->json(['error' => 'Not at table'], 403);
         }
 
-        // Toggle ready
+        // Must have a role and seat chosen
+        if (!$pivotPlayer->pivot->role || ($pivotPlayer->pivot->role === 'player' && !$pivotPlayer->pivot->seat)) {
+            return response()->json(['error' => __('messages.bj_choose_role_first')], 422);
+        }
+
         $isReady = !$pivotPlayer->pivot->is_ready;
         $table->players()->updateExistingPivot($user->id, ['is_ready' => $isReady]);
 
         $players     = $this->getPlayersData($table);
-        $allReady    = $players->every(fn($p) => $p['is_ready']);
         $countdownAt = null;
 
-        if ($allReady && $players->count() >= 2) {
+        // Start condition: 1 ready dealer + ≥1 ready player
+        $readyDealer  = $players->first(fn($p) => $p['role'] === 'dealer' && $p['is_ready']);
+        $readyPlayers = $players->filter(fn($p) => $p['role'] === 'player' && $p['is_ready']);
+
+        if ($readyDealer && $readyPlayers->count() >= 1) {
             $countdownAt = now()->addSeconds(5)->timestamp;
             Cache::put("bj_countdown_{$table->id}", $countdownAt, 30);
             event(new BlackjackRoomUpdated($table->id, 'countdown_start', $players->toArray(), $countdownAt));
@@ -185,46 +221,178 @@ class BlackjackController extends Controller
         ]);
     }
 
-    private function getPlayersData(BlackjackTable $table): \Illuminate\Support\Collection
+    // ── Gameplay ──────────────────────────────────────────────────────────
+
+    /**
+     * POST {table}/game/start — dealer starts the round
+     */
+    public function startRound(BlackjackTable $table)
     {
-        return $table->players()
-            ->withPivot('is_ready')
-            ->get()
-            ->map(fn($p) => [
-                'id'       => $p->id,
-                'name'     => $p->name,
-                'is_ready' => (bool) $p->pivot->is_ready,
-            ]);
+        $user  = Auth::user();
+        $pivot = $table->players()->where('user_id', $user->id)->first()?->pivot;
+
+        if (!$pivot || $pivot->role !== 'dealer') {
+            return response()->json(['error' => 'Only the dealer can start the round'], 403);
+        }
+
+        // Validate start conditions
+        $players     = $this->getPlayersData($table);
+        $readyDealer = $players->first(fn($p) => $p['role'] === 'dealer' && $p['is_ready']);
+        $readyCount  = $players->filter(fn($p) => $p['role'] === 'player' && $p['is_ready'])->count();
+
+        if (!$readyDealer || $readyCount < 1) {
+            return response()->json(['error' => __('messages.bj_not_enough_players')], 422);
+        }
+
+        // Clear any existing active round
+        $table->rounds()->whereNotIn('phase', ['finished'])->delete();
+        Cache::forget("bj_countdown_{$table->id}");
+
+        // Reset all ready flags
+        $table->players()->each(function ($p) use ($table) {
+            $table->players()->updateExistingPivot($p->id, ['is_ready' => false]);
+        });
+
+        $round = BlackjackEngine::startRound($table);
+
+        $clientState = BlackjackEngine::clientState($round, $user);
+        event(new BlackjackRoomUpdated($table->id, 'round_started', [], null, $clientState));
+
+        return response()->json(['round' => $clientState]);
     }
 
+    /**
+     * GET {table}/game/state — returns current state
+     */
+    public function state(BlackjackTable $table)
+    {
+        $user  = Auth::user();
+        $fresh = $user->fresh();
+
+        $pivot = $table->players()->where('user_id', $user->id)->first()?->pivot;
+
+        $base = [
+            'z_coins' => $fresh->z_coins - $fresh->z_coins_frozen,
+            'min_bet' => $table->min_bet,
+            'max_bet' => $table->max_bet,
+            'my_role' => $pivot?->role,
+            'my_seat' => $pivot?->seat,
+        ];
+
+        $round = $table->activeRound();
+
+        if (!$round) {
+            return response()->json(array_merge($base, [
+                'phase'        => 'lobby',
+                'players'      => $this->getPlayersData($table),
+                'countdown_at' => Cache::get("bj_countdown_{$table->id}"),
+            ]));
+        }
+
+        $clientState = BlackjackEngine::clientState($round, $user);
+        return response()->json(array_merge($base, ['round' => $clientState]));
+    }
+
+    /**
+     * POST {table}/game/deal — player places bet
+     */
     public function deal(Request $request, BlackjackTable $table)
     {
         $request->validate(['bet' => 'required|integer|min:1']);
-        $result = BlackjackEngine::deal($table, Auth::id(), (int) $request->bet);
+
+        $round = $table->activeRound();
+        if (!$round || $round->phase !== 'betting') {
+            return response()->json(['error' => 'Not in betting phase'], 422);
+        }
+
+        $result = BlackjackEngine::placeBet($round, Auth::id(), (int) $request->bet);
 
         if (!$result['ok']) {
             return response()->json(['error' => $result['error']], 422);
         }
 
-        $state = BlackjackEngine::clientState($result['game'], Auth::user());
-        return response()->json(['state' => $state]);
+        $round       = $result['round'];
+        $clientState = BlackjackEngine::clientState($round, Auth::user());
+        event(new BlackjackRoomUpdated(
+            $table->id,
+            $round->phase === 'player_turns' ? 'cards_dealt' : 'bet_placed',
+            [], null, $clientState
+        ));
+
+        return response()->json(['round' => $clientState]);
     }
 
+    /**
+     * POST {table}/game/action — hit | stand | double
+     */
     public function action(Request $request, BlackjackTable $table)
     {
         $request->validate(['action' => 'required|in:hit,stand,double']);
 
-        $user = Auth::user();
-        $game = BlackjackGame::where('user_id', $user->id)
-            ->where('blackjack_table_id', $table->id)
-            ->latest()->first();
-
-        if (!$game || $game->state['phase'] !== 'playing') {
-            return response()->json(['error' => __('messages.bj_no_active_hand')], 422);
+        $round = $table->activeRound();
+        if (!$round) {
+            return response()->json(['error' => 'No active round'], 422);
         }
 
-        $game  = BlackjackEngine::processAction($game, $request->action);
-        $state = BlackjackEngine::clientState($game, $user);
-        return response()->json(['state' => $state]);
+        $result = BlackjackEngine::processAction($round, Auth::id(), $request->action);
+
+        if (!$result['ok']) {
+            return response()->json(['error' => $result['error']], 422);
+        }
+
+        $round       = $result['round'];
+        $clientState = BlackjackEngine::clientState($round, Auth::user());
+
+        $eventType = match ($round->phase) {
+            'dealer_turn' => 'dealer_turn',
+            'finished'    => 'round_finished',
+            default       => 'player_acted',
+        };
+
+        event(new BlackjackRoomUpdated($table->id, $eventType, [], null, $clientState));
+
+        return response()->json(['round' => $clientState]);
+    }
+
+    /**
+     * POST {table}/game/next — dealer starts next round
+     */
+    public function nextRound(BlackjackTable $table)
+    {
+        $user  = Auth::user();
+        $pivot = $table->players()->where('user_id', $user->id)->first()?->pivot;
+
+        if (!$pivot || $pivot->role !== 'dealer') {
+            return response()->json(['error' => 'Only the dealer can start next round'], 403);
+        }
+
+        $round = $table->activeRound();
+        if (!$round || $round->phase !== 'finished') {
+            return response()->json(['error' => 'Round not finished yet'], 422);
+        }
+
+        $round = BlackjackEngine::startRound($table);
+
+        $clientState = BlackjackEngine::clientState($round, $user);
+        event(new BlackjackRoomUpdated($table->id, 'round_started', [], null, $clientState));
+
+        return response()->json(['round' => $clientState]);
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────────────
+
+    private function getPlayersData(BlackjackTable $table): \Illuminate\Support\Collection
+    {
+        return $table->players()
+            ->withPivot('is_ready', 'role', 'seat')
+            ->get()
+            ->map(fn($p) => [
+                'id'       => $p->id,
+                'name'     => $p->name,
+                'avatar'   => $p->discord_avatar ?? null,
+                'is_ready' => (bool) $p->pivot->is_ready,
+                'role'     => $p->pivot->role ?? 'player',
+                'seat'     => $p->pivot->seat,
+            ]);
     }
 }

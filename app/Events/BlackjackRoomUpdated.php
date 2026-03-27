@@ -6,18 +6,30 @@ use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Events\Dispatchable;
-use Illuminate\Queue\SerializesModels;
 
 class BlackjackRoomUpdated implements ShouldBroadcastNow
 {
-    use Dispatchable, InteractsWithSockets, SerializesModels;
+    use Dispatchable, InteractsWithSockets;
+
+    public int    $tableId;
+    public string $type;
+    public array  $players;
+    public ?int   $countdownAt;
+    public array  $roundState;
 
     public function __construct(
-        public int     $tableId,
-        public string  $type,        // 'ready_update' | 'countdown_start' | 'countdown_cancel'
-        public array   $players,
-        public ?int    $countdownAt = null,
-    ) {}
+        int    $tableId,
+        string $type,
+        array  $players      = [],
+        ?int   $countdownAt  = null,
+        array  $roundState   = []
+    ) {
+        $this->tableId     = $tableId;
+        $this->type        = $type;
+        $this->players     = $players;
+        $this->countdownAt = $countdownAt;
+        $this->roundState  = $roundState;
+    }
 
     public function broadcastOn(): array
     {
@@ -30,6 +42,7 @@ class BlackjackRoomUpdated implements ShouldBroadcastNow
             'type'         => $this->type,
             'players'      => $this->players,
             'countdown_at' => $this->countdownAt,
+            'round_state'  => $this->roundState,
         ];
     }
 }
