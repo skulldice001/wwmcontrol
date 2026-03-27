@@ -8,9 +8,9 @@ on:
 
 jobs:
   # ---------------------------------------------------------------------------
-  # Job 1: Build & Test (CI)
+  # Job 1: Test (CI) – không build frontend, server tự build
   # ---------------------------------------------------------------------------
-  build-test:
+  test:
     runs-on: ubuntu-latest
 
     steps:
@@ -40,29 +40,10 @@ jobs:
         mkdir -p database
         touch database/database.sqlite
 
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '20'
-        cache: 'npm'
-
-    - name: Install NPM Dependencies
-      run: npm ci
-
-    - name: Build Frontend Assets
-      run: npm run build
-      env:
-        VITE_REVERB_APP_KEY: mock_key
-        VITE_REVERB_HOST: localhost
-        VITE_REVERB_PORT: 8080
-        VITE_REVERB_SCHEME: http
-
-    - name: Ensure Vite Manifest Exists
+    - name: Create fake Vite manifest (for tests that render views)
       run: |
         mkdir -p public/build
-        if [ ! -f public/build/manifest.json ]; then
-          echo '{}' > public/build/manifest.json
-        fi
+        echo '{"resources/css/app.css":{"file":"assets/app.css","src":"resources/css/app.css"},"resources/js/app.js":{"file":"assets/app.js","src":"resources/js/app.js"}}' > public/build/manifest.json
 
     - name: Execute Tests (Unit/Feature)
       env:
@@ -71,10 +52,10 @@ jobs:
       run: php artisan test
 
   # ---------------------------------------------------------------------------
-  # Job 2: Deploy to Server (CD)
+  # Job 2: Deploy to Server (CD) – pull code rồi build trên server
   # ---------------------------------------------------------------------------
   deploy:
-    needs: build-test
+    needs: test
     if: github.ref == 'refs/heads/poker_setup_V3'
     runs-on: ubuntu-latest
 
@@ -87,6 +68,7 @@ jobs:
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         port: 2018
         script: |
+          set -e
           cd /var/www/wwmcontrol
 
           # Pull latest code
@@ -94,15 +76,11 @@ jobs:
           git checkout poker_setup_V3
           git pull origin poker_setup_V3
 
-          # Install/update PHP dependencies
+          # Install PHP dependencies
           composer install --no-dev --no-interaction --no-progress --prefer-dist --optimize-autoloader
 
-          # Install NPM & build frontend (với đúng env production)
-          npm ci --prefer-offline
-          VITE_REVERB_APP_KEY=$(grep REVERB_APP_KEY .env | cut -d '=' -f2) \
-          VITE_REVERB_HOST=api.thezotopia.online \
-          VITE_REVERB_PORT=443 \
-          VITE_REVERB_SCHEME=https \
+          # Build frontend trên server (đọc VITE_* từ .env của server)
+          npm install --ignore-scripts
           npm run build
 
           # Run database migrations
@@ -120,5 +98,4 @@ jobs:
           chmod -R 775 storage bootstrap/cache
 
           # Restart background workers
-          php artisan queue:restart
           php artisan reverb:restart
