@@ -8,6 +8,7 @@ use App\Models\PokerGame;
 use App\Models\PokerMessage;
 use App\Models\PokerTable;
 use App\Models\User;
+use App\Models\ZooCoinTransaction;
 use App\Services\Poker\HandEvaluator;
 use App\Services\Poker\GameEngine;
 use Illuminate\Http\Request;
@@ -293,7 +294,18 @@ class PokerGameController extends Controller
                 $available = $user->z_coins - $user->z_coins_frozen;
                 if ($available < $buyIn) return false;
             }
-            User::whereIn('id', $humanIds)->decrement('z_coins', $buyIn);
+            foreach ($users as $user) {
+                $balBefore = $user->z_coins;
+                $user->decrement('z_coins', $buyIn);
+                ZooCoinTransaction::create([
+                    'user_id'       => $user->id,
+                    'type'          => 'poker_bet',
+                    'amount'        => $buyIn,
+                    'balance_before'=> $balBefore,
+                    'balance_after' => $balBefore - $buyIn,
+                    'note'          => 'Poker buy-in',
+                ]);
+            }
             return true;
         });
     }
@@ -363,7 +375,17 @@ class PokerGameController extends Controller
             if ($p['is_ai'] || !in_array($p['id'], $humanIds)) continue;
             $finalChips = (int) $p['chips'];
             if ($finalChips > 0) {
-                User::where('id', $p['id'])->increment('z_coins', $finalChips);
+                $user      = User::find($p['id']);
+                $balBefore = $user->z_coins;
+                $user->increment('z_coins', $finalChips);
+                ZooCoinTransaction::create([
+                    'user_id'        => $user->id,
+                    'type'           => 'poker_payout',
+                    'amount'         => $finalChips,
+                    'balance_before' => $balBefore,
+                    'balance_after'  => $balBefore + $finalChips,
+                    'note'           => 'Poker payout',
+                ]);
             }
         }
     }
