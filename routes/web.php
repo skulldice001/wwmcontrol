@@ -125,6 +125,8 @@ Route::middleware('auth')->group(function () {
     Route::post('/entertainment/blackjack/{table}/game/action',      [BlackjackController::class, 'action'])->name('entertainment.blackjack.game.action');
     Route::post('/entertainment/blackjack/{table}/game/next',          [BlackjackController::class, 'nextRound'])->name('entertainment.blackjack.game.next');
     Route::post('/entertainment/blackjack/{table}/game/dealer-action', [BlackjackController::class, 'dealerAction'])->name('entertainment.blackjack.game.dealer-action');
+    Route::get('/entertainment/blackjack/{table}/chat',                [BlackjackController::class, 'messages'])->name('entertainment.blackjack.chat.index');
+    Route::post('/entertainment/blackjack/{table}/chat',               [BlackjackController::class, 'sendMessage'])->name('entertainment.blackjack.chat.send');
 
     // Poker game actions (inside a room)
     Route::post('/entertainment/poker/{table}/ready',        [PokerGameController::class, 'ready'])->name('entertainment.poker.ready');
