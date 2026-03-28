@@ -439,7 +439,9 @@ export default {
         },
         potText() {
             const pot = this.gameState ? (this.gameState.pot || 0) : 0;
-            return pot > 0 ? `${this.msg.potDisplay} ${this.fmtChips(pot)}` : '';
+            if (pot <= 0) return '';
+            const potZ = Math.floor(pot / 100);
+            return `${this.msg.potDisplay} ${this.fmt(potZ)} Zoo`;
         },
         seatData() {
             const empty = Array.from({ length: 6 }, (_, i) => ({
@@ -491,7 +493,9 @@ export default {
             const hand = this.winnerInfo.folded_win
                 ? this.msg.opponentsFolded
                 : `${this.msg.handLabel} <strong>${this.escHtml(this.winnerInfo.hand_name)}</strong>`;
-            return `${hand} &mdash; ${this.msg.potLabel} <strong>${this.fmtChips(this.winnerInfo.pot)}</strong>`;
+            // pot is in chips (100× big_blind scale); convert to Zoo for display
+            const potZ = Math.floor(this.winnerInfo.pot / 100);
+            return `${hand} &mdash; ${this.msg.potLabel} <strong>${this.fmt(potZ)} Zoo</strong>`;
         },
         reversedLog() {
             return (this.actionLog || []).slice().reverse();
