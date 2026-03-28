@@ -491,7 +491,7 @@ export default {
     chooseRole(role, seat) {
       fetch(this.routes.role, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': this.csrf },
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': this.csrf },
         body: JSON.stringify({ role, seat }),
       })
         .then(r => r.json())
@@ -523,7 +523,7 @@ export default {
       this.readyLoading = true;
       fetch(this.routes.ready, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': this.csrf },
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': this.csrf },
       })
         .then(r => r.json())
         .then(data => {
@@ -539,7 +539,7 @@ export default {
       this.starting = true;
       fetch(this.routes.start, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': this.csrf },
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': this.csrf },
       })
         .then(r => r.json())
         .then(data => {
@@ -575,7 +575,7 @@ export default {
       this.acting = true;
       fetch(this.routes.deal, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': this.csrf },
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': this.csrf },
         body: JSON.stringify({ bet }),
       })
         .then(r => r.json())
@@ -592,7 +592,7 @@ export default {
       this.acting = true;
       fetch(this.routes.action, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': this.csrf },
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': this.csrf },
         body: JSON.stringify({ action }),
       })
         .then(r => r.json())
@@ -609,7 +609,7 @@ export default {
       this.acting = true;
       fetch(this.routes.dealerAction, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': this.csrf },
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': this.csrf },
         body: JSON.stringify({ action }),
       })
         .then(r => r.json())
@@ -625,7 +625,7 @@ export default {
       this.starting = true;
       fetch(this.routes.next, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': this.csrf },
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': this.csrf },
       })
         .then(r => r.json())
         .then(data => {
@@ -691,7 +691,7 @@ export default {
       this.chatInput   = '';
       fetch(this.routes.chatSend, {
         method:  'POST',
-        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': this.csrf },
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': this.csrf },
         body:    JSON.stringify({ message: text }),
       })
         .then(r => r.json())
