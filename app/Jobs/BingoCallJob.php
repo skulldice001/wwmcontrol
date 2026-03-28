@@ -86,7 +86,7 @@ class BingoCallJob implements ShouldQueue
             $game->id,
             $state['current_index'],
             $state['call_started_at']
-        )->delay(now()->addSeconds(5));
+        )->delay(now()->addSeconds(8));
     }
 
     /**

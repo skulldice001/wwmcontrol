@@ -229,7 +229,7 @@ class BingoController extends Controller
 
         // Dispatch first call after 5 seconds
         BingoCallJob::dispatch($table->id, $game->id, 0, $startedAt)
-            ->delay(now()->addSeconds(5));
+            ->delay(now()->addSeconds(8));
 
         $seats = $this->buildSeats($players, $game);
 
