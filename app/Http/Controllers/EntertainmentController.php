@@ -149,11 +149,14 @@ class EntertainmentController extends Controller
             if ($updatedGame) {
                 // Settle Z-coins if the force-fold triggered showdown
                 if ($updatedGame->state['phase'] === 'showdown') {
+                    $bigBlind   = (int) ($updatedGame->state['big_blind'] ?? 1);
+                    $startStack = $bigBlind * 100;
                     foreach ($updatedGame->state['players'] as $p) {
                         if ($p['is_ai'] || !in_array($p['id'], $humanIds)) continue;
                         $finalChips = (int) $p['chips'];
-                        if ($finalChips > 0) {
-                            User::where('id', $p['id'])->increment('z_coins', $finalChips);
+                        $payout     = (int) floor($finalChips * $bigBlind / $startStack);
+                        if ($payout > 0) {
+                            User::where('id', $p['id'])->increment('z_coins', $payout);
                         }
                     }
                     // Reset ready flags so remaining players can start next hand
