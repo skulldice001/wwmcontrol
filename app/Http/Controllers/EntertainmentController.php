@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Events\PokerRoomUpdated;
 use App\Events\PokerTableUpdated;
+use App\Models\BingoTable;
 use App\Models\BlackjackTable;
 use App\Models\LotteryDraw;
 use App\Models\TaixiuTable;
@@ -26,6 +27,7 @@ class EntertainmentController extends Controller
             'poker'    => $this->tableStats(PokerTable::all()),
             'blackjack'=> $this->tableStats(BlackjackTable::all()),
             'taixiu'   => $this->tableStats(TaixiuTable::all()),
+            'bingo'    => $this->tableStats(BingoTable::all()),
             'lottery'  => [
                 'daily_pot'  => $daily?->total_pot ?? 0,
                 'weekly_pot' => $weekly?->total_pot ?? 0,

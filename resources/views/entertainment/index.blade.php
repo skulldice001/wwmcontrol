@@ -59,6 +59,19 @@
     user-select: none; color: #fff;
 }
 
+/* Bingo – deep teal */
+.ent-card-bingo {
+    background: linear-gradient(145deg, #021a1a 0%, #0a4a4a 55%, #021a1a 100%);
+}
+.ent-card-bingo .ent-suit-bg {
+    position: absolute; right: -6px; top: 50%; transform: translateY(-50%);
+    font-size: 90px; opacity: .1; line-height: 1; pointer-events: none;
+    user-select: none; color: #1abc9c; letter-spacing: 2px;
+}
+.ent-card-bingo .ent-card-tag { background: rgba(26,188,156,.15); color: #1abc9c; border: 1px solid rgba(26,188,156,.35); }
+.ent-card-bingo .ent-card-stripe { background: linear-gradient(90deg,#0e6655,#1abc9c,#0e6655); }
+.ent-card-bingo .ent-play-btn { background: linear-gradient(90deg,#0e6655,#1abc9c); color: #fff; }
+
 /* Lottery – deep purple/gold */
 .ent-card-lottery {
     background: linear-gradient(145deg, #1a0533 0%, #4a1a7a 55%, #1a0533 100%);
@@ -203,6 +216,36 @@
             </div>
             <span class="ent-play-btn">
                 <i class="fas fa-play"></i> {{ __('messages.play_now') }}
+            </span>
+        </div>
+    </a>
+
+    {{-- Bingo --}}
+    <a href="{{ route('entertainment.bingo') }}" class="ent-card ent-card-bingo">
+        <div class="ent-card-stripe"></div>
+        <div class="ent-suit-bg">B I N G O</div>
+        <div class="ent-card-body">
+            <div>
+                <div class="ent-card-tag">Bingo</div>
+                <div class="ent-card-title">Bingo Zoo</div>
+                <div class="ent-card-sub">5×5 · 75 số · Bắt đầu khi đủ 2 người</div>
+                <div class="ent-stats">
+                    <div class="ent-stat">
+                        <div class="ent-stat-num">{{ $stats['bingo']['total'] }}</div>
+                        <div class="ent-stat-lbl">{{ __('messages.tx_rooms_total') }}</div>
+                    </div>
+                    <div class="ent-stat">
+                        <div class="ent-stat-num" style="color:#1abc9c;">{{ $stats['bingo']['playing'] }}</div>
+                        <div class="ent-stat-lbl">{{ __('messages.tx_rooms_playing') }}</div>
+                    </div>
+                    <div class="ent-stat">
+                        <div class="ent-stat-num" style="color:#f6c23e;">{{ $stats['bingo']['waiting'] }}</div>
+                        <div class="ent-stat-lbl">{{ __('messages.tx_rooms_waiting') }}</div>
+                    </div>
+                </div>
+            </div>
+            <span class="ent-play-btn">
+                <i class="fas fa-th"></i> Chơi Ngay
             </span>
         </div>
     </a>

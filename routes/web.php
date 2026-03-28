@@ -87,6 +87,7 @@ use App\Http\Controllers\PokerGameController;
 use App\Http\Controllers\BlackjackController;
 use App\Http\Controllers\TaixiuController;
 use App\Http\Controllers\LotteryController;
+use App\Http\Controllers\BingoController;
 
 Route::middleware('auth')->group(function () {
     Route::get('/dashboard', function () {
@@ -151,6 +152,16 @@ Route::middleware('auth')->group(function () {
     Route::post('/entertainment/taixiu/{table}/game/bet',            [TaixiuController::class, 'bet'])->name('entertainment.taixiu.game.bet');
     Route::get('/entertainment/taixiu/{table}/chat',                 [TaixiuController::class, 'messages'])->name('entertainment.taixiu.chat.index');
     Route::post('/entertainment/taixiu/{table}/chat',                [TaixiuController::class, 'sendMessage'])->name('entertainment.taixiu.chat.send');
+
+    // Bingo
+    Route::get('/entertainment/bingo',                  [BingoController::class, 'index'])->name('entertainment.bingo');
+    Route::post('/entertainment/bingo',                 [BingoController::class, 'createTable'])->name('entertainment.bingo.create');
+    Route::get('/entertainment/bingo/{table}',          [BingoController::class, 'show'])->name('entertainment.bingo.show')
+        ->missing(fn () => redirect()->route('entertainment.bingo'));
+    Route::post('/entertainment/bingo/{table}/join',    [BingoController::class, 'joinTable'])->name('entertainment.bingo.join');
+    Route::delete('/entertainment/bingo/{table}/leave', [BingoController::class, 'leaveTable'])->name('entertainment.bingo.leave');
+    Route::post('/entertainment/bingo/{table}/ready',   [BingoController::class, 'ready'])->name('entertainment.bingo.ready');
+    Route::get('/entertainment/bingo/{table}/state',    [BingoController::class, 'state'])->name('entertainment.bingo.state');
 
     // Lottery
     Route::get('/entertainment/lottery',        [LotteryController::class, 'index'])->name('entertainment.lottery');
