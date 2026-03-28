@@ -1,0 +1,81 @@
+@extends('layouts.admin')
+
+@section('title', 'Xổ Số Zoo')
+
+@section('content')
+@include('partials.notify')
+<script>
+window.__lottery = {
+    daily: {!! json_encode([
+        'id'              => $daily->id,
+        'type'            => $daily->type,
+        'status'          => $daily->status,
+        'draw_at'         => $daily->draw_at->toIso8601String(),
+        'seconds_left'    => $daily->secondsUntilDraw(),
+        'winning_numbers' => $daily->winning_numbers,
+        'multiplier'      => $daily->multiplier,
+        'pick_count'      => $daily->pick_count,
+        'total_tickets'   => $daily->total_tickets,
+        'total_pot'       => $daily->total_pot,
+        'my_tickets'      => $dailyTickets->map(fn($t) => [
+            'id'            => $t->id,
+            'picked_number' => $t->picked_number,
+            'bet_amount'    => $t->bet_amount,
+            'is_winner'     => $t->is_winner,
+            'payout'        => $t->payout,
+        ])->values(),
+    ], JSON_HEX_TAG | JSON_HEX_APOS) !!},
+    weekly: {!! json_encode([
+        'id'              => $weekly->id,
+        'type'            => $weekly->type,
+        'status'          => $weekly->status,
+        'draw_at'         => $weekly->draw_at->toIso8601String(),
+        'seconds_left'    => $weekly->secondsUntilDraw(),
+        'winning_numbers' => $weekly->winning_numbers,
+        'multiplier'      => $weekly->multiplier,
+        'pick_count'      => $weekly->pick_count,
+        'total_tickets'   => $weekly->total_tickets,
+        'total_pot'       => $weekly->total_pot,
+        'my_tickets'      => $weeklyTickets->map(fn($t) => [
+            'id'            => $t->id,
+            'picked_number' => $t->picked_number,
+            'bet_amount'    => $t->bet_amount,
+            'is_winner'     => $t->is_winner,
+            'payout'        => $t->payout,
+        ])->values(),
+    ], JSON_HEX_TAG | JSON_HEX_APOS) !!},
+    recentDaily:  {!! json_encode($recentDaily->map(fn($d) => [
+        'id'              => $d->id,
+        'draw_at'         => $d->draw_at->format('d/m H:i'),
+        'winning_numbers' => $d->winning_numbers,
+        'total_tickets'   => $d->total_tickets,
+        'total_pot'       => $d->total_pot,
+        'total_payout'    => $d->total_payout,
+    ])->values(), JSON_HEX_TAG | JSON_HEX_APOS) !!},
+    recentWeekly: {!! json_encode($recentWeekly->map(fn($d) => [
+        'id'              => $d->id,
+        'draw_at'         => $d->draw_at->format('d/m H:i'),
+        'winning_numbers' => $d->winning_numbers,
+        'total_tickets'   => $d->total_tickets,
+        'total_pot'       => $d->total_pot,
+        'total_payout'    => $d->total_payout,
+    ])->values(), JSON_HEX_TAG | JSON_HEX_APOS) !!},
+    balance:  {{ $balance }},
+    routes: {
+        state:  '{{ route('entertainment.lottery.state') }}',
+        ticket: '{{ route('entertainment.lottery.ticket') }}',
+        back:   '{{ route('entertainment.index') }}',
+    },
+    csrf: '{{ csrf_token() }}',
+};
+</script>
+<lottery-lobby
+    :init-daily="window.__lottery.daily"
+    :init-weekly="window.__lottery.weekly"
+    :init-recent-daily="window.__lottery.recentDaily"
+    :init-recent-weekly="window.__lottery.recentWeekly"
+    :init-balance="window.__lottery.balance"
+    :routes="window.__lottery.routes"
+    :csrf="window.__lottery.csrf"
+></lottery-lobby>
+@endsection

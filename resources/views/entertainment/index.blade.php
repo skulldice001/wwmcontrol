@@ -59,6 +59,19 @@
     user-select: none; color: #fff;
 }
 
+/* Lottery – deep purple/gold */
+.ent-card-lottery {
+    background: linear-gradient(145deg, #1a0533 0%, #4a1a7a 55%, #1a0533 100%);
+}
+.ent-card-lottery .ent-suit-bg {
+    position: absolute; right: -6px; top: 50%; transform: translateY(-50%);
+    font-size: 100px; opacity: .1; line-height: 1; pointer-events: none;
+    user-select: none; color: #f0c040;
+}
+.ent-card-lottery .ent-card-tag { background: rgba(240,192,64,.15); color: #f0c040; border: 1px solid rgba(240,192,64,.35); }
+.ent-card-lottery .ent-card-stripe { background: linear-gradient(90deg,#7b2fbe,#f0c040,#7b2fbe); }
+.ent-card-lottery .ent-play-btn { background: linear-gradient(90deg,#7b2fbe,#a855f7); color: #fff; }
+
 /* Tài Xỉu – crimson red */
 .ent-card-taixiu {
     background: linear-gradient(145deg, #2e0606 0%, #8b1a1a 55%, #2e0606 100%);
@@ -190,6 +203,32 @@
             </div>
             <span class="ent-play-btn">
                 <i class="fas fa-play"></i> {{ __('messages.play_now') }}
+            </span>
+        </div>
+    </a>
+
+    {{-- Lottery --}}
+    <a href="{{ route('entertainment.lottery') }}" class="ent-card ent-card-lottery">
+        <div class="ent-card-stripe"></div>
+        <div class="ent-suit-bg">🎱</div>
+        <div class="ent-card-body">
+            <div>
+                <div class="ent-card-tag">Lottery</div>
+                <div class="ent-card-title">Xổ Số Zoo</div>
+                <div class="ent-card-sub">Hàng ngày ×10 · Hàng tuần ×70 · Số 01–45</div>
+                <div class="ent-stats">
+                    <div class="ent-stat">
+                        <div class="ent-stat-num" style="color:#f0c040;">{{ number_format($stats['lottery']['daily_pot']) }}</div>
+                        <div class="ent-stat-lbl">Quỹ hôm nay</div>
+                    </div>
+                    <div class="ent-stat">
+                        <div class="ent-stat-num" style="color:#a855f7;">{{ number_format($stats['lottery']['weekly_pot']) }}</div>
+                        <div class="ent-stat-lbl">Quỹ tuần</div>
+                    </div>
+                </div>
+            </div>
+            <span class="ent-play-btn">
+                <i class="fas fa-ticket-alt"></i> Mua Vé
             </span>
         </div>
     </a>
