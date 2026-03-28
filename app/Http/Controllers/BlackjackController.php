@@ -146,7 +146,7 @@ class BlackjackController extends Controller
     {
         $request->validate([
             'role' => 'required|in:player,dealer',
-            'seat' => 'nullable|integer|min:1|max:7',
+            'seat' => 'nullable|integer|min:0|max:7',
         ]);
 
         $user = Auth::user();
