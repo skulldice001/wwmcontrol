@@ -25,7 +25,7 @@
         <div class="lottery-card-body">
           <div class="lottery-badge">Hàng Ngày · 20:00</div>
           <div class="lottery-mult">×{{ daily.multiplier }}</div>
-          <div class="lottery-label">Rút {{ daily.pick_count }} số · Phạm vi 01–45</div>
+          <div class="lottery-label">Rút {{ daily.pick_count }} số · Phạm vi 01–99</div>
 
           <!-- Countdown -->
           <div class="lottery-countdown" v-if="daily.status === 'open'">
@@ -53,7 +53,7 @@
           <div v-if="daily.status === 'open' && !daily.my_tickets.length" class="lottery-form">
             <div class="lottery-number-grid">
               <button
-                v-for="n in 45" :key="n"
+                v-for="n in 99" :key="n"
                 :class="['lottery-num-btn', dailyPick === n ? 'selected' : '']"
                 @click="dailyPick = n"
               >{{ pad(n) }}</button>
@@ -106,7 +106,7 @@
         <div class="lottery-card-body">
           <div class="lottery-badge weekly">Hàng Tuần · Thứ 7 · 21:00</div>
           <div class="lottery-mult weekly">×{{ weekly.multiplier }}</div>
-          <div class="lottery-label">Rút {{ weekly.pick_count }} số · Phạm vi 01–45</div>
+          <div class="lottery-label">Rút {{ weekly.pick_count }} số · Phạm vi 01–99</div>
 
           <!-- Countdown -->
           <div class="lottery-countdown" v-if="weekly.status === 'open'">
@@ -134,7 +134,7 @@
           <div v-if="weekly.status === 'open' && !weekly.my_tickets.length" class="lottery-form">
             <div class="lottery-number-grid">
               <button
-                v-for="n in 45" :key="n"
+                v-for="n in 99" :key="n"
                 :class="['lottery-num-btn', weeklyPick === n ? 'selected' : '']"
                 @click="weeklyPick = n"
               >{{ pad(n) }}</button>
