@@ -32,13 +32,14 @@ class LotteryController extends Controller
             ->where('status', 'settled')
             ->orderByDesc('draw_at')->take(5)->get();
 
-        $balance = Auth::user()->z_coins;
+        $balance    = Auth::user()->z_coins;
+        $myHistory  = $this->myHistory($userId);
 
         return view('entertainment.lottery', compact(
             'daily', 'weekly',
             'dailyTickets', 'weeklyTickets',
             'recentDaily', 'recentWeekly',
-            'balance'
+            'balance', 'myHistory'
         ));
     }
 
@@ -56,6 +57,7 @@ class LotteryController extends Controller
             'balance'        => Auth::user()->z_coins,
             'recent_daily'   => $this->recentDraws('daily'),
             'recent_weekly'  => $this->recentDraws('weekly'),
+            'my_history'     => $this->myHistory($userId),
         ]);
     }
 
@@ -65,7 +67,7 @@ class LotteryController extends Controller
         $request->validate([
             'draw_id'       => 'required|integer',
             'picked_number' => 'required|integer|min:1|max:45',
-            'bet_amount'    => 'required|integer|min:10',
+            'bet_amount'    => 'required|integer|in:10,100,1000,10000',
         ]);
 
         $draw = LotteryDraw::find($request->draw_id);
@@ -75,6 +77,11 @@ class LotteryController extends Controller
 
         $user   = Auth::user();
         $amount = (int) $request->bet_amount;
+
+        // One ticket per draw per user
+        if (LotteryTicket::where('lottery_draw_id', $draw->id)->where('user_id', $user->id)->exists()) {
+            return response()->json(['error' => 'Bạn đã mua vé cho giải này rồi.'], 422);
+        }
 
         $ticket = DB::transaction(function () use ($user, $draw, $request, $amount) {
             $user = User::where('id', $user->id)->lockForUpdate()->first();
@@ -145,6 +152,25 @@ class LotteryController extends Controller
             'total_pot'       => $draw->total_pot,
             'my_tickets'      => $myTickets,
         ];
+    }
+
+    private function myHistory(int $userId): array
+    {
+        return LotteryTicket::where('user_id', $userId)
+            ->with(['draw:id,type,draw_at,winning_numbers,status'])
+            ->orderByDesc('created_at')
+            ->take(20)
+            ->get()
+            ->map(fn($t) => [
+                'id'             => $t->id,
+                'draw_type'      => $t->draw?->type,
+                'draw_at'        => $t->draw?->draw_at?->format('d/m H:i'),
+                'draw_status'    => $t->draw?->status,
+                'picked_number'  => $t->picked_number,
+                'bet_amount'     => $t->bet_amount,
+                'is_winner'      => $t->is_winner,
+                'payout'         => $t->payout,
+            ])->toArray();
     }
 
     private function recentDraws(string $type): array

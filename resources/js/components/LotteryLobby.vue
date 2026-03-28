@@ -25,14 +25,14 @@
         <div class="lottery-card-body">
           <div class="lottery-badge">Hàng Ngày · 20:00</div>
           <div class="lottery-mult">×{{ daily.multiplier }}</div>
-          <div class="lottery-label">Rút {{ daily.pick_count }} số · Phạm vi 1–45</div>
+          <div class="lottery-label">Rút {{ daily.pick_count }} số · Phạm vi 01–45</div>
 
           <!-- Countdown -->
           <div class="lottery-countdown" v-if="daily.status === 'open'">
             <i class="fas fa-clock mr-1"></i>
             <span class="lottery-countdown-val">{{ fmtCountdown(dailySeconds) }}</span>
           </div>
-          <div class="lottery-drawn-badge" v-else-if="daily.status !== 'open'">
+          <div class="lottery-drawn-badge" v-else>
             <i class="fas fa-check-circle mr-1"></i>
             Đã quay: <strong>{{ (daily.winning_numbers || []).map(n => pad(n)).join(' · ') }}</strong>
           </div>
@@ -49,8 +49,8 @@
             </div>
           </div>
 
-          <!-- Ticket form -->
-          <div v-if="daily.status === 'open'" class="lottery-form">
+          <!-- Ticket form — hidden if already bought -->
+          <div v-if="daily.status === 'open' && !daily.my_tickets.length" class="lottery-form">
             <div class="lottery-number-grid">
               <button
                 v-for="n in 45" :key="n"
@@ -58,29 +58,35 @@
                 @click="dailyPick = n"
               >{{ pad(n) }}</button>
             </div>
-            <div class="lottery-bet-row mt-2">
-              <input
-                type="number" v-model.number="dailyBet" :min="10" step="10"
-                class="form-control form-control-sm lottery-bet-input"
-                placeholder="Số Zoo cược"
-              >
+            <!-- Tier bet buttons -->
+            <div class="lottery-tiers mt-2">
               <button
-                class="btn btn-warning btn-sm lottery-buy-btn"
-                :disabled="!dailyPick || dailyBet < 10 || buying === 'daily'"
-                @click="buyTicket('daily')"
-              >
-                <span v-if="buying === 'daily'"><i class="fas fa-spinner fa-spin mr-1"></i></span>
-                <span v-else><i class="fas fa-ticket-alt mr-1"></i></span>
-                Mua vé
-              </button>
+                v-for="t in BET_TIERS" :key="t"
+                :class="['lottery-tier-btn', dailyBet === t ? 'selected' : '']"
+                @click="dailyBet = t"
+              >{{ t.toLocaleString() }}</button>
             </div>
             <div v-if="dailyPick" class="text-center mt-1" style="font-size:11px;color:#aaa;">
-              Số đã chọn: <strong style="color:#f6c23e;">{{ pad(dailyPick) }}</strong>
-              · Cược {{ dailyBet || 0 }} Zoo → Thắng {{ ((dailyBet || 0) * daily.multiplier).toLocaleString() }} Zoo
+              Số: <strong style="color:#f6c23e;">{{ pad(dailyPick) }}</strong>
+              · Cược <strong>{{ dailyBet.toLocaleString() }}</strong> Zoo
+              → Thắng <strong style="color:#f6c23e;">{{ (dailyBet * daily.multiplier).toLocaleString() }}</strong> Zoo
             </div>
+            <button
+              class="btn btn-warning btn-sm lottery-buy-btn mt-2 w-100"
+              :disabled="!dailyPick || buying === 'daily'"
+              @click="buyTicket('daily')"
+            >
+              <span v-if="buying === 'daily'"><i class="fas fa-spinner fa-spin mr-1"></i>Đang mua...</span>
+              <span v-else><i class="fas fa-ticket-alt mr-1"></i>Mua Vé</span>
+            </button>
           </div>
 
-          <!-- My tickets -->
+          <!-- Already bought notice -->
+          <div v-else-if="daily.status === 'open' && daily.my_tickets.length" class="lottery-bought-notice">
+            <i class="fas fa-check-circle mr-1"></i> Bạn đã mua vé cho giải hôm nay.
+          </div>
+
+          <!-- My tickets for this draw -->
           <div v-if="daily.my_tickets && daily.my_tickets.length" class="lottery-my-tickets">
             <div class="lottery-my-tickets-title">Vé của bạn:</div>
             <div v-for="t in daily.my_tickets" :key="t.id" class="lottery-ticket-row">
@@ -100,14 +106,14 @@
         <div class="lottery-card-body">
           <div class="lottery-badge weekly">Hàng Tuần · Thứ 7 · 21:00</div>
           <div class="lottery-mult weekly">×{{ weekly.multiplier }}</div>
-          <div class="lottery-label">Rút {{ weekly.pick_count }} số · Phạm vi 1–45</div>
+          <div class="lottery-label">Rút {{ weekly.pick_count }} số · Phạm vi 01–45</div>
 
           <!-- Countdown -->
           <div class="lottery-countdown" v-if="weekly.status === 'open'">
             <i class="fas fa-clock mr-1"></i>
             <span class="lottery-countdown-val">{{ fmtCountdown(weeklySeconds) }}</span>
           </div>
-          <div class="lottery-drawn-badge" v-else-if="weekly.status !== 'open'">
+          <div class="lottery-drawn-badge" v-else>
             <i class="fas fa-check-circle mr-1"></i>
             Đã quay: <strong>{{ (weekly.winning_numbers || []).map(n => pad(n)).join(' · ') }}</strong>
           </div>
@@ -124,8 +130,8 @@
             </div>
           </div>
 
-          <!-- Ticket form -->
-          <div v-if="weekly.status === 'open'" class="lottery-form">
+          <!-- Ticket form — hidden if already bought -->
+          <div v-if="weekly.status === 'open' && !weekly.my_tickets.length" class="lottery-form">
             <div class="lottery-number-grid">
               <button
                 v-for="n in 45" :key="n"
@@ -133,29 +139,35 @@
                 @click="weeklyPick = n"
               >{{ pad(n) }}</button>
             </div>
-            <div class="lottery-bet-row mt-2">
-              <input
-                type="number" v-model.number="weeklyBet" :min="10" step="10"
-                class="form-control form-control-sm lottery-bet-input"
-                placeholder="Số Zoo cược"
-              >
+            <!-- Tier bet buttons -->
+            <div class="lottery-tiers mt-2">
               <button
-                class="btn btn-sm lottery-buy-btn weekly"
-                :disabled="!weeklyPick || weeklyBet < 10 || buying === 'weekly'"
-                @click="buyTicket('weekly')"
-              >
-                <span v-if="buying === 'weekly'"><i class="fas fa-spinner fa-spin mr-1"></i></span>
-                <span v-else><i class="fas fa-ticket-alt mr-1"></i></span>
-                Mua vé
-              </button>
+                v-for="t in BET_TIERS" :key="t"
+                :class="['lottery-tier-btn weekly', weeklyBet === t ? 'selected' : '']"
+                @click="weeklyBet = t"
+              >{{ t.toLocaleString() }}</button>
             </div>
             <div v-if="weeklyPick" class="text-center mt-1" style="font-size:11px;color:#aaa;">
-              Số đã chọn: <strong style="color:#c084fc;">{{ pad(weeklyPick) }}</strong>
-              · Cược {{ weeklyBet || 0 }} Zoo → Thắng {{ ((weeklyBet || 0) * weekly.multiplier).toLocaleString() }} Zoo
+              Số: <strong style="color:#c084fc;">{{ pad(weeklyPick) }}</strong>
+              · Cược <strong>{{ weeklyBet.toLocaleString() }}</strong> Zoo
+              → Thắng <strong style="color:#c084fc;">{{ (weeklyBet * weekly.multiplier).toLocaleString() }}</strong> Zoo
             </div>
+            <button
+              class="btn btn-sm lottery-buy-btn weekly mt-2 w-100"
+              :disabled="!weeklyPick || buying === 'weekly'"
+              @click="buyTicket('weekly')"
+            >
+              <span v-if="buying === 'weekly'"><i class="fas fa-spinner fa-spin mr-1"></i>Đang mua...</span>
+              <span v-else><i class="fas fa-ticket-alt mr-1"></i>Mua Vé</span>
+            </button>
           </div>
 
-          <!-- My tickets -->
+          <!-- Already bought notice -->
+          <div v-else-if="weekly.status === 'open' && weekly.my_tickets.length" class="lottery-bought-notice weekly">
+            <i class="fas fa-check-circle mr-1"></i> Bạn đã mua vé cho giải tuần này.
+          </div>
+
+          <!-- My tickets for this draw -->
           <div v-if="weekly.my_tickets && weekly.my_tickets.length" class="lottery-my-tickets">
             <div class="lottery-my-tickets-title">Vé của bạn:</div>
             <div v-for="t in weekly.my_tickets" :key="t.id" class="lottery-ticket-row">
@@ -171,12 +183,49 @@
 
     </div><!-- /lottery-cards -->
 
+    <!-- My ticket history -->
+    <div v-if="myHistory.length" class="lottery-section mb-4">
+      <h6 class="lottery-history-title"><i class="fas fa-history mr-1"></i> Lịch sử vé của bạn</h6>
+      <table class="table table-sm table-dark lottery-table">
+        <thead>
+          <tr>
+            <th>Loại</th>
+            <th>Ngày quay</th>
+            <th>Số chọn</th>
+            <th>Cược</th>
+            <th>Kết quả</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="t in myHistory" :key="t.id">
+            <td>
+              <span :class="['badge', t.draw_type === 'weekly' ? 'badge-purple' : 'badge-green']">
+                {{ t.draw_type === 'weekly' ? 'Tuần' : 'Ngày' }}
+              </span>
+            </td>
+            <td style="font-size:11px;">{{ t.draw_at || '—' }}</td>
+            <td>
+              <span :class="['lottery-result-num', t.draw_type === 'weekly' ? 'weekly' : '']">
+                {{ pad(t.picked_number) }}
+              </span>
+            </td>
+            <td style="font-size:12px;">{{ t.bet_amount.toLocaleString() }}</td>
+            <td>
+              <span v-if="t.is_winner === true"  class="badge badge-success">Trúng +{{ t.payout.toLocaleString() }}</span>
+              <span v-else-if="t.is_winner === false" class="badge badge-danger">Trượt</span>
+              <span v-else class="badge badge-secondary">Chờ quay</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
     <!-- Recent results -->
     <div class="lottery-history">
       <div class="lottery-history-col">
-        <h6 class="lottery-history-title"><i class="fas fa-history mr-1"></i> Kết quả ngày gần đây</h6>
+        <h6 class="lottery-history-title"><i class="fas fa-list mr-1"></i> Kết quả ngày gần đây</h6>
         <table class="table table-sm table-dark lottery-table">
-          <thead><tr><th>Ngày</th><th>Số trúng</th><th>Tổng vé</th><th>Thưởng</th></tr></thead>
+          <thead><tr><th>Ngày</th><th>Số trúng</th><th>Vé</th><th>Thưởng</th></tr></thead>
           <tbody>
             <tr v-if="!recentDaily.length"><td colspan="4" class="text-center text-muted">Chưa có kết quả</td></tr>
             <tr v-for="d in recentDaily" :key="d.id">
@@ -189,9 +238,9 @@
         </table>
       </div>
       <div class="lottery-history-col">
-        <h6 class="lottery-history-title"><i class="fas fa-history mr-1"></i> Kết quả tuần gần đây</h6>
+        <h6 class="lottery-history-title"><i class="fas fa-list mr-1"></i> Kết quả tuần gần đây</h6>
         <table class="table table-sm table-dark lottery-table">
-          <thead><tr><th>Tuần</th><th>Số trúng</th><th>Tổng vé</th><th>Thưởng</th></tr></thead>
+          <thead><tr><th>Tuần</th><th>Số trúng</th><th>Vé</th><th>Thưởng</th></tr></thead>
           <tbody>
             <tr v-if="!recentWeekly.length"><td colspan="4" class="text-center text-muted">Chưa có kết quả</td></tr>
             <tr v-for="d in recentWeekly" :key="d.id">
@@ -214,6 +263,8 @@
 </template>
 
 <script>
+const BET_TIERS = [10, 100, 1000, 10000];
+
 export default {
   name: 'LotteryLobby',
   props: {
@@ -222,17 +273,21 @@ export default {
     initRecentDaily:  { type: Array,  default: () => [] },
     initRecentWeekly: { type: Array,  default: () => [] },
     initBalance:      { type: Number, default: 0 },
+    initHistory:      { type: Array,  default: () => [] },
     routes:           { type: Object, required: true },
     csrf:             { type: String, required: true },
   },
 
   data() {
     return {
-      daily:        { ...this.initDaily },
-      weekly:       { ...this.initWeekly },
+      BET_TIERS,
+
+      daily:        { ...this.initDaily,  my_tickets: [...(this.initDaily.my_tickets  || [])] },
+      weekly:       { ...this.initWeekly, my_tickets: [...(this.initWeekly.my_tickets || [])] },
       recentDaily:  [...this.initRecentDaily],
       recentWeekly: [...this.initRecentWeekly],
       balance:      this.initBalance,
+      myHistory:    [...this.initHistory],
 
       dailySeconds:  this.initDaily.seconds_left  || 0,
       weeklySeconds: this.initWeekly.seconds_left || 0,
@@ -294,13 +349,14 @@ export default {
       this.balance      = data.balance;
       this.recentDaily  = data.recent_daily  || [];
       this.recentWeekly = data.recent_weekly || [];
+      if (data.my_history) this.myHistory = data.my_history;
 
       if (data.daily) {
-        this.daily        = data.daily;
+        this.daily        = { ...data.daily, my_tickets: data.daily.my_tickets || [] };
         this.dailySeconds = data.daily.seconds_left || 0;
       }
       if (data.weekly) {
-        this.weekly        = data.weekly;
+        this.weekly        = { ...data.weekly, my_tickets: data.weekly.my_tickets || [] };
         this.weeklySeconds = data.weekly.seconds_left || 0;
       }
     },
@@ -310,8 +366,8 @@ export default {
       const bet  = type === 'daily' ? this.dailyBet  : this.weeklyBet;
       const draw = type === 'daily' ? this.daily      : this.weekly;
 
-      if (!pick || bet < 10) {
-        this.errMsg = 'Vui lòng chọn số và nhập số Zoo cược (tối thiểu 10).';
+      if (!pick) {
+        this.errMsg = 'Vui lòng chọn một số.';
         return;
       }
       if (bet > this.balance) {
@@ -342,16 +398,18 @@ export default {
         // Update balance and tickets
         this.balance = data.balance;
         if (type === 'daily') {
-          this.daily.my_tickets = [...(this.daily.my_tickets || []), data.ticket];
+          this.daily.my_tickets = [...this.daily.my_tickets, data.ticket];
           this.daily.total_tickets++;
           this.daily.total_pot += bet;
           this.dailyPick = null;
         } else {
-          this.weekly.my_tickets = [...(this.weekly.my_tickets || []), data.ticket];
+          this.weekly.my_tickets = [...this.weekly.my_tickets, data.ticket];
           this.weekly.total_tickets++;
           this.weekly.total_pot += bet;
           this.weeklyPick = null;
         }
+        // Refresh history
+        this.poll();
       } catch (_) {
         this.errMsg = 'Lỗi kết nối. Thử lại sau.';
       } finally {
@@ -471,11 +529,36 @@ export default {
   box-shadow: 0 0 8px rgba(168,85,247,.6);
 }
 
-/* Bet row */
-.lottery-bet-row { display: flex; gap: 8px; align-items: center; }
-.lottery-bet-input { flex: 1; background: rgba(0,0,0,.4) !important; color: #fff !important; border-color: rgba(255,255,255,.2) !important; }
+/* Tier bet buttons */
+.lottery-tiers {
+  display: flex; gap: 6px;
+}
+.lottery-tier-btn {
+  flex: 1; padding: 5px 0; border-radius: 8px; font-size: 12px; font-weight: 700;
+  border: 1px solid rgba(255,255,255,.2);
+  background: rgba(255,255,255,.07); color: rgba(255,255,255,.6);
+  cursor: pointer; transition: all .15s;
+}
+.lottery-tier-btn:hover { background: rgba(255,255,255,.18); color: #fff; }
+.lottery-tier-btn.selected {
+  background: #f6c23e; color: #000; border-color: #f6c23e;
+}
+.lottery-tier-btn.weekly.selected {
+  background: #a855f7; border-color: #a855f7; color: #fff;
+}
+
 .lottery-buy-btn { white-space: nowrap; }
 .lottery-buy-btn.weekly { background: linear-gradient(90deg,#6c3483,#a855f7); color: #fff; border: none; }
+
+/* Already bought notice */
+.lottery-bought-notice {
+  background: rgba(46,204,113,.12); border: 1px solid #2ecc7144;
+  border-radius: 8px; padding: 10px 14px; margin-bottom: 10px;
+  font-size: 13px; color: #2ecc71;
+}
+.lottery-bought-notice.weekly {
+  background: rgba(168,85,247,.12); border-color: #a855f744; color: #c084fc;
+}
 
 /* My tickets */
 .lottery-my-tickets { margin-top: 12px; border-top: 1px solid rgba(255,255,255,.08); padding-top: 10px; }
@@ -494,6 +577,9 @@ export default {
 }
 .lottery-ticket-num.weekly { background: #a855f7; color: #fff; }
 
+/* Section */
+.lottery-section { }
+
 /* History */
 .lottery-history { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
 @media (max-width: 768px) { .lottery-history { grid-template-columns: 1fr; } }
@@ -510,6 +596,9 @@ export default {
   font-size: 11px; font-weight: 800; margin-right: 3px;
 }
 .lottery-result-num.weekly { background: #a855f7; color: #fff; }
+
+.badge-green  { background: rgba(46,204,113,.25); color: #2ecc71; }
+.badge-purple { background: rgba(168,85,247,.25); color: #c084fc; }
 
 /* Error toast */
 .lottery-error-toast {

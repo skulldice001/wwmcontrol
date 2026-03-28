@@ -61,6 +61,7 @@ window.__lottery = {
         'total_payout'    => $d->total_payout,
     ])->values(), JSON_HEX_TAG | JSON_HEX_APOS) !!},
     balance:  {{ $balance }},
+    myHistory: {!! json_encode($myHistory, JSON_HEX_TAG | JSON_HEX_APOS) !!},
     routes: {
         state:  '{{ route('entertainment.lottery.state') }}',
         ticket: '{{ route('entertainment.lottery.ticket') }}',
@@ -75,6 +76,7 @@ window.__lottery = {
     :init-recent-daily="window.__lottery.recentDaily"
     :init-recent-weekly="window.__lottery.recentWeekly"
     :init-balance="window.__lottery.balance"
+    :init-history="window.__lottery.myHistory"
     :routes="window.__lottery.routes"
     :csrf="window.__lottery.csrf"
 ></lottery-lobby>
