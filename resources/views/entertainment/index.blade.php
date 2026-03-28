@@ -215,7 +215,7 @@
             <div>
                 <div class="ent-card-tag">Lottery</div>
                 <div class="ent-card-title">Xổ Số Zoo</div>
-                <div class="ent-card-sub">Hàng ngày ×10 · Hàng tuần ×70 · Số 01–45</div>
+                <div class="ent-card-sub">Hàng ngày ×10 · Hàng tuần ×70 · Số 01–99</div>
                 <div class="ent-stats">
                     <div class="ent-stat">
                         <div class="ent-stat-num" style="color:#f0c040;">{{ number_format($stats['lottery']['daily_pot']) }}</div>

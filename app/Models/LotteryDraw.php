@@ -21,7 +21,7 @@ class LotteryDraw extends Model
     ];
 
     const NUMBER_MIN = 1;
-    const NUMBER_MAX = 45;
+    const NUMBER_MAX = 99;
 
     const DAILY_MULTIPLIER  = 10;
     const WEEKLY_MULTIPLIER = 70;

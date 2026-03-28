@@ -66,7 +66,7 @@ class LotteryController extends Controller
     {
         $request->validate([
             'draw_id'       => 'required|integer',
-            'picked_number' => 'required|integer|min:1|max:45',
+            'picked_number' => 'required|integer|min:1|max:99',
             'bet_amount'    => 'required|integer|in:10,100,1000,10000',
         ]);
 
