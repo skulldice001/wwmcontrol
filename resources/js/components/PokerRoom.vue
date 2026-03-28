@@ -258,6 +258,7 @@
             <input type="number" v-model.number="raiseValue"
                    :min="raiseMin" :max="raiseMax" :step="raiseStep"
                    class="form-control form-control-sm" style="width:100px">
+            <span class="text-warning small">Zoo</span>
             <button class="btn btn-sm btn-primary" @click="confirmRaise">OK</button>
             <button class="btn btn-sm btn-secondary" @click="showRaiseRow = false">X</button>
           </div>
@@ -424,7 +425,7 @@ export default {
             return p ? p.chips > 0 : false;
         },
         callAmountText() {
-            return this.fmtChips(this.toCall);
+            return this.fmt(Math.floor(this.toCall / 100)) + ' Zoo';
         },
         phaseLabel() {
             const labels = {
@@ -456,8 +457,8 @@ export default {
                 const seat     = empty[p.index];
                 seat.visible   = true;
                 seat.name      = p.name;
-                seat.chips     = this.fmtChips(p.chips);
-                seat.bet       = p.bet > 0 ? `${this.msg.betLabel} ${this.fmtChips(p.bet)}` : '';
+                seat.chips     = this.fmt(Math.floor(p.chips / 100)) + ' Zoo';
+                seat.bet       = p.bet > 0 ? `${this.msg.betLabel} ${this.fmt(Math.floor(p.bet / 100))} Zoo` : '';
                 seat.folded    = p.status === 'folded';
                 seat.activeTurn = !!p.is_current && s.phase !== 'showdown';
                 seat.isAI      = !!p.is_ai;
@@ -628,17 +629,19 @@ export default {
 
         doRaise() {
             if (!this.gameState || !this.myPlayer) return;
-            const p       = this.myPlayer;
-            const max     = p.chips + p.bet;
-            this.raiseMin = this.gameState.min_raise || 0;
-            this.raiseMax = max;
-            this.raiseStep = this.gameState.big_blind || 100;
+            const p        = this.myPlayer;
+            const maxChips = p.chips + p.bet;
+            const bb       = this.gameState.big_blind || 100;
+            // slider in Zoo (÷100); confirmRaise converts back to chips (×100)
+            this.raiseMin   = Math.ceil((this.gameState.min_raise || 0) / 100);
+            this.raiseMax   = Math.floor(maxChips / 100);
+            this.raiseStep  = Math.max(1, Math.floor(bb / 100));
             this.raiseValue = this.raiseMin;
             this.showRaiseRow = true;
         },
 
         confirmRaise() {
-            const val = parseInt(this.raiseValue, 10);
+            const val = parseInt(this.raiseValue, 10) * 100; // convert Zoo → chips for server
             this.showRaiseRow = false;
             this.sendAction('raise', val);
         },
