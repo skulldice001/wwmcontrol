@@ -86,6 +86,7 @@ use App\Http\Controllers\EntertainmentController;
 use App\Http\Controllers\PokerGameController;
 use App\Http\Controllers\BlackjackController;
 use App\Http\Controllers\TaixiuController;
+use App\Http\Controllers\LotteryController;
 
 Route::middleware('auth')->group(function () {
     Route::get('/dashboard', function () {
@@ -150,6 +151,11 @@ Route::middleware('auth')->group(function () {
     Route::post('/entertainment/taixiu/{table}/game/bet',            [TaixiuController::class, 'bet'])->name('entertainment.taixiu.game.bet');
     Route::get('/entertainment/taixiu/{table}/chat',                 [TaixiuController::class, 'messages'])->name('entertainment.taixiu.chat.index');
     Route::post('/entertainment/taixiu/{table}/chat',                [TaixiuController::class, 'sendMessage'])->name('entertainment.taixiu.chat.send');
+
+    // Lottery
+    Route::get('/entertainment/lottery',        [LotteryController::class, 'index'])->name('entertainment.lottery');
+    Route::get('/entertainment/lottery/state',  [LotteryController::class, 'state'])->name('entertainment.lottery.state');
+    Route::post('/entertainment/lottery/ticket',[LotteryController::class, 'buyTicket'])->name('entertainment.lottery.ticket');
 
     // Zoo-coin routes
     Route::post('/zoo-coins/transfer', [\App\Http\Controllers\ZooCoinController::class, 'transfer'])->name('zoo.transfer');

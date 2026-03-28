@@ -32,6 +32,7 @@ import BlackjackLobby from './components/BlackjackLobby.vue';
 import PokerRoom from './components/PokerRoom.vue';
 import TaixiuLobby from './components/TaixiuLobby.vue';
 import TaixiuRoom from './components/TaixiuRoom.vue';
+import LotteryLobby from './components/LotteryLobby.vue';
 
 const app = createApp({});
 app.config.globalProperties.window = window;
@@ -44,4 +45,5 @@ app.component('blackjack-lobby', BlackjackLobby);
 app.component('poker-room', PokerRoom);
 app.component('taixiu-lobby', TaixiuLobby);
 app.component('taixiu-room', TaixiuRoom);
+app.component('lottery-lobby', LotteryLobby);
 app.mount('#app');

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Events\PokerRoomUpdated;
 use App\Events\PokerTableUpdated;
 use App\Models\BlackjackTable;
+use App\Models\LotteryDraw;
 use App\Models\TaixiuTable;
 use Illuminate\Support\Facades\DB;
 use App\Models\PokerGame;
@@ -18,10 +19,17 @@ class EntertainmentController extends Controller
 {
     public function index()
     {
+        $daily  = LotteryDraw::where('type', 'daily')->where('status', 'open')->latest('draw_at')->first();
+        $weekly = LotteryDraw::where('type', 'weekly')->where('status', 'open')->latest('draw_at')->first();
+
         $stats = [
             'poker'    => $this->tableStats(PokerTable::all()),
             'blackjack'=> $this->tableStats(BlackjackTable::all()),
             'taixiu'   => $this->tableStats(TaixiuTable::all()),
+            'lottery'  => [
+                'daily_pot'  => $daily?->total_pot ?? 0,
+                'weekly_pot' => $weekly?->total_pot ?? 0,
+            ],
         ];
         return view('entertainment.index', compact('stats'));
     }
