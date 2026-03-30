@@ -38,11 +38,34 @@ class LotteryDraw extends Model
         return $this->status === 'open' && now()->lt($this->draw_at);
     }
 
-    /** Return current open draw for type, creating one if none exists. */
+    /** Return current open draw for type, creating one if none exists.
+     *  Only considers draws whose draw_at is still in the future (open for ticket sales).
+     */
     public static function getOrCreateOpen(string $type): self
     {
-        $draw = self::where('type', $type)->where('status', 'open')->latest('draw_at')->first();
+        // Find an open draw that hasn't reached its draw time yet
+        $draw = self::where('type', $type)
+            ->where('status', 'open')
+            ->where('draw_at', '>', now())
+            ->latest('draw_at')
+            ->first();
+
         if ($draw) return $draw;
+
+        // Avoid duplicate: if a draw for the next scheduled time already exists, return it
+        $nextAt = self::nextDrawAt($type);
+        $existing = self::where('type', $type)
+            ->where('draw_at', $nextAt)
+            ->first();
+
+        if ($existing) {
+            // Re-open if somehow closed without being drawn
+            if ($existing->status !== 'open') {
+                $existing->update(['status' => 'open']);
+            }
+            return $existing;
+        }
+
         return self::createNext($type);
     }
 
