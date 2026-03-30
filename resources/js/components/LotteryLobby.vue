@@ -37,6 +37,48 @@
             Đã quay: <strong>{{ (daily.winning_numbers || []).map(n => pad(n)).join(' · ') }}</strong>
           </div>
 
+          <!-- Not yet open for ticket sales -->
+          <div v-if="dailyOpenSeconds > 0" class="lottery-not-open-notice">
+            <i class="fas fa-lock mr-1"></i>
+            Mở bán vé lúc <strong>{{ fmtOpenTime(daily.opens_at) }}</strong>
+            · còn <strong>{{ fmtCountdown(dailyOpenSeconds) }}</strong>
+          </div>
+
+          <!-- Post-draw results banner (shown while ticket sales are locked) -->
+          <div
+            v-if="dailyOpenSeconds > 0 && lastSettledDaily && !claimedDrawIds.includes(lastSettledDaily.id)"
+            class="lottery-result-banner"
+          >
+            <div class="lottery-result-banner-title">
+              <i class="fas fa-star mr-1" style="color:#f6c23e;"></i>
+              Kết quả ngày {{ lastSettledDaily.draw_at }}
+            </div>
+            <div class="lottery-result-banner-nums">
+              <span v-for="n in lastSettledDaily.winning_numbers" :key="n" class="lottery-result-num lg">{{ pad(n) }}</span>
+            </div>
+            <div v-if="lastSettledDaily.my_ticket">
+              <div v-if="lastSettledDaily.my_ticket.is_winner" class="lottery-winner-row">
+                <i class="fas fa-trophy mr-1" style="color:#f6c23e;"></i>
+                Bạn trúng! Số <strong>{{ pad(lastSettledDaily.my_ticket.picked_number) }}</strong>
+                · Nhận <strong style="color:#f6c23e;">+{{ (lastSettledDaily.my_ticket.payout || 0).toLocaleString() }} Zoo</strong>
+                <button class="btn btn-warning btn-xs ml-2" @click="claimDraw(lastSettledDaily.id)">
+                  <i class="fas fa-gift mr-1"></i>Lĩnh thưởng
+                </button>
+              </div>
+              <div v-else-if="lastSettledDaily.my_ticket.is_winner === false" class="lottery-miss-row">
+                <i class="fas fa-times-circle mr-1"></i>
+                Số <strong>{{ pad(lastSettledDaily.my_ticket.picked_number) }}</strong> chưa trúng lần này.
+                <button class="btn btn-secondary btn-xs ml-2" @click="claimDraw(lastSettledDaily.id)">
+                  Đóng
+                </button>
+              </div>
+            </div>
+            <div v-else class="lottery-miss-row">
+              Bạn chưa mua vé giải này.
+              <button class="btn btn-secondary btn-xs ml-2" @click="claimDraw(lastSettledDaily.id)">Đóng</button>
+            </div>
+          </div>
+
           <!-- Pot info -->
           <div class="lottery-pot-info">
             <div>
@@ -49,8 +91,8 @@
             </div>
           </div>
 
-          <!-- Ticket form — hidden if already bought -->
-          <div v-if="daily.status === 'open' && !daily.my_tickets.length" class="lottery-form">
+          <!-- Ticket form — hidden if already bought or not yet open -->
+          <div v-if="daily.status === 'open' && !daily.my_tickets.length && dailyOpenSeconds === 0" class="lottery-form">
             <div class="lottery-number-grid">
               <button
                 v-for="n in 99" :key="n"
@@ -82,7 +124,7 @@
           </div>
 
           <!-- Already bought notice -->
-          <div v-else-if="daily.status === 'open' && daily.my_tickets.length" class="lottery-bought-notice">
+          <div v-else-if="daily.status === 'open' && daily.my_tickets.length && dailyOpenSeconds === 0" class="lottery-bought-notice">
             <i class="fas fa-check-circle mr-1"></i> Bạn đã mua vé cho giải hôm nay.
           </div>
 
@@ -118,6 +160,46 @@
             Đã quay: <strong>{{ (weekly.winning_numbers || []).map(n => pad(n)).join(' · ') }}</strong>
           </div>
 
+          <!-- Not yet open for ticket sales -->
+          <div v-if="weeklyOpenSeconds > 0" class="lottery-not-open-notice weekly">
+            <i class="fas fa-lock mr-1"></i>
+            Mở bán vé lúc <strong>{{ fmtOpenTime(weekly.opens_at) }}</strong>
+            · còn <strong>{{ fmtCountdown(weeklyOpenSeconds) }}</strong>
+          </div>
+
+          <!-- Post-draw results banner (shown while ticket sales are locked) -->
+          <div
+            v-if="weeklyOpenSeconds > 0 && lastSettledWeekly && !claimedDrawIds.includes(lastSettledWeekly.id)"
+            class="lottery-result-banner weekly"
+          >
+            <div class="lottery-result-banner-title">
+              <i class="fas fa-star mr-1" style="color:#c084fc;"></i>
+              Kết quả tuần {{ lastSettledWeekly.draw_at }}
+            </div>
+            <div class="lottery-result-banner-nums">
+              <span v-for="n in lastSettledWeekly.winning_numbers" :key="n" class="lottery-result-num weekly lg">{{ pad(n) }}</span>
+            </div>
+            <div v-if="lastSettledWeekly.my_ticket">
+              <div v-if="lastSettledWeekly.my_ticket.is_winner" class="lottery-winner-row weekly">
+                <i class="fas fa-trophy mr-1" style="color:#c084fc;"></i>
+                Bạn trúng! Số <strong>{{ pad(lastSettledWeekly.my_ticket.picked_number) }}</strong>
+                · Nhận <strong style="color:#c084fc;">+{{ (lastSettledWeekly.my_ticket.payout || 0).toLocaleString() }} Zoo</strong>
+                <button class="btn btn-xs ml-2" style="background:#a855f7;color:#fff;" @click="claimDraw(lastSettledWeekly.id)">
+                  <i class="fas fa-gift mr-1"></i>Lĩnh thưởng
+                </button>
+              </div>
+              <div v-else-if="lastSettledWeekly.my_ticket.is_winner === false" class="lottery-miss-row">
+                <i class="fas fa-times-circle mr-1"></i>
+                Số <strong>{{ pad(lastSettledWeekly.my_ticket.picked_number) }}</strong> chưa trúng lần này.
+                <button class="btn btn-secondary btn-xs ml-2" @click="claimDraw(lastSettledWeekly.id)">Đóng</button>
+              </div>
+            </div>
+            <div v-else class="lottery-miss-row">
+              Bạn chưa mua vé giải này.
+              <button class="btn btn-secondary btn-xs ml-2" @click="claimDraw(lastSettledWeekly.id)">Đóng</button>
+            </div>
+          </div>
+
           <!-- Pot info -->
           <div class="lottery-pot-info">
             <div>
@@ -130,8 +212,8 @@
             </div>
           </div>
 
-          <!-- Ticket form — hidden if already bought -->
-          <div v-if="weekly.status === 'open' && !weekly.my_tickets.length" class="lottery-form">
+          <!-- Ticket form — hidden if already bought or not yet open -->
+          <div v-if="weekly.status === 'open' && !weekly.my_tickets.length && weeklyOpenSeconds === 0" class="lottery-form">
             <div class="lottery-number-grid">
               <button
                 v-for="n in 99" :key="n"
@@ -163,7 +245,7 @@
           </div>
 
           <!-- Already bought notice -->
-          <div v-else-if="weekly.status === 'open' && weekly.my_tickets.length" class="lottery-bought-notice weekly">
+          <div v-else-if="weekly.status === 'open' && weekly.my_tickets.length && weeklyOpenSeconds === 0" class="lottery-bought-notice weekly">
             <i class="fas fa-check-circle mr-1"></i> Bạn đã mua vé cho giải tuần này.
           </div>
 
@@ -273,8 +355,10 @@ export default {
     initRecentDaily:  { type: Array,  default: () => [] },
     initRecentWeekly: { type: Array,  default: () => [] },
     initBalance:      { type: Number, default: 0 },
-    initHistory:      { type: Array,  default: () => [] },
-    routes:           { type: Object, required: true },
+    initHistory:           { type: Array,  default: () => [] },
+    initLastSettledDaily:  { type: Object, default: null },
+    initLastSettledWeekly: { type: Object, default: null },
+    routes:                { type: Object, required: true },
     csrf:             { type: String, required: true },
   },
 
@@ -289,13 +373,19 @@ export default {
       balance:      this.initBalance,
       myHistory:    [...this.initHistory],
 
-      dailySeconds:  this.initDaily.seconds_left  || 0,
-      weeklySeconds: this.initWeekly.seconds_left || 0,
+      dailySeconds:      this.initDaily.seconds_left       || 0,
+      weeklySeconds:     this.initWeekly.seconds_left      || 0,
+      dailyOpenSeconds:  this.initDaily.seconds_until_open  || 0,
+      weeklyOpenSeconds: this.initWeekly.seconds_until_open || 0,
 
       dailyPick:  null,
       weeklyPick: null,
       dailyBet:   100,
       weeklyBet:  100,
+
+      lastSettledDaily:  this.initLastSettledDaily  || null,
+      lastSettledWeekly: this.initLastSettledWeekly || null,
+      claimedDrawIds:    JSON.parse(localStorage.getItem('lottery_claimed') || '[]'),
 
       buying:  null, // 'daily' | 'weekly' | null
       errMsg:  '',
@@ -307,8 +397,10 @@ export default {
 
   mounted() {
     this._ticker = setInterval(() => {
-      if (this.dailySeconds > 0)  this.dailySeconds--;
-      if (this.weeklySeconds > 0) this.weeklySeconds--;
+      if (this.dailySeconds > 0)      this.dailySeconds--;
+      if (this.weeklySeconds > 0)     this.weeklySeconds--;
+      if (this.dailyOpenSeconds > 0)  this.dailyOpenSeconds--;
+      if (this.weeklyOpenSeconds > 0) this.weeklyOpenSeconds--;
     }, 1000);
 
     this._poller = setInterval(() => this.poll(), 30000);
@@ -322,6 +414,21 @@ export default {
   methods: {
     pad(n) {
       return String(n).padStart(2, '0');
+    },
+
+    claimDraw(drawId) {
+      if (!this.claimedDrawIds.includes(drawId)) {
+        this.claimedDrawIds = [...this.claimedDrawIds, drawId];
+        localStorage.setItem('lottery_claimed', JSON.stringify(this.claimedDrawIds));
+      }
+    },
+
+    fmtOpenTime(isoStr) {
+      if (!isoStr) return '';
+      const d = new Date(isoStr);
+      const h = String(d.getHours()).padStart(2, '0');
+      const m = String(d.getMinutes()).padStart(2, '0');
+      return `${h}:${m}`;
     },
 
     fmtCountdown(sec) {
@@ -352,13 +459,17 @@ export default {
       if (data.my_history) this.myHistory = data.my_history;
 
       if (data.daily) {
-        this.daily        = { ...data.daily, my_tickets: data.daily.my_tickets || [] };
-        this.dailySeconds = data.daily.seconds_left || 0;
+        this.daily             = { ...data.daily, my_tickets: data.daily.my_tickets || [] };
+        this.dailySeconds      = data.daily.seconds_left       || 0;
+        this.dailyOpenSeconds  = data.daily.seconds_until_open || 0;
       }
       if (data.weekly) {
-        this.weekly        = { ...data.weekly, my_tickets: data.weekly.my_tickets || [] };
-        this.weeklySeconds = data.weekly.seconds_left || 0;
+        this.weekly             = { ...data.weekly, my_tickets: data.weekly.my_tickets || [] };
+        this.weeklySeconds      = data.weekly.seconds_left       || 0;
+        this.weeklyOpenSeconds  = data.weekly.seconds_until_open || 0;
       }
+      if (data.last_settled_daily  !== undefined) this.lastSettledDaily  = data.last_settled_daily;
+      if (data.last_settled_weekly !== undefined) this.lastSettledWeekly = data.last_settled_weekly;
     },
 
     async buyTicket(type) {
@@ -549,6 +660,41 @@ export default {
 
 .lottery-buy-btn { white-space: nowrap; }
 .lottery-buy-btn.weekly { background: linear-gradient(90deg,#6c3483,#a855f7); color: #fff; border: none; }
+
+/* Post-draw results banner */
+.lottery-result-banner {
+  background: rgba(246,194,62,.1); border: 1px solid rgba(246,194,62,.35);
+  border-radius: 10px; padding: 12px 14px; margin-bottom: 12px;
+}
+.lottery-result-banner.weekly {
+  background: rgba(168,85,247,.1); border-color: rgba(168,85,247,.35);
+}
+.lottery-result-banner-title {
+  font-size: 11px; font-weight: 700; color: rgba(255,255,255,.5);
+  text-transform: uppercase; letter-spacing: .6px; margin-bottom: 8px;
+}
+.lottery-result-banner-nums { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.lottery-result-num.lg { width: 32px; height: 32px; font-size: 13px; }
+.lottery-winner-row {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 6px;
+  font-size: 12px; color: #f6c23e; font-weight: 600;
+}
+.lottery-winner-row.weekly { color: #c084fc; }
+.lottery-miss-row {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 6px;
+  font-size: 12px; color: rgba(255,255,255,.4);
+}
+.btn-xs { padding: 2px 8px; font-size: 11px; border-radius: 5px; }
+
+/* Not yet open notice */
+.lottery-not-open-notice {
+  background: rgba(246,194,62,.1); border: 1px solid rgba(246,194,62,.3);
+  border-radius: 8px; padding: 8px 14px; margin-bottom: 10px;
+  font-size: 12px; color: rgba(246,194,62,.85);
+}
+.lottery-not-open-notice.weekly {
+  background: rgba(168,85,247,.1); border-color: rgba(168,85,247,.3); color: #c084fc;
+}
 
 /* Already bought notice */
 .lottery-bought-notice {

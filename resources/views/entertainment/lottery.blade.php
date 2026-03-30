@@ -10,8 +10,10 @@ window.__lottery = {
         'id'              => $daily->id,
         'type'            => $daily->type,
         'status'          => $daily->status,
-        'draw_at'         => $daily->draw_at->toIso8601String(),
-        'seconds_left'    => $daily->secondsUntilDraw(),
+        'draw_at'            => $daily->draw_at->toIso8601String(),
+        'opens_at'           => $daily->opens_at?->toIso8601String(),
+        'seconds_left'       => $daily->secondsUntilDraw(),
+        'seconds_until_open' => $daily->secondsUntilOpen(),
         'winning_numbers' => $daily->winning_numbers,
         'multiplier'      => $daily->multiplier,
         'pick_count'      => $daily->pick_count,
@@ -29,8 +31,10 @@ window.__lottery = {
         'id'              => $weekly->id,
         'type'            => $weekly->type,
         'status'          => $weekly->status,
-        'draw_at'         => $weekly->draw_at->toIso8601String(),
-        'seconds_left'    => $weekly->secondsUntilDraw(),
+        'draw_at'            => $weekly->draw_at->toIso8601String(),
+        'opens_at'           => $weekly->opens_at?->toIso8601String(),
+        'seconds_left'       => $weekly->secondsUntilDraw(),
+        'seconds_until_open' => $weekly->secondsUntilOpen(),
         'winning_numbers' => $weekly->winning_numbers,
         'multiplier'      => $weekly->multiplier,
         'pick_count'      => $weekly->pick_count,
@@ -62,6 +66,8 @@ window.__lottery = {
     ])->values(), JSON_HEX_TAG | JSON_HEX_APOS) !!},
     balance:  {{ $balance }},
     myHistory: {!! json_encode($myHistory, JSON_HEX_TAG | JSON_HEX_APOS) !!},
+    lastSettledDaily:  {!! json_encode($lastSettledDaily,  JSON_HEX_TAG | JSON_HEX_APOS) !!},
+    lastSettledWeekly: {!! json_encode($lastSettledWeekly, JSON_HEX_TAG | JSON_HEX_APOS) !!},
     routes: {
         state:  '{{ route('entertainment.lottery.state') }}',
         ticket: '{{ route('entertainment.lottery.ticket') }}',
@@ -77,6 +83,8 @@ window.__lottery = {
     :init-recent-weekly="window.__lottery.recentWeekly"
     :init-balance="window.__lottery.balance"
     :init-history="window.__lottery.myHistory"
+    :init-last-settled-daily="window.__lottery.lastSettledDaily"
+    :init-last-settled-weekly="window.__lottery.lastSettledWeekly"
     :routes="window.__lottery.routes"
     :csrf="window.__lottery.csrf"
 ></lottery-lobby>
