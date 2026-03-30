@@ -9,13 +9,14 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class LotteryDraw extends Model
 {
     protected $fillable = [
-        'type', 'status', 'draw_at', 'drawn_at',
+        'type', 'status', 'draw_at', 'opens_at', 'drawn_at',
         'winning_numbers', 'pick_count', 'multiplier',
         'total_tickets', 'total_pot', 'total_payout',
     ];
 
     protected $casts = [
         'draw_at'         => 'datetime',
+        'opens_at'        => 'datetime',
         'drawn_at'        => 'datetime',
         'winning_numbers' => 'array',
     ];
@@ -35,7 +36,18 @@ class LotteryDraw extends Model
 
     public function isOpen(): bool
     {
-        return $this->status === 'open' && now()->lt($this->draw_at);
+        if ($this->status !== 'open') return false;
+        if (now()->gte($this->draw_at))  return false;
+        // If opens_at is set, tickets can only be purchased after that time
+        if ($this->opens_at && now()->lt($this->opens_at)) return false;
+        return true;
+    }
+
+    /** Seconds until ticket sales open (0 if already open). */
+    public function secondsUntilOpen(): int
+    {
+        if (!$this->opens_at || now()->gte($this->opens_at)) return 0;
+        return max(0, (int) now()->diffInSeconds($this->opens_at, false));
     }
 
     /** Return current open draw for type, creating one if none exists.
@@ -73,6 +85,7 @@ class LotteryDraw extends Model
     public static function createNext(string $type): self
     {
         $drawAt     = self::nextDrawAt($type);
+        $opensAt    = self::nextOpensAt($type, $drawAt);
         $multiplier = $type === 'weekly' ? self::WEEKLY_MULTIPLIER : self::DAILY_MULTIPLIER;
         $pickCount  = $type === 'weekly' ? self::WEEKLY_PICK_COUNT : self::DAILY_PICK_COUNT;
 
@@ -80,6 +93,7 @@ class LotteryDraw extends Model
             'type'       => $type,
             'status'     => 'open',
             'draw_at'    => $drawAt,
+            'opens_at'   => $opensAt,
             'pick_count' => $pickCount,
             'multiplier' => $multiplier,
         ]);
@@ -90,17 +104,23 @@ class LotteryDraw extends Model
     {
         if ($type === 'weekly') {
             // Next Saturday at 21:00
-            $next = now()->next('Saturday')->setTime(21, 0, 0);
-            // If today IS Saturday and time < 21:00, use today
-            if (now()->isSaturday() && now()->lt(now()->copy()->setTime(21, 0, 0))) {
-                $next = now()->copy()->setTime(21, 0, 0);
+            $saturday21 = now()->copy()->setTime(21, 0, 0);
+            if (!now()->isSaturday() || now()->gte($saturday21)) {
+                $saturday21 = now()->next('Saturday')->setTime(21, 0, 0);
             }
-            return $next;
+            return $saturday21;
         }
 
-        // Daily: next 20:00
-        $today8pm = now()->copy()->setTime(20, 0, 0);
-        return now()->lt($today8pm) ? $today8pm : $today8pm->addDay();
+        // Daily: 20:00 today, or 20:00 tomorrow if already past
+        $today20 = now()->copy()->setTime(20, 0, 0);
+        return now()->lt($today20) ? $today20 : $today20->addDay();
+    }
+
+    /** Calculate when ticket sales open for a draw. */
+    public static function nextOpensAt(string $type, Carbon $drawAt): Carbon
+    {
+        // Both daily and weekly: ticket sales open at midnight of the draw day
+        return $drawAt->copy()->startOfDay();
     }
 
     /** Seconds until draw. */

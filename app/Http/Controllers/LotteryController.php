@@ -35,11 +35,15 @@ class LotteryController extends Controller
         $balance    = Auth::user()->z_coins;
         $myHistory  = $this->myHistory($userId);
 
+        $lastSettledDaily  = $this->lastSettledDraw('daily',  $userId);
+        $lastSettledWeekly = $this->lastSettledDraw('weekly', $userId);
+
         return view('entertainment.lottery', compact(
             'daily', 'weekly',
             'dailyTickets', 'weeklyTickets',
             'recentDaily', 'recentWeekly',
-            'balance', 'myHistory'
+            'balance', 'myHistory',
+            'lastSettledDaily', 'lastSettledWeekly'
         ));
     }
 
@@ -52,12 +56,14 @@ class LotteryController extends Controller
         $weekly = LotteryDraw::getOrCreateOpen('weekly');
 
         return response()->json([
-            'daily'          => $this->drawData($daily, $userId),
-            'weekly'         => $this->drawData($weekly, $userId),
-            'balance'        => Auth::user()->z_coins,
-            'recent_daily'   => $this->recentDraws('daily'),
-            'recent_weekly'  => $this->recentDraws('weekly'),
-            'my_history'     => $this->myHistory($userId),
+            'daily'                => $this->drawData($daily, $userId),
+            'weekly'               => $this->drawData($weekly, $userId),
+            'balance'              => Auth::user()->z_coins,
+            'recent_daily'         => $this->recentDraws('daily'),
+            'recent_weekly'        => $this->recentDraws('weekly'),
+            'my_history'           => $this->myHistory($userId),
+            'last_settled_daily'   => $this->lastSettledDraw('daily',  $userId),
+            'last_settled_weekly'  => $this->lastSettledDraw('weekly', $userId),
         ]);
     }
 
@@ -140,17 +146,19 @@ class LotteryController extends Controller
             ])->values()->toArray();
 
         return [
-            'id'              => $draw->id,
-            'type'            => $draw->type,
-            'status'          => $draw->status,
-            'draw_at'         => $draw->draw_at->toIso8601String(),
-            'seconds_left'    => $draw->secondsUntilDraw(),
-            'winning_numbers' => $draw->winning_numbers,
-            'multiplier'      => $draw->multiplier,
-            'pick_count'      => $draw->pick_count,
-            'total_tickets'   => $draw->total_tickets,
-            'total_pot'       => $draw->total_pot,
-            'my_tickets'      => $myTickets,
+            'id'                => $draw->id,
+            'type'              => $draw->type,
+            'status'            => $draw->status,
+            'draw_at'           => $draw->draw_at->toIso8601String(),
+            'opens_at'          => $draw->opens_at?->toIso8601String(),
+            'seconds_left'      => $draw->secondsUntilDraw(),
+            'seconds_until_open'=> $draw->secondsUntilOpen(),
+            'winning_numbers'   => $draw->winning_numbers,
+            'multiplier'        => $draw->multiplier,
+            'pick_count'        => $draw->pick_count,
+            'total_tickets'     => $draw->total_tickets,
+            'total_pot'         => $draw->total_pot,
+            'my_tickets'        => $myTickets,
         ];
     }
 
@@ -171,6 +179,34 @@ class LotteryController extends Controller
                 'is_winner'      => $t->is_winner,
                 'payout'         => $t->payout,
             ])->toArray();
+    }
+
+    private function lastSettledDraw(string $type, int $userId): ?array
+    {
+        $draw = LotteryDraw::where('type', $type)
+            ->where('status', 'settled')
+            ->orderByDesc('draw_at')
+            ->first();
+
+        if (!$draw) return null;
+
+        $ticket = LotteryTicket::where('lottery_draw_id', $draw->id)
+            ->where('user_id', $userId)
+            ->first();
+
+        return [
+            'id'              => $draw->id,
+            'draw_at'         => $draw->draw_at->format('d/m H:i'),
+            'winning_numbers' => $draw->winning_numbers,
+            'total_tickets'   => $draw->total_tickets,
+            'total_payout'    => $draw->total_payout,
+            'my_ticket'       => $ticket ? [
+                'picked_number' => $ticket->picked_number,
+                'bet_amount'    => $ticket->bet_amount,
+                'is_winner'     => $ticket->is_winner,
+                'payout'        => $ticket->payout,
+            ] : null,
+        ];
     }
 
     private function recentDraws(string $type): array
