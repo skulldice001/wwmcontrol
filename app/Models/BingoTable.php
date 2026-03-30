@@ -15,8 +15,7 @@ class BingoTable extends Model
     public function players(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'bingo_table_players')
-            ->withPivot('joined_at', 'is_ready')
-            ->withTimestamps();
+            ->withPivot('joined_at', 'is_ready');
     }
 
     public function games(): HasMany
