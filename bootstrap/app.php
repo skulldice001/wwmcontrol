@@ -45,7 +45,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withSchedule(function (Schedule $schedule): void {
         $schedule->command('events:close-expired')->dailyAt('00:00');
         $schedule->command('zoo:daily-bonus')->dailyAt('00:05');
-        $schedule->command('lottery:draw daily')->dailyAt('20:00');
+        $schedule->command('lottery:draw daily')->dailyAt('08:00');
         $schedule->command('lottery:draw weekly')->weeklyOn(6, '21:00');
     })
     ->create();

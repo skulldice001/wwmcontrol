@@ -37,9 +37,12 @@ class LotteryDraw extends Model
     public function isOpen(): bool
     {
         if ($this->status !== 'open') return false;
-        if (now()->gte($this->draw_at))  return false;
-        // If opens_at is set, tickets can only be purchased after that time
         if ($this->opens_at && now()->lt($this->opens_at)) return false;
+        // Daily: ticket sales close 1 hour before draw (07:00); Weekly: close at draw time
+        $cutoff = $this->type === 'daily'
+            ? $this->draw_at->copy()->subHour()
+            : $this->draw_at;
+        if (now()->gte($cutoff)) return false;
         return true;
     }
 
@@ -111,9 +114,9 @@ class LotteryDraw extends Model
             return $saturday21;
         }
 
-        // Daily: 20:00 today, or 20:00 tomorrow if already past
-        $today20 = now()->copy()->setTime(20, 0, 0);
-        return now()->lt($today20) ? $today20 : $today20->addDay();
+        // Daily: 08:00 today, or 08:00 tomorrow if already past
+        $today08 = now()->copy()->setTime(8, 0, 0);
+        return now()->lt($today08) ? $today08 : $today08->addDay();
     }
 
     /** Calculate when ticket sales open for a draw. */
@@ -127,5 +130,14 @@ class LotteryDraw extends Model
     public function secondsUntilDraw(): int
     {
         return max(0, (int) now()->diffInSeconds($this->draw_at, false));
+    }
+
+    /** Seconds until ticket sales close (1 hour before draw for daily; at draw_at for weekly). */
+    public function secondsUntilClose(): int
+    {
+        $cutoff = $this->type === 'daily'
+            ? $this->draw_at->copy()->subHour()
+            : $this->draw_at;
+        return max(0, (int) now()->diffInSeconds($cutoff, false));
     }
 }
