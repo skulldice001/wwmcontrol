@@ -111,6 +111,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/entertainment', [EntertainmentController::class, 'index'])->name('entertainment.index');
     Route::get('/entertainment/poker',  [EntertainmentController::class, 'poker'])->name('entertainment.poker');
     Route::post('/entertainment/poker', [EntertainmentController::class, 'createTable'])->name('entertainment.poker.create');
+    Route::post('/entertainment/poker/ai', [EntertainmentController::class, 'createAiPokerTable'])->name('entertainment.poker.ai.create');
     Route::get('/entertainment/poker/test-update', [EntertainmentController::class, 'testUpdate'])->name('entertainment.poker.test-update');
     Route::get('/entertainment/poker/{table}', [EntertainmentController::class, 'showTable'])->name('entertainment.poker.show')
         ->missing(fn () => redirect()->route('entertainment.poker'));
@@ -118,6 +119,7 @@ Route::middleware('auth')->group(function () {
     Route::delete('/entertainment/poker/{table}/leave', [EntertainmentController::class, 'leaveTable'])->name('entertainment.poker.leave');
     Route::get('/entertainment/blackjack',                           [EntertainmentController::class, 'blackjack'])->name('entertainment.blackjack');
     Route::post('/entertainment/blackjack',                          [BlackjackController::class, 'createTable'])->name('entertainment.blackjack.create');
+    Route::post('/entertainment/blackjack/ai',                       [BlackjackController::class, 'createAiTable'])->name('entertainment.blackjack.ai.create');
     Route::get('/entertainment/blackjack/{table}',                   [BlackjackController::class, 'show'])->name('entertainment.blackjack.show')
         ->missing(fn () => redirect()->route('entertainment.blackjack'));
     Route::post('/entertainment/blackjack/{table}/join',             [BlackjackController::class, 'joinTable'])->name('entertainment.blackjack.join');

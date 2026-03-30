@@ -16,8 +16,11 @@
           <button class="btn btn-outline-info btn-sm mr-2" @click="refresh" :disabled="refreshing">
             <i :class="['fas fa-sync-alt mr-1', refreshing ? 'fa-spin' : '']"></i>Làm mới danh sách bàn
           </button>
-          <button class="btn btn-success btn-sm" @click="showCreateModal = true">
+          <button class="btn btn-success btn-sm mr-2" @click="showCreateModal = true">
             <i class="fas fa-plus"></i> {{ msg.bjCreateTable }}
+          </button>
+          <button class="btn btn-warning btn-sm" @click="playVsAi" :disabled="creatingAi">
+            <i class="fas fa-robot mr-1"></i>{{ creatingAi ? 'Đang tạo...' : 'Chơi vs AI' }}
           </button>
         </div>
       </div>
@@ -142,6 +145,7 @@ export default {
       joiningId:       null,
       showCreateModal: false,
       creating:        false,
+      creatingAi:      false,
       form: {
         name:        '',
         min_bet:     100,
@@ -204,6 +208,18 @@ export default {
         })
         .catch(() => { if (window.notify) window.notify('error', 'Connection error.'); })
         .finally(() => { this.creating = false; this.loading = false; });
+    },
+
+    playVsAi() {
+      this.creatingAi = true;
+      fetch(this.routes.createAi, {
+        method: 'POST',
+        headers: { 'X-CSRF-TOKEN': this.csrf, 'Accept': 'application/json', 'Content-Type': 'application/json' },
+      })
+        .then(r => r.json())
+        .then(data => { if (data.redirect) window.location.href = data.redirect; })
+        .catch(() => { if (window.notify) window.notify('error', 'Không thể tạo bàn AI.'); })
+        .finally(() => { this.creatingAi = false; });
     },
 
     refresh() {

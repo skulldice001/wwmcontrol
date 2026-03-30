@@ -104,6 +104,35 @@ class EntertainmentController extends Controller
         return response()->json(['redirect' => route('entertainment.poker.show', $table)]);
     }
 
+    /** POST /entertainment/poker/ai — create a solo poker table vs AI */
+    public function createAiPokerTable(Request $request)
+    {
+        $user = Auth::user();
+
+        // Fixed stakes for AI mode: big_blind = 1, small_blind = 1
+        $table = PokerTable::create([
+            'name'            => $user->name . ' vs AI',
+            'type'            => 'no_limit_holdem',
+            'small_blind'     => 1,
+            'big_blind'       => 2,
+            'min_buy_in'      => 50,
+            'max_buy_in'      => 200,
+            'max_players'     => 2,
+            'status'          => 'waiting',
+            'current_players' => 0,
+            'is_ai_mode'      => true,
+        ]);
+
+        $table->players()->attach($user->id, ['joined_at' => now()]);
+        $table->current_players = 1;
+        $table->status          = 'playing';
+        $table->save();
+
+        event(new PokerTableUpdated($table));
+
+        return response()->json(['redirect' => route('entertainment.poker.show', $table)]);
+    }
+
     public function joinTable(PokerTable $table)
     {
         $user = Auth::user();

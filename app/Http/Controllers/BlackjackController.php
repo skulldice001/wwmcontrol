@@ -43,6 +43,33 @@ class BlackjackController extends Controller
         return response()->json(['redirect' => route('entertainment.blackjack.show', $table)]);
     }
 
+    /** POST /entertainment/blackjack/ai — create a solo blackjack table vs AI dealer */
+    public function createAiTable()
+    {
+        $user = Auth::user();
+
+        $table = BlackjackTable::create([
+            'name'            => $user->name . ' vs AI',
+            'min_bet'         => 1,
+            'max_bet'         => 100,
+            'max_players'     => 1,
+            'status'          => 'playing',
+            'current_players' => 0,
+            'is_ai_mode'      => true,
+            'is_preset'       => false,
+        ]);
+
+        $table->players()->attach($user->id, [
+            'joined_at' => now(),
+            'role'      => 'player',
+            'seat'      => 1,
+        ]);
+        $table->current_players = 1;
+        $table->save();
+
+        return response()->json(['redirect' => route('entertainment.blackjack.show', $table)]);
+    }
+
     public function joinTable(BlackjackTable $table)
     {
         $user = Auth::user();
@@ -73,7 +100,15 @@ class BlackjackController extends Controller
             return response()->json(['message' => __('messages.table_full')], 422);
         }
 
-        $table->players()->attach($user->id, ['joined_at' => now(), 'role' => 'player']);
+        $playerSeat = $table->is_ai_mode
+            ? ($table->players()->max('seat') ?? 0) + 1
+            : null;
+
+        $pivotData = $table->is_ai_mode
+            ? ['joined_at' => now(), 'role' => 'player', 'seat' => $playerSeat]
+            : ['joined_at' => now(), 'role' => 'player'];
+
+        $table->players()->attach($user->id, $pivotData);
         $table->current_players = $table->players()->count();
         $table->status          = 'playing';
         $table->save();
@@ -206,9 +241,11 @@ class BlackjackController extends Controller
             return response()->json(['error' => 'Not at table'], 403);
         }
 
-        // Must have a role and seat chosen
-        if (!$pivotPlayer->pivot->role || ($pivotPlayer->pivot->role === 'player' && !$pivotPlayer->pivot->seat)) {
-            return response()->json(['error' => __('messages.bj_choose_role_first')], 422);
+        // Must have a role and seat chosen (skip check in AI mode — auto-assigned on join)
+        if (!$table->is_ai_mode) {
+            if (!$pivotPlayer->pivot->role || ($pivotPlayer->pivot->role === 'player' && !$pivotPlayer->pivot->seat)) {
+                return response()->json(['error' => __('messages.bj_choose_role_first')], 422);
+            }
         }
 
         $isReady = !$pivotPlayer->pivot->is_ready;
@@ -217,7 +254,21 @@ class BlackjackController extends Controller
         $players     = $this->getPlayersData($table);
         $countdownAt = null;
 
-        // Start condition: 1 ready dealer + ≥1 ready player
+        // AI mode: start as soon as 1 player is ready (no human dealer needed)
+        if ($table->is_ai_mode) {
+            $readyPlayers = $players->filter(fn($p) => $p['is_ready']);
+            if ($readyPlayers->count() >= 1) {
+                $countdownAt = now()->addSeconds(3)->timestamp;
+                Cache::put("bj_countdown_{$table->id}", $countdownAt, 30);
+                event(new BlackjackRoomUpdated($table->id, 'countdown_start', $players->toArray(), $countdownAt));
+            } else {
+                Cache::forget("bj_countdown_{$table->id}");
+                event(new BlackjackRoomUpdated($table->id, 'ready_update', $players->toArray()));
+            }
+            return response()->json(['players' => $players, 'countdown_at' => $countdownAt]);
+        }
+
+        // Normal mode: 1 ready dealer + ≥1 ready player
         $readyDealer  = $players->first(fn($p) => $p['role'] === 'dealer' && $p['is_ready']);
         $readyPlayers = $players->filter(fn($p) => $p['role'] === 'player' && $p['is_ready']);
 
@@ -246,14 +297,17 @@ class BlackjackController extends Controller
         $user  = Auth::user();
         $pivot = $table->players()->where('user_id', $user->id)->first()?->pivot;
 
-        if (!$pivot || $pivot->role !== 'dealer') {
+        // AI mode: any seated player can start
+        if (!$table->is_ai_mode && (!$pivot || $pivot->role !== 'dealer')) {
             return response()->json(['error' => 'Only the dealer can start the round'], 403);
         }
 
         // Validate start conditions
         $players     = $this->getPlayersData($table);
-        $readyDealer = $players->first(fn($p) => $p['role'] === 'dealer' && $p['is_ready']);
-        $readyCount  = $players->filter(fn($p) => $p['role'] === 'player' && $p['is_ready'])->count();
+        $readyDealer = $table->is_ai_mode ? true : $players->first(fn($p) => $p['role'] === 'dealer' && $p['is_ready']);
+        $readyCount  = $table->is_ai_mode
+            ? $players->filter(fn($p) => $p['is_ready'])->count()
+            : $players->filter(fn($p) => $p['role'] === 'player' && $p['is_ready'])->count();
 
         if (!$readyDealer || $readyCount < 1) {
             return response()->json(['error' => __('messages.bj_not_enough_players')], 422);
@@ -287,11 +341,12 @@ class BlackjackController extends Controller
         $pivot = $table->players()->where('user_id', $user->id)->first()?->pivot;
 
         $base = [
-            'z_coins' => $fresh->z_coins - $fresh->z_coins_frozen,
-            'min_bet' => $table->min_bet,
-            'max_bet' => $table->max_bet,
-            'my_role' => $pivot?->role,
-            'my_seat' => $pivot?->seat,
+            'z_coins'     => $fresh->z_coins - $fresh->z_coins_frozen,
+            'min_bet'     => $table->min_bet,
+            'max_bet'     => $table->max_bet,
+            'my_role'     => $pivot?->role,
+            'my_seat'     => $pivot?->seat,
+            'is_ai_mode'  => (bool) $table->is_ai_mode,
         ];
 
         $round = $table->activeRound();
@@ -355,7 +410,13 @@ class BlackjackController extends Controller
             return response()->json(['error' => $result['error']], 422);
         }
 
-        $round       = $result['round'];
+        $round = $result['round'];
+
+        // AI mode: auto-play dealer when it's dealer's turn
+        if ($table->is_ai_mode && $round->phase === 'dealer_turn') {
+            $round = BlackjackEngine::runAiDealer($round);
+        }
+
         $clientState = BlackjackEngine::clientState($round, Auth::user());
 
         $eventType = match ($round->phase) {
@@ -404,7 +465,7 @@ class BlackjackController extends Controller
         $user  = Auth::user();
         $pivot = $table->players()->where('user_id', $user->id)->first()?->pivot;
 
-        if (!$pivot || $pivot->role !== 'dealer') {
+        if (!$table->is_ai_mode && (!$pivot || $pivot->role !== 'dealer')) {
             return response()->json(['error' => 'Only the dealer can start next round'], 403);
         }
 

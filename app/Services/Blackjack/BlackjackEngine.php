@@ -24,16 +24,27 @@ class BlackjackEngine
             ->withPivot('role', 'seat', 'is_ready')
             ->get();
 
-        $dealer = $pivotPlayers->first(fn($p) => $p->pivot->role === 'dealer');
+        // In AI mode, all seated users are players; dealer is the AI
+        $isAiMode = (bool) $table->is_ai_mode;
+
+        if ($isAiMode) {
+            $dealer        = null; // AI dealer
+            $playerRecords = $pivotPlayers->sortBy('pivot.seat');
+        } else {
+            $dealer        = $pivotPlayers->first(fn($p) => $p->pivot->role === 'dealer');
+            $playerRecords = $pivotPlayers->where('pivot.role', 'player')->sortBy('pivot.seat');
+        }
 
         // Build player slots ordered by seat
-        $players = [];
+        $players   = [];
         $turnOrder = [];
-        foreach ($pivotPlayers->where('pivot.role', 'player')->sortBy('pivot.seat') as $p) {
+        $seat      = 1;
+        foreach ($playerRecords as $p) {
+            $seatNum = $isAiMode ? $seat++ : (int) $p->pivot->seat;
             $players[(string) $p->id] = [
                 'user_id'    => $p->id,
                 'name'       => $p->name,
-                'seat'       => (int) $p->pivot->seat,
+                'seat'       => $seatNum,
                 'cards'      => [],
                 'bet'        => 0,
                 'bet_placed' => false,
@@ -47,11 +58,16 @@ class BlackjackEngine
             $turnOrder[] = $p->id;
         }
 
+        $dealerName = $isAiMode ? 'Dealer (AI)' : ($dealer?->name ?? 'Dealer');
+        $dealerUserId = $isAiMode ? 0 : ($dealer?->id ?? 0);
+
         $state = [
             'deck'                 => [],
+            'is_ai_mode'           => $isAiMode,
             'dealer'               => [
-                'user_id'     => $dealer->id,
-                'name'        => $dealer->name,
+                'user_id'     => $dealerUserId,
+                'name'        => $dealerName,
+                'is_ai'       => $isAiMode,
                 'cards'       => [],
                 'hole_card'   => null,
                 'score'       => 0,
@@ -108,15 +124,16 @@ class BlackjackEngine
             }
 
             // Deduct bet
+            $isAiMode  = (bool) ($round->state['is_ai_mode'] ?? false);
             $balBefore = $user->z_coins;
             $user->decrement('z_coins', $bet);
             ZooCoinTransaction::create([
                 'user_id'        => $userId,
-                'type'           => 'blackjack_bet',
+                'type'           => $isAiMode ? 'blackjack_ai_bet' : 'blackjack_bet',
                 'amount'         => $bet,
                 'balance_before' => $balBefore,
                 'balance_after'  => $balBefore - $bet,
-                'note'           => "Blackjack đặt cược (bàn #{$table->id})",
+                'note'           => "Blackjack" . ($isAiMode ? " vs AI" : "") . " đặt cược (bàn #{$table->id})",
             ]);
 
             $state['players'][(string) $userId]['bet']        = $bet;
@@ -376,6 +393,41 @@ class BlackjackEngine
         ];
     }
 
+    /**
+     * Auto-play AI dealer: hit until score >= 17, then stand and resolve.
+     * Only valid in AI-mode tables during dealer_turn phase.
+     */
+    public static function runAiDealer(BlackjackRound $round): BlackjackRound
+    {
+        return DB::transaction(function () use ($round) {
+            $round = BlackjackRound::where('id', $round->id)->lockForUpdate()->first();
+
+            if ($round->phase !== 'dealer_turn') {
+                return $round;
+            }
+
+            $state = $round->state;
+
+            // Hit until 17+
+            for ($i = 0; $i < 20; $i++) {
+                $score = self::score($state['dealer']['cards']);
+                if ($score >= 17) break;
+                $state['dealer']['cards'][] = array_shift($state['deck']);
+                $newScore = self::score($state['dealer']['cards']);
+                $state['dealer']['score'] = $newScore;
+                if ($newScore > 21) {
+                    $state['dealer']['busted'] = true;
+                    break;
+                }
+            }
+
+            $state['dealer']['score'] = self::score($state['dealer']['cards']);
+            $round->update(['state' => $state]);
+
+            return self::resolveAll($round->fresh());
+        });
+    }
+
     // ── Leave handling ──────────────────────────────────────────────────────
 
     /**
@@ -536,6 +588,7 @@ class BlackjackEngine
     private static function resolveAll(BlackjackRound $round): BlackjackRound
     {
         $state       = $round->state;
+        $isAiMode    = (bool) ($state['is_ai_mode'] ?? false);
         $dealerScore = self::score($state['dealer']['cards']);
         $dealerBj    = $state['dealer']['blackjack'] ?? false;
         $dealerBust  = $state['dealer']['busted']    ?? false;
@@ -563,22 +616,29 @@ class BlackjackEngine
                 [$result, $payout] = ['lose', 0];
             }
 
+            // AI mode: scale payout by 0.1 (return bet unchanged if push/win, but profit portion ÷10)
+            if ($isAiMode && $payout > 0) {
+                $profit = $payout - $bet; // profit portion
+                $payout = $bet + (int) floor($profit / 10); // return bet + scaled profit
+                $payout = self::capAiPayout($p['user_id'], $payout, $bet, $round->blackjack_table_id);
+            }
+
             $p['result'] = $result;
             $p['payout'] = $payout;
 
             // Credit payout
             if ($payout > 0) {
-                DB::transaction(function () use ($p, $payout, $round, $result) {
+                DB::transaction(function () use ($p, $payout, $round, $result, $isAiMode) {
                     $user      = User::where('id', $p['user_id'])->lockForUpdate()->first();
                     $balBefore = $user->z_coins;
                     $user->increment('z_coins', $payout);
                     ZooCoinTransaction::create([
                         'user_id'        => $p['user_id'],
-                        'type'           => 'blackjack_payout',
+                        'type'           => $isAiMode ? 'blackjack_ai_payout' : 'blackjack_payout',
                         'amount'         => $payout,
                         'balance_before' => $balBefore,
                         'balance_after'  => $balBefore + $payout,
-                        'note'           => "Blackjack thắng: {$result} +{$payout} Zoo (bàn #{$round->blackjack_table_id})",
+                        'note'           => "Blackjack" . ($isAiMode ? " vs AI" : "") . ": {$result} +{$payout} Zoo (bàn #{$round->blackjack_table_id})",
                     ]);
                 });
             }
@@ -624,6 +684,27 @@ class BlackjackEngine
             }
         }
         return null;
+    }
+
+    /** Cap AI payout so total daily net AI winnings don't exceed 5 000 Zoo. */
+    private static function capAiPayout(int $userId, int $payout, int $bet, int $tableId): int
+    {
+        $today   = now()->startOfDay();
+        $payouts = ZooCoinTransaction::where('user_id', $userId)
+            ->whereIn('type', ['poker_ai_payout', 'blackjack_ai_payout'])
+            ->where('created_at', '>=', $today)
+            ->sum('amount');
+        $bets = ZooCoinTransaction::where('user_id', $userId)
+            ->whereIn('type', ['poker_ai_bet', 'blackjack_ai_bet'])
+            ->where('created_at', '>=', $today)
+            ->sum('amount');
+
+        $netSoFar  = max(0, $payouts - $bets);
+        // Profit from this payout = payout - bet (bet was already deducted earlier)
+        $profit    = max(0, $payout - $bet);
+        $remaining = max(0, 5000 - $netSoFar);
+        $cappedProfit = min($profit, $remaining);
+        return $bet + $cappedProfit; // always return at least the bet amount
     }
 
     private static function freshDeck(): array

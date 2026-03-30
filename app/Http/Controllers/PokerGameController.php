@@ -21,18 +21,22 @@ class PokerGameController extends Controller
     public function start(PokerTable $table)
     {
         $humanIds = $table->players()->pluck('users.id')->toArray();
+        $minRequired = $table->is_ai_mode ? 1 : 2;
 
-        if (count($humanIds) < 2) {
-            return response()->json(['error' => 'Cần ít nhất 2 người chơi để bắt đầu ván mới.'], 422);
+        if (count($humanIds) < $minRequired) {
+            return response()->json(['error' => 'Cần ít nhất ' . $minRequired . ' người chơi để bắt đầu ván mới.'], 422);
         }
 
-        if (!$this->deductBuyIn($table, $humanIds)) {
+        if (!$this->deductBuyIn($table, $humanIds, $table->is_ai_mode)) {
             return response()->json([
                 'error' => 'Không đủ Z-Coin để vào ván (cần ít nhất ' . number_format($table->min_buy_in) . ' Z)',
             ], 422);
         }
 
         $game = GameEngine::startGame($table, $humanIds);
+        if ($table->is_ai_mode) {
+            $game = GameEngine::runAI($game);
+        }
         $this->dispatchTurnTimer($table, $game);
         $this->broadcast($table, $game);
 
@@ -66,12 +70,13 @@ class PokerGameController extends Controller
         $table->players()->updateExistingPivot($user->id, ['is_ready' => $newReady]);
 
         $players  = $table->players()->get();
-        $allReady = $players->count() >= 2 && $players->every(fn($p) => $p->pivot->is_ready);
+        $minReady = $table->is_ai_mode ? 1 : 2;
+        $allReady = $players->count() >= $minReady && $players->every(fn($p) => $p->pivot->is_ready);
 
         if ($allReady) {
             $humanIds = $players->pluck('id')->toArray();
 
-            if (!$this->deductBuyIn($table, $humanIds)) {
+            if (!$this->deductBuyIn($table, $humanIds, $table->is_ai_mode)) {
                 // Reset all ready flags so the lobby is not stuck
                 DB::table('poker_table_players')
                     ->where('poker_table_id', $table->id)
@@ -89,6 +94,9 @@ class PokerGameController extends Controller
             }
 
             $game  = GameEngine::startGame($table, $humanIds);
+            if ($table->is_ai_mode) {
+                $game = GameEngine::runAI($game);
+            }
             $this->dispatchTurnTimer($table, $game);
             $seats = $this->buildSeats($players, $game);
 
@@ -133,10 +141,15 @@ class PokerGameController extends Controller
             Auth::id()
         );
 
+        // Let AI act after human action (may chain through multiple AI turns)
+        if ($table->is_ai_mode && $game->state['phase'] !== 'showdown') {
+            $game = GameEngine::runAI($game);
+        }
+
         // Pay out Z-Coins when the hand reaches showdown
         if ($game->state['phase'] === 'showdown') {
             $humanIds = $table->players()->pluck('users.id')->toArray();
-            $this->settleZCoins($game, $humanIds);
+            $this->settleZCoins($game, $humanIds, $table->is_ai_mode);
             // Reset ready flags — players must re-ready for next hand
             DB::table('poker_table_players')
                 ->where('poker_table_id', $table->id)
@@ -260,6 +273,7 @@ class PokerGameController extends Controller
             'log'             => array_slice($s['log'] ?? [], -8),
             'z_coins'         => User::find($userId)?->z_coins ?? 0,
             'turn_started_at' => $s['turn_started_at'] ?? null,
+            'is_ai_mode'      => (bool) ($s['is_ai_mode'] ?? false),
         ];
     }
 
@@ -283,13 +297,13 @@ class PokerGameController extends Controller
     }
 
     /** Deduct buy-in from all human players atomically. Returns false if any lack funds. */
-    private function deductBuyIn(PokerTable $table, array $humanIds): bool
+    private function deductBuyIn(PokerTable $table, array $humanIds, bool $isAiMode = false): bool
     {
         if (empty($humanIds)) return true;
-        $minBalance = (int) $table->min_buy_in;  // minimum z_coins required to enter
-        $entryFee   = (int) $table->big_blind;    // amount deducted = first-turn bet
+        $minBalance = (int) $table->min_buy_in;
+        $entryFee   = (int) $table->big_blind;
 
-        return DB::transaction(function () use ($humanIds, $minBalance, $entryFee) {
+        return DB::transaction(function () use ($humanIds, $minBalance, $entryFee, $isAiMode) {
             $users = User::whereIn('id', $humanIds)->lockForUpdate()->get();
             foreach ($users as $user) {
                 $available = $user->z_coins - $user->z_coins_frozen;
@@ -300,11 +314,11 @@ class PokerGameController extends Controller
                 $user->decrement('z_coins', $entryFee);
                 ZooCoinTransaction::create([
                     'user_id'        => $user->id,
-                    'type'           => 'poker_bet',
+                    'type'           => $isAiMode ? 'poker_ai_bet' : 'poker_bet',
                     'amount'         => $entryFee,
                     'balance_before' => $balBefore,
                     'balance_after'  => $balBefore - $entryFee,
-                    'note'           => 'Poker buy-in',
+                    'note'           => $isAiMode ? 'Poker vs AI buy-in' : 'Poker buy-in',
                 ]);
             }
             return true;
@@ -372,29 +386,55 @@ class PokerGameController extends Controller
     /** Credit each human player their proportional z-coin payout at showdown.
      *  Chips are scaled 100× entry fee (big_blind), so we convert back:
      *  payout_z = floor(final_chips * big_blind / (big_blind * 100)) = floor(final_chips / 100)
+     *  AI mode: payout is divided by 10; total daily AI winnings capped at 5 000 Zoo.
      */
-    private function settleZCoins(PokerGame $game, array $humanIds): void
+    private function settleZCoins(PokerGame $game, array $humanIds, bool $isAiMode = false): void
     {
         $bigBlind   = (int) ($game->state['big_blind'] ?? 1);
-        $startStack = $bigBlind * 100; // matches max_buy_in set at table creation
+        $startStack = $bigBlind * 100;
 
         foreach ($game->state['players'] as $p) {
             if ($p['is_ai'] || !in_array($p['id'], $humanIds)) continue;
+
             $finalChips = (int) $p['chips'];
             $payout     = (int) floor($finalChips * $bigBlind / $startStack);
+
+            if ($isAiMode) {
+                $payout = (int) floor($payout / 10);
+                $payout = $this->capAiPayout($p['id'], $payout);
+            }
+
             if ($payout > 0) {
                 $user      = User::find($p['id']);
                 $balBefore = $user->z_coins;
                 $user->increment('z_coins', $payout);
                 ZooCoinTransaction::create([
                     'user_id'        => $user->id,
-                    'type'           => 'poker_payout',
+                    'type'           => $isAiMode ? 'poker_ai_payout' : 'poker_payout',
                     'amount'         => $payout,
                     'balance_before' => $balBefore,
                     'balance_after'  => $balBefore + $payout,
-                    'note'           => 'Poker payout',
+                    'note'           => $isAiMode ? 'Poker vs AI payout' : 'Poker payout',
                 ]);
             }
         }
+    }
+
+    /** Returns max additional AI payout allowed today (daily cap = 5 000 Zoo net). */
+    private function capAiPayout(int $userId, int $requested): int
+    {
+        $today   = now()->startOfDay();
+        $payouts = ZooCoinTransaction::where('user_id', $userId)
+            ->whereIn('type', ['poker_ai_payout', 'blackjack_ai_payout'])
+            ->where('created_at', '>=', $today)
+            ->sum('amount');
+        $bets = ZooCoinTransaction::where('user_id', $userId)
+            ->whereIn('type', ['poker_ai_bet', 'blackjack_ai_bet'])
+            ->where('created_at', '>=', $today)
+            ->sum('amount');
+
+        $netSoFar  = max(0, $payouts - $bets);
+        $remaining = max(0, 5000 - $netSoFar);
+        return min($requested, $remaining);
     }
 }
