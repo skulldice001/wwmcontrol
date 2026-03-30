@@ -146,13 +146,14 @@ class LotteryController extends Controller
             ])->values()->toArray();
 
         return [
-            'id'                => $draw->id,
-            'type'              => $draw->type,
-            'status'            => $draw->status,
-            'draw_at'           => $draw->draw_at->toIso8601String(),
-            'opens_at'          => $draw->opens_at?->toIso8601String(),
-            'seconds_left'      => $draw->secondsUntilDraw(),
-            'seconds_until_open'=> $draw->secondsUntilOpen(),
+            'id'                 => $draw->id,
+            'type'               => $draw->type,
+            'status'             => $draw->status,
+            'draw_at'            => $draw->draw_at->toIso8601String(),
+            'opens_at'           => $draw->opens_at?->toIso8601String(),
+            'seconds_left'       => $draw->secondsUntilClose(),
+            'seconds_until_draw' => $draw->secondsUntilDraw(),
+            'seconds_until_open' => $draw->secondsUntilOpen(),
             'winning_numbers'   => $draw->winning_numbers,
             'multiplier'        => $draw->multiplier,
             'pick_count'        => $draw->pick_count,

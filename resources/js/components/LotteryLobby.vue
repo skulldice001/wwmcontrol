@@ -23,14 +23,19 @@
       <div class="lottery-card lottery-card-daily">
         <div class="lottery-card-stripe"></div>
         <div class="lottery-card-body">
-          <div class="lottery-badge">Hàng Ngày · 20:00</div>
+          <div class="lottery-badge">Hàng Ngày · Mua vé 0h–7h · Rút thưởng 8h</div>
           <div class="lottery-mult">×{{ daily.multiplier }}</div>
           <div class="lottery-label">Rút {{ daily.pick_count }} số · Phạm vi 01–99</div>
 
           <!-- Countdown -->
-          <div class="lottery-countdown" v-if="daily.status === 'open'">
+          <div class="lottery-countdown" v-if="daily.status === 'open' && dailySeconds > 0">
             <i class="fas fa-clock mr-1"></i>
-            <span class="lottery-countdown-val">{{ fmtCountdown(dailySeconds) }}</span>
+            <small style="color:rgba(255,255,255,.4);">Đóng bán vé:</small>
+            <span class="lottery-countdown-val ml-1">{{ fmtCountdown(dailySeconds) }}</span>
+          </div>
+          <div class="lottery-countdown" v-else-if="daily.status === 'open' && dailySeconds === 0">
+            <i class="fas fa-hourglass-half mr-1" style="color:#f6c23e;"></i>
+            <span style="color:rgba(255,255,255,.6);font-size:13px;">Đang chuẩn bị rút thưởng lúc 08:00...</span>
           </div>
           <div class="lottery-drawn-badge" v-else>
             <i class="fas fa-check-circle mr-1"></i>
@@ -470,6 +475,7 @@ export default {
       }
       if (data.last_settled_daily  !== undefined) this.lastSettledDaily  = data.last_settled_daily;
       if (data.last_settled_weekly !== undefined) this.lastSettledWeekly = data.last_settled_weekly;
+      // dailySeconds now = seconds until ticket sales CLOSE (not draw time)
     },
 
     async buyTicket(type) {
