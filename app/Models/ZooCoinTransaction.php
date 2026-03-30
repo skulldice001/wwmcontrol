@@ -42,8 +42,12 @@ class ZooCoinTransaction extends Model
             'daily_bonus'       => 'Thưởng ngày',
             'blackjack_bet'     => 'Blackjack cược',
             'blackjack_payout'  => 'Blackjack thắng',
+            'blackjack_ai_bet'  => 'Blackjack AI cược',
+            'blackjack_ai_payout' => 'Blackjack AI thắng',
             'poker_bet'         => 'Poker buy-in',
             'poker_payout'      => 'Poker thắng',
+            'poker_ai_bet'      => 'Poker AI buy-in',
+            'poker_ai_payout'   => 'Poker AI thắng',
             'taixiu_bet'        => 'Tài Xỉu cược',
             'taixiu_payout'     => 'Tài Xỉu thắng',
             'lottery_bet'       => 'Mua vé xổ số',
@@ -57,8 +61,8 @@ class ZooCoinTransaction extends Model
     public function typeBadgeClass(): string
     {
         return match ($this->type) {
-            'add', 'transfer_in', 'daily_bonus', 'blackjack_payout', 'poker_payout', 'taixiu_payout', 'lottery_payout', 'bingo_payout' => 'badge-success',
-            'deduct', 'transfer_out', 'blackjack_bet', 'poker_bet', 'taixiu_bet', 'lottery_bet', 'bingo_bet'                          => 'badge-danger',
+            'add', 'transfer_in', 'daily_bonus', 'blackjack_payout', 'poker_payout', 'blackjack_ai_payout', 'poker_ai_payout', 'taixiu_payout', 'lottery_payout', 'bingo_payout' => 'badge-success',
+            'deduct', 'transfer_out', 'blackjack_bet', 'poker_bet', 'blackjack_ai_bet', 'poker_ai_bet', 'taixiu_bet', 'lottery_bet', 'bingo_bet'                          => 'badge-danger',
             default                                                  => 'badge-secondary',
         };
     }

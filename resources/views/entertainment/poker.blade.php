@@ -11,6 +11,9 @@
         <button data-toggle="modal" data-target="#create-table-modal" class="btn btn-success float-right ml-2">
             <i class="fas fa-plus"></i> {{ __('messages.create_table') }}
         </button>
+        <button id="play-vs-ai-poker" class="btn btn-warning float-right ml-2">
+            <i class="fas fa-robot mr-1"></i> Chơi vs AI
+        </button>
         <button id="refresh-tables-btn" class="btn btn-outline-info float-right">
             <i class="fas fa-sync-alt mr-1"></i> {{ __('messages.refresh_tables') }}
         </button>
@@ -248,6 +251,21 @@
         // Re-enable submit button when modal opens
         $('#create-table-modal').on('show.bs.modal', function() {
             $('#create-table-submit').prop('disabled', false);
+        });
+
+        // Play vs AI — create private AI table and redirect
+        $('#play-vs-ai-poker').click(function() {
+            const $btn = $(this).prop('disabled', true).text('Đang tạo...');
+            $.ajax({
+                url: "{{ route('entertainment.poker.ai.create') }}",
+                method: 'POST',
+                headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+                success: function(r) { window.location.href = r.redirect; },
+                error: function() {
+                    $btn.prop('disabled', false).html('<i class="fas fa-robot mr-1"></i> Chơi vs AI');
+                    alert('Không thể tạo bàn AI. Vui lòng thử lại.');
+                },
+            });
         });
 
         $('#refresh-tables-btn').click(function() {

@@ -9,6 +9,7 @@ window.__bjLobby = {
     tables:  {!! json_encode($tables->values(), JSON_HEX_TAG | JSON_HEX_APOS) !!},
     routes: {
         create:        '{{ route('entertainment.blackjack.create') }}',
+        createAi:      '{{ route('entertainment.blackjack.ai.create') }}',
         joinBase:      '{{ url('entertainment/blackjack') }}',
         list:          '{{ route('entertainment.blackjack') }}',
         entertainment: '{{ route('entertainment.index') }}',

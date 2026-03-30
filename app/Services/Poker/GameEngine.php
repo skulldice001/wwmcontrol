@@ -38,12 +38,18 @@ class GameEngine
 
         $startChips = (int) $table->max_buy_in;
 
-        // --- Build player seats: humans only, no AI bots ---
+        // --- Build player seats ---
         $users   = User::whereIn('id', $humanUserIds)->get()->keyBy('id');
         $players = [];
         foreach ($humanUserIds as $uid) {
             $name      = $users[$uid]->name ?? "Player#{$uid}";
             $players[] = self::makePlayer($uid, $name, $startChips, false);
+        }
+
+        // In AI mode: add one AI opponent
+        if ($table->is_ai_mode) {
+            $aiName    = self::AI_NAMES[array_rand(self::AI_NAMES)];
+            $players[] = self::makePlayer(null, $aiName . ' (AI)', $startChips, true);
         }
 
         // --- Deal hole cards ---
@@ -87,6 +93,7 @@ class GameEngine
             'winner_info'     => null,
             'small_blind'     => (float) $table->small_blind,
             'big_blind'       => (float) $table->big_blind,
+            'is_ai_mode'      => (bool) $table->is_ai_mode,
             'log'             => ["New hand started. Blinds: {$table->small_blind}/{$table->big_blind}"],
         ];
 
@@ -383,7 +390,7 @@ class GameEngine
     //  AI
     // =========================================================================
 
-    private static function runAI(PokerGame $game): PokerGame
+    public static function runAI(PokerGame $game): PokerGame
     {
         for ($iter = 0; $iter < 50; $iter++) {
             $state = $game->state;
