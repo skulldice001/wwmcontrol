@@ -47,5 +47,6 @@ return Application::configure(basePath: dirname(__DIR__))
         $schedule->command('zoo:daily-bonus')->dailyAt('00:05');
         $schedule->command('lottery:draw daily')->dailyAt('08:00');
         $schedule->command('lottery:draw weekly')->weeklyOn(6, '21:00');
+        $schedule->command('lottery:draw jackpot')->dailyAt('08:30');
     })
     ->create();

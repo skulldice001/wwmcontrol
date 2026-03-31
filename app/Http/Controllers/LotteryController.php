@@ -146,21 +146,14 @@ class LotteryController extends Controller
         ]);
     }
 
-    /** POST /entertainment/lottery/jackpot — buy one jackpot ticket */
+    /** POST /entertainment/lottery/jackpot — buy one jackpot ticket (single 2-digit number 00–99) */
     public function buyJackpotTicket(Request $request)
     {
         $request->validate([
-            'numbers' => 'required|array|size:2',
-            'numbers.*' => 'required|integer|min:1|max:99',
+            'number' => 'required|integer|min:0|max:99',
         ]);
 
-        $n1 = (int) $request->numbers[0];
-        $n2 = (int) $request->numbers[1];
-
-        if ($n1 === $n2) {
-            return response()->json(['error' => 'Hai số phải khác nhau.'], 422);
-        }
-
+        $number  = (int) $request->number;
         $jackpot = LotteryDraw::getOrCreateJackpot();
 
         if ($jackpot->status !== 'open') {
@@ -170,7 +163,7 @@ class LotteryController extends Controller
         $user  = Auth::user();
         $price = LotteryDraw::JACKPOT_PRICE;
 
-        $result = DB::transaction(function () use ($user, $jackpot, $n1, $n2, $price) {
+        $ticket = DB::transaction(function () use ($user, $jackpot, $number, $price) {
             $user = User::where('id', $user->id)->lockForUpdate()->first();
 
             $available = $user->z_coins - $user->z_coins_frozen;
@@ -187,75 +180,29 @@ class LotteryController extends Controller
                 'amount'         => $price,
                 'balance_before' => $balBefore,
                 'balance_after'  => $balBefore - $price,
-                'note'           => 'Mua vé Jackpot',
+                'note'           => 'Mua vé Jackpot số ' . str_pad($number, 2, '0', STR_PAD_LEFT),
             ]);
 
-            // Create ticket
             $ticket = LotteryTicket::create([
                 'lottery_draw_id' => $jackpot->id,
                 'user_id'         => $user->id,
-                'picked_number'   => $n1, // first number for legacy compat
-                'picked_numbers'  => [$n1, $n2],
+                'picked_number'   => $number,
+                'picked_numbers'  => [$number],
                 'bet_amount'      => $price,
             ]);
 
-            // Add to pot
             $jackpot->increment('total_tickets');
             $jackpot->increment('total_pot', $price);
-            $jackpot->refresh();
 
-            // Check win: both numbers must match winning_numbers (any order)
-            $winning = $jackpot->winning_numbers;
-            sort($winning);
-            $picked = [$n1, $n2];
-            sort($picked);
-
-            $isWinner = ($picked === $winning);
-
-            if ($isWinner) {
-                $pot = $jackpot->total_pot;
-
-                // Pay out
-                $userNow = User::where('id', $user->id)->lockForUpdate()->first();
-                $before  = $userNow->z_coins;
-                $after   = $before + $pot;
-                $userNow->update(['z_coins' => $after]);
-
-                ZooCoinTransaction::create([
-                    'user_id'        => $userNow->id,
-                    'type'           => 'lottery_payout',
-                    'amount'         => $pot,
-                    'balance_before' => $before,
-                    'balance_after'  => $after,
-                    'note'           => 'Trúng Jackpot!',
-                ]);
-
-                $ticket->update(['is_winner' => true, 'payout' => $pot]);
-
-                $jackpot->update([
-                    'status'         => 'settled',
-                    'drawn_at'       => now(),
-                    'total_payout'   => $pot,
-                ]);
-
-                return [
-                    'won'     => true,
-                    'payout'  => $pot,
-                    'numbers' => $winning,
-                    'balance' => $after,
-                ];
-            }
-
-            $ticket->update(['is_winner' => false]);
-
-            return [
-                'won'     => false,
-                'pot'     => $jackpot->total_pot,
-                'balance' => $userNow->z_coins ?? $user->fresh()->z_coins,
-            ];
+            return $ticket;
         });
 
-        return response()->json(['ok' => true] + $result);
+        return response()->json([
+            'ok'      => true,
+            'ticket'  => $ticket,
+            'balance' => Auth::user()->fresh()->z_coins,
+            'pot'     => $jackpot->fresh()->total_pot,
+        ]);
     }
 
     // ── Helpers ────────────────────────────────────────────────────────────
@@ -263,13 +210,15 @@ class LotteryController extends Controller
     private function jackpotData(LotteryDraw $jackpot, array $myTickets): array
     {
         return [
-            'id'           => $jackpot->id,
-            'status'       => $jackpot->status,
-            'total_tickets'=> $jackpot->total_tickets,
-            'total_pot'    => $jackpot->total_pot,
-            'ticket_price' => $jackpot->ticket_price,
-            'pick_count'   => $jackpot->pick_count,
-            'my_tickets'   => $myTickets,
+            'id'                 => $jackpot->id,
+            'status'             => $jackpot->status,
+            'draw_at'            => $jackpot->draw_at?->toIso8601String(),
+            'seconds_until_draw' => $jackpot->secondsUntilJackpotDraw(),
+            'total_tickets'      => $jackpot->total_tickets,
+            'total_pot'          => $jackpot->total_pot,
+            'ticket_price'       => $jackpot->ticket_price,
+            'pick_count'         => $jackpot->pick_count,
+            'my_tickets'         => $myTickets,
             // winning_numbers intentionally NOT sent until settled
         ];
     }
