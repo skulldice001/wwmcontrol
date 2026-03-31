@@ -169,6 +169,45 @@ class DiscordService
     }
 
     /**
+     * Fetch messages from a Discord channel.
+     *
+     * @param string $channelId
+     * @param int $limit Max 100
+     * @param string|null $before Snowflake ID — fetch messages before this ID
+     * @return array|null null on error, array of message objects on success
+     */
+    public function getChannelMessages(string $channelId, int $limit = 50, ?string $before = null): ?array
+    {
+        if (!$this->botToken) {
+            Log::warning('Discord bot token not configured.');
+            return null;
+        }
+
+        $params = ['limit' => min($limit, 100)];
+        if ($before) $params['before'] = $before;
+
+        try {
+            $response = Http::withHeaders([
+                'Authorization' => "Bot {$this->botToken}",
+            ])
+            ->withOptions([
+                'verify' => config('services.discord.guzzle.verify', true),
+            ])
+            ->get("https://discord.com/api/v10/channels/{$channelId}/messages", $params);
+
+            if ($response->successful()) {
+                return $response->json();
+            }
+
+            Log::error("Discord API error (getChannelMessages): {$response->status()} - {$response->body()}");
+            return null;
+        } catch (\Exception $e) {
+            Log::error("Discord API exception (getChannelMessages): {$e->getMessage()}");
+            return null;
+        }
+    }
+
+    /**
      * Get the user's nickname in the guild.
      *
      * @param string $userId

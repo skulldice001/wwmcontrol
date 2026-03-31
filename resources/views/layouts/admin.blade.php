@@ -209,6 +209,12 @@
                             </a>
                         </li>
                         @endif
+                        <li class="nav-item">
+                            <a href="{{ route('admin.library.index') }}" class="nav-link {{ request()->routeIs('admin.library.*') ? 'active' : '' }}">
+                                <i class="nav-icon fas fa-book"></i>
+                                <p>Thư Viện</p>
+                            </a>
+                        </li>
                     @else
                         <li class="nav-item">
                             <a href="{{ route('dashboard') }}" class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">
@@ -238,6 +244,12 @@
                             <a href="{{ route('entertainment.index') }}" class="nav-link {{ request()->routeIs('entertainment.*') ? 'active' : '' }}">
                                 <i class="nav-icon fas fa-gamepad"></i>
                                 <p>{{ __('messages.entertainment_hall') }}</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ route('library.index') }}" class="nav-link {{ request()->routeIs('library.*') ? 'active' : '' }}">
+                                <i class="nav-icon fas fa-book-open"></i>
+                                <p>Thư Viện</p>
                             </a>
                         </li>
                         <li class="nav-item">

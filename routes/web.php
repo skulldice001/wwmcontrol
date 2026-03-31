@@ -4,6 +4,7 @@ use App\Http\Controllers\Auth\DiscordController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\LibraryController;
+use App\Http\Controllers\Admin\LibraryArticleController;
 use App\Http\Controllers\Admin\Auth\LoginController as AdminLoginController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -77,7 +78,9 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::post('users/{user}/freeze-coins', [UserController::class, 'freezeCoins'])->name('users.freeze-coins');
         Route::post('users/{user}/adjust-coins', [UserController::class, 'adjustCoins'])->name('users.adjust-coins');
         Route::get('users/{user}/coin-history', [UserController::class, 'coinHistory'])->name('users.coin-history');
-        Route::get('/library', [LibraryController::class, 'index'])->name('library.index');
+        Route::resource('library', LibraryArticleController::class);
+        Route::post('library/{library}/publish',   [LibraryArticleController::class, 'publish'])->name('library.publish');
+        Route::post('library/{library}/unpublish', [LibraryArticleController::class, 'unpublish'])->name('library.unpublish');
     });
 });
 
@@ -190,7 +193,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/zoo-coins/history', [\App\Http\Controllers\ZooCoinController::class, 'history'])->name('zoo.history');
 
     // Library Routes
-    Route::get('/library', [LibraryController::class, 'index'])->name('library.index');
+    Route::get('/library',                        [LibraryController::class, 'index'])->name('library.index');
+    Route::get('/library/{category}',             [LibraryController::class, 'category'])->name('library.category');
+    Route::get('/library/{category}/{article}',   [LibraryController::class, 'show'])->name('library.show');
 });
 
 

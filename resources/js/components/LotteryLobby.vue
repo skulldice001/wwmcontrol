@@ -23,7 +23,7 @@
       <div class="lottery-card lottery-card-daily">
         <div class="lottery-card-stripe"></div>
         <div class="lottery-card-body">
-          <div class="lottery-badge">Hàng Ngày · Mua vé 0h–7h · Rút thưởng 8h</div>
+          <div class="lottery-badge">Hàng Ngày · Đóng bán 7h · Rút thưởng 8h</div>
           <div class="lottery-mult">×{{ daily.multiplier }}</div>
           <div class="lottery-label">Rút {{ daily.pick_count }} số · Phạm vi 01–99</div>
 
