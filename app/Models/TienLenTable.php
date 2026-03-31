@@ -10,6 +10,8 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class TienLenTable extends Model
 {
+    protected $table = 'tienlen_tables';
+
     protected $fillable = [
         'owner_id', 'name', 'variant', 'entry_fee', 'status', 'is_ai_mode',
     ];

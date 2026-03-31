@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class TienLenGame extends Model
 {
+    protected $table = 'tienlen_games';
+
     protected $fillable = ['tienlen_table_id', 'state', 'status'];
 
     protected $casts = [
