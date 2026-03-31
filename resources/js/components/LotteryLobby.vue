@@ -28,12 +28,12 @@
           <div class="lottery-label">Rút {{ daily.pick_count }} số · Phạm vi 01–99</div>
 
           <!-- Countdown -->
-          <div class="lottery-countdown" v-if="daily.status === 'open' && dailySeconds > 0">
+          <div class="lottery-countdown" v-if="daily.status === 'open' && dailyOpenSeconds === 0 && dailySeconds > 0">
             <i class="fas fa-clock mr-1"></i>
             <small style="color:rgba(255,255,255,.4);">Đóng bán vé:</small>
             <span class="lottery-countdown-val ml-1">{{ fmtCountdown(dailySeconds) }}</span>
           </div>
-          <div class="lottery-countdown" v-else-if="daily.status === 'open' && dailySeconds === 0">
+          <div class="lottery-countdown" v-else-if="daily.status === 'open' && dailyOpenSeconds === 0 && dailySeconds === 0">
             <i class="fas fa-hourglass-half mr-1" style="color:#f6c23e;"></i>
             <span style="color:rgba(255,255,255,.6);font-size:13px;">Đang chuẩn bị rút thưởng lúc 08:00...</span>
           </div>
@@ -156,7 +156,7 @@
           <div class="lottery-label">Rút {{ weekly.pick_count }} số · Phạm vi 01–99</div>
 
           <!-- Countdown -->
-          <div class="lottery-countdown" v-if="weekly.status === 'open'">
+          <div class="lottery-countdown" v-if="weekly.status === 'open' && weeklyOpenSeconds === 0">
             <i class="fas fa-clock mr-1"></i>
             <span class="lottery-countdown-val">{{ fmtCountdown(weeklySeconds) }}</span>
           </div>
