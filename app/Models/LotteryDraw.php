@@ -173,7 +173,11 @@ class LotteryDraw extends Model
     /** Calculate when ticket sales open for a draw. */
     public static function nextOpensAt(string $type, Carbon $drawAt): Carbon
     {
-        // Both daily and weekly: ticket sales open at midnight of the draw day
+        // Daily: open immediately (right after previous draw settles at 08:00)
+        // Weekly: open at midnight of the draw day (Saturday)
+        if ($type === 'daily') {
+            return now();
+        }
         return $drawAt->copy()->startOfDay();
     }
 
