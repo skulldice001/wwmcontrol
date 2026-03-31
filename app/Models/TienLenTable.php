@@ -28,27 +28,29 @@ class TienLenTable extends Model
 
     public function players(): BelongsToMany
     {
-        return $this->belongsToMany(User::class, 'tienlen_table_players')
+        return $this->belongsToMany(User::class, 'tienlen_table_players', 'tienlen_table_id', 'user_id')
             ->withPivot('seat', 'is_ready', 'joined_at');
     }
 
     public function tablePlayerRecords(): HasMany
     {
-        return $this->hasMany(TienLenTablePlayer::class);
+        return $this->hasMany(TienLenTablePlayer::class, 'tienlen_table_id');
     }
 
     public function games(): HasMany
     {
-        return $this->hasMany(TienLenGame::class);
+        return $this->hasMany(TienLenGame::class, 'tienlen_table_id');
     }
 
     public function activeGame(): HasOne
     {
-        return $this->hasOne(TienLenGame::class)->where('status', 'active')->latestOfMany();
+        return $this->hasOne(TienLenGame::class, 'tienlen_table_id')
+            ->where('status', 'active')
+            ->latestOfMany();
     }
 
     public function messages(): HasMany
     {
-        return $this->hasMany(TienLenMessage::class);
+        return $this->hasMany(TienLenMessage::class, 'tienlen_table_id');
     }
 }

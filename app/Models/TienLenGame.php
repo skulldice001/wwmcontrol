@@ -17,6 +17,6 @@ class TienLenGame extends Model
 
     public function table(): BelongsTo
     {
-        return $this->belongsTo(TienLenTable::class, 'tienlen_table_id');
+        return $this->belongsTo(TienLenTable::class, 'tienlen_table_id', 'id');
     }
 }
