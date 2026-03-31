@@ -9,6 +9,8 @@ class TienLenMessage extends Model
 {
     public $timestamps = false;
 
+    protected $table = 'tienlen_messages';
+
     protected $fillable = ['tienlen_table_id', 'user_id', 'body'];
 
     protected $casts = [
