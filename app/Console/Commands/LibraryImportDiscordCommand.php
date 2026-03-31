@@ -5,123 +5,189 @@ namespace App\Console\Commands;
 use App\Models\LibraryArticle;
 use App\Services\DiscordService;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Http;
 
 class LibraryImportDiscordCommand extends Command
 {
     protected $signature = 'library:import-discord
-        {--channel=1461845830737723597 : Discord channel ID to import from}
-        {--limit=100 : Number of messages to fetch (max 100 per call)}
-        {--category=general : Default category for new drafts}
-        {--before= : Fetch messages before this Discord message ID (for pagination)}
-        {--min-length=80 : Skip messages shorter than this many characters}';
+        {--channel=1461845830737723597 : Discord forum channel ID}
+        {--category=guild_war_experience : Default category for new drafts}
+        {--min-length=30 : Skip messages shorter than this many characters}';
 
-    protected $description = 'Import messages from a Discord channel as library draft articles';
+    protected $description = 'Import posts from a Discord forum channel as library draft articles';
 
-    public function handle(DiscordService $discord): int
+    const GUILD_ID = '1257953508217585704';
+
+    public function handle(): int
     {
-        $channelId  = $this->option('channel');
-        $limit      = (int) $this->option('limit');
-        $category   = $this->option('category');
-        $before     = $this->option('before') ?: null;
-        $minLength  = (int) $this->option('min-length');
+        $channelId = $this->option('channel');
+        $category  = $this->option('category');
+        $minLen    = (int) $this->option('min-length');
+        $token     = config('services.discord.bot_token');
+
+        if (!$token) {
+            $this->error('DISCORD_BOT_TOKEN not configured.');
+            return self::FAILURE;
+        }
 
         if (!array_key_exists($category, LibraryArticle::CATEGORIES)) {
             $this->error('Invalid category. Choices: ' . implode(', ', array_keys(LibraryArticle::CATEGORIES)));
             return self::FAILURE;
         }
 
-        $this->info("Fetching up to {$limit} messages from channel {$channelId}...");
+        $this->info("Fetching threads from forum channel {$channelId}...");
 
-        $messages = $discord->getChannelMessages($channelId, $limit, $before);
+        // Collect all threads (active + archived)
+        $threads = $this->collectThreads($token, channelId: $channelId);
 
-        if ($messages === null) {
-            $this->error('Failed to fetch messages. Check DISCORD_BOT_TOKEN and channel permissions.');
+        if ($threads === null) {
+            $this->error('Failed to fetch threads. Check bot permissions.');
             return self::FAILURE;
         }
 
-        $this->info('Fetched ' . count($messages) . ' messages.');
+        $this->info('Found ' . count($threads) . ' threads total.');
 
-        $created  = 0;
-        $skipped  = 0;
-        $tooShort = 0;
+        $created = 0;
+        $skipped = 0;
+        $empty   = 0;
 
-        foreach ($messages as $msg) {
-            $content = trim($msg['content'] ?? '');
+        foreach ($threads as $thread) {
+            $threadId   = $thread['id'];
+            $threadName = trim($thread['name'] ?? '');
 
-            // Skip empty, very short, or bot messages
-            if (mb_strlen($content) < $minLength) {
-                $tooShort++;
-                continue;
-            }
-
-            // Skip messages that are only mentions/commands/links
-            $strippedContent = preg_replace('/<[^>]+>/', '', $content); // remove Discord mentions/channels
-            if (mb_strlen(trim($strippedContent)) < 30) {
-                $tooShort++;
-                continue;
-            }
-
-            $messageId = (string) $msg['id'];
-
-            // Skip already imported
-            if (LibraryArticle::where('discord_message_id', $messageId)->exists()) {
+            // Skip already imported (use thread ID as discord_message_id)
+            if (LibraryArticle::where('discord_message_id', $threadId)->exists()) {
                 $skipped++;
                 continue;
             }
 
-            // Extract title from first line (max 200 chars)
-            $lines = explode("\n", $content);
-            $firstLine = trim($lines[0]);
-            // Remove Discord formatting markers from title
-            $title = preg_replace('/^[#*_>\-`]+\s*/', '', $firstLine);
-            $title = mb_substr($title ?: 'Bài nhập từ Discord', 0, 200);
+            // Get the starter message (oldest = first) in this thread
+            $content = $this->getStarterContent($token, $threadId, $minLen);
 
-            // Clean content: remove Discord mentions, channel links, custom emoji
-            $cleanContent = preg_replace('/<@!?\d+>/', '[thành viên]', $content);
-            $cleanContent = preg_replace('/<#\d+>/', '[kênh]', $cleanContent);
-            $cleanContent = preg_replace('/<a?:\w+:\d+>/', '', $cleanContent);
-            $cleanContent = trim($cleanContent);
+            if ($content === null) {
+                $empty++;
+                $this->line("  <fg=gray>~ [empty/short] {$threadName}</>");
+                continue;
+            }
 
-            $author = $msg['author']['global_name']
-                   ?? $msg['author']['username']
-                   ?? 'Unknown';
+            $author = $thread['owner_id'] ?? null;
+            // Get author name from members list if possible
+            $authorName = $this->resolveAuthorName($token, $content['author'] ?? []);
 
-            // Auto-detect category by keywords
-            $detectedCategory = $this->detectCategory($cleanContent) ?? $category;
+            $detectedCategory = $this->detectCategory($threadName . ' ' . $content['text']) ?? $category;
 
             LibraryArticle::create([
-                'title'              => $title,
+                'title'              => mb_substr($threadName ?: 'Bài nhập từ Discord', 0, 255),
                 'category'           => $detectedCategory,
-                'content'            => $cleanContent,
+                'content'            => $content['text'],
                 'status'             => 'draft',
-                'discord_message_id' => $messageId,
-                'discord_author'     => $author,
+                'discord_message_id' => $threadId,
+                'discord_author'     => $authorName,
             ]);
 
             $created++;
-            $this->line("  + [{$detectedCategory}] {$title}");
+            $this->line("  <fg=green>+ [{$detectedCategory}]</> {$threadName}");
         }
 
         $this->newLine();
-        $this->info("Done. Created: {$created} | Already imported: {$skipped} | Too short: {$tooShort}");
-
-        if (count($messages) === $limit && $created > 0) {
-            $oldest = end($messages);
-            $this->comment("To fetch older messages, run with: --before={$oldest['id']}");
-        }
+        $this->info("Done. Created: {$created} | Already imported: {$skipped} | Empty/short: {$empty}");
 
         return self::SUCCESS;
     }
 
-    private function detectCategory(string $content): ?string
+    // ─── Helpers ────────────────────────────────────────────────────────────
+
+    private function collectThreads(string $token, string $channelId): ?array
     {
-        $lower = mb_strtolower($content);
+        $headers = ['Authorization' => "Bot {$token}"];
+        $opts    = ['verify' => config('services.discord.guzzle.verify', true)];
+
+        // Active threads in the guild filtered to this channel
+        $res = Http::withHeaders($headers)->withOptions($opts)
+            ->get("https://discord.com/api/v10/guilds/" . self::GUILD_ID . "/threads/active");
+
+        if (!$res->successful()) {
+            $this->error("Failed to get active threads: {$res->status()} {$res->body()}");
+            return null;
+        }
+
+        $active = collect($res->json()['threads'] ?? [])
+            ->where('parent_id', $channelId)
+            ->values()
+            ->toArray();
+
+        // Archived threads in the channel
+        $archived = [];
+        $before   = null;
+
+        do {
+            $params = ['limit' => 100];
+            if ($before) $params['before'] = $before;
+
+            $ares = Http::withHeaders($headers)->withOptions($opts)
+                ->get("https://discord.com/api/v10/channels/{$channelId}/threads/archived/public", $params);
+
+            if (!$ares->successful()) break;
+
+            $batch    = $ares->json()['threads'] ?? [];
+            $archived = array_merge($archived, $batch);
+            $hasMore  = $ares->json()['has_more'] ?? false;
+            $before   = !empty($batch) ? end($batch)['thread_metadata']['archive_timestamp'] : null;
+        } while ($hasMore && $before);
+
+        return array_merge($active, $archived);
+    }
+
+    private function getStarterContent(string $token, string $threadId, int $minLen): ?array
+    {
+        $opts = ['verify' => config('services.discord.guzzle.verify', true)];
+
+        // Get messages oldest-first by fetching with high limit then reversing
+        $res = Http::withHeaders(['Authorization' => "Bot {$token}"])
+            ->withOptions($opts)
+            ->get("https://discord.com/api/v10/channels/{$threadId}/messages", ['limit' => 100]);
+
+        if (!$res->successful()) return null;
+
+        $messages = $res->json();
+        if (empty($messages)) return null;
+
+        // Discord returns newest first — reverse to get oldest (starter) first
+        $messages = array_reverse($messages);
+
+        foreach ($messages as $msg) {
+            $raw  = trim($msg['content'] ?? '');
+            // Clean Discord formatting
+            $text = preg_replace('/<@!?\d+>/', '[thành viên]', $raw);
+            $text = preg_replace('/<#\d+>/', '[kênh]', $text);
+            $text = preg_replace('/<a?:[\w]+:\d+>/', '', $text);
+            $text = trim($text);
+
+            if (mb_strlen($text) >= $minLen) {
+                return [
+                    'text'   => $text,
+                    'author' => $msg['author'] ?? [],
+                ];
+            }
+        }
+
+        return null;
+    }
+
+    private function resolveAuthorName(string $token, array $author): string
+    {
+        return $author['global_name'] ?? $author['username'] ?? 'Unknown';
+    }
+
+    private function detectCategory(string $text): ?string
+    {
+        $lower = mb_strtolower($text);
 
         $patterns = [
-            'guild_war_experience'  => ['bang chiến', 'guild war', 'gw ', 'guild chiến', 'công thành', 'giải đấu bang'],
-            'arena_summary'         => ['đấu trường', 'arena', 'pvp', 'rank', 'bảng xếp hạng', 'mùa giải', 'thi đấu'],
-            'dungeon_summary'       => ['hang động', 'dungeon', 'boss', 'raid', 'instance', 'bản đồ hầm'],
-            'character_development' => ['nội công', 'kỹ năng', 'build', 'trang bị', 'nhân vật', 'thăng cấp', 'hướng dẫn build'],
+            'guild_war_experience'  => ['bang chiến', 'guild war', 'gw ', 'công thành', 'liên minh', 'chiến trường'],
+            'arena_summary'         => ['đấu trường', 'arena', 'pvp', 'rank', 'bảng xếp hạng', 'mùa giải', 'thi đấu', 'season'],
+            'dungeon_summary'       => ['hang động', 'dungeon', 'boss', 'raid', 'instance', 'map', 'mech', 'cơ chế', 'boss'],
+            'character_development' => ['nội công', 'kỹ năng', 'build', 'trang bị', 'nhân vật', 'thăng cấp', 'hướng dẫn build', 'skill', 'đồ', 'lv', 'level'],
         ];
 
         $scores = [];
