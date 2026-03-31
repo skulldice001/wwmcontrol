@@ -50,6 +50,28 @@ window.__lottery = {
             'payout'        => $t->payout,
         ])->values(),
     ], JSON_HEX_TAG | JSON_HEX_APOS) !!},
+    jackpot: {!! json_encode([
+        'id'           => $jackpot->id,
+        'status'       => $jackpot->status,
+        'total_tickets'=> $jackpot->total_tickets,
+        'total_pot'    => $jackpot->total_pot,
+        'ticket_price' => $jackpot->ticket_price,
+        'pick_count'   => $jackpot->pick_count,
+        'my_tickets'   => $myJackpotTickets->map(fn($t) => [
+            'id'             => $t->id,
+            'picked_numbers' => $t->picked_numbers,
+            'bet_amount'     => $t->bet_amount,
+            'is_winner'      => $t->is_winner,
+            'payout'         => $t->payout,
+        ])->values(),
+    ], JSON_HEX_TAG | JSON_HEX_APOS) !!},
+    recentJackpot: {!! json_encode($recentJackpot->map(fn($d) => [
+        'id'              => $d->id,
+        'drawn_at'        => $d->drawn_at?->format('d/m H:i'),
+        'winning_numbers' => $d->winning_numbers,
+        'total_tickets'   => $d->total_tickets,
+        'total_pot'       => $d->total_pot,
+    ])->values(), JSON_HEX_TAG | JSON_HEX_APOS) !!},
     recentDaily:  {!! json_encode($recentDaily->map(fn($d) => [
         'id'              => $d->id,
         'draw_at'         => $d->draw_at->format('d/m H:i'),
@@ -71,9 +93,10 @@ window.__lottery = {
     lastSettledDaily:  {!! json_encode($lastSettledDaily,  JSON_HEX_TAG | JSON_HEX_APOS) !!},
     lastSettledWeekly: {!! json_encode($lastSettledWeekly, JSON_HEX_TAG | JSON_HEX_APOS) !!},
     routes: {
-        state:  '{{ route('entertainment.lottery.state') }}',
-        ticket: '{{ route('entertainment.lottery.ticket') }}',
-        back:   '{{ route('entertainment.index') }}',
+        state:   '{{ route('entertainment.lottery.state') }}',
+        ticket:  '{{ route('entertainment.lottery.ticket') }}',
+        jackpot: '{{ route('entertainment.lottery.jackpot') }}',
+        back:    '{{ route('entertainment.index') }}',
     },
     csrf: '{{ csrf_token() }}',
 };
@@ -81,6 +104,8 @@ window.__lottery = {
 <lottery-lobby
     :init-daily="window.__lottery.daily"
     :init-weekly="window.__lottery.weekly"
+    :init-jackpot="window.__lottery.jackpot"
+    :init-recent-jackpot="window.__lottery.recentJackpot"
     :init-recent-daily="window.__lottery.recentDaily"
     :init-recent-weekly="window.__lottery.recentWeekly"
     :init-balance="window.__lottery.balance"

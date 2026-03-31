@@ -15,8 +15,9 @@ class LotteryController extends Controller
     /** GET /entertainment/lottery */
     public function index()
     {
-        $daily  = LotteryDraw::getOrCreateOpen('daily');
-        $weekly = LotteryDraw::getOrCreateOpen('weekly');
+        $daily   = LotteryDraw::getOrCreateOpen('daily');
+        $weekly  = LotteryDraw::getOrCreateOpen('weekly');
+        $jackpot = LotteryDraw::getOrCreateJackpot();
 
         $userId = Auth::id();
 
@@ -24,6 +25,8 @@ class LotteryController extends Controller
             ->where('user_id', $userId)->get();
         $weeklyTickets = LotteryTicket::where('lottery_draw_id', $weekly->id)
             ->where('user_id', $userId)->get();
+        $myJackpotTickets = LotteryTicket::where('lottery_draw_id', $jackpot->id)
+            ->where('user_id', $userId)->orderByDesc('id')->take(5)->get();
 
         $recentDaily  = LotteryDraw::where('type', 'daily')
             ->where('status', 'settled')
@@ -31,6 +34,9 @@ class LotteryController extends Controller
         $recentWeekly = LotteryDraw::where('type', 'weekly')
             ->where('status', 'settled')
             ->orderByDesc('draw_at')->take(5)->get();
+        $recentJackpot = LotteryDraw::where('type', 'jackpot')
+            ->where('status', 'settled')
+            ->orderByDesc('drawn_at')->take(5)->get();
 
         $balance    = Auth::user()->z_coins;
         $myHistory  = $this->myHistory($userId);
@@ -39,9 +45,9 @@ class LotteryController extends Controller
         $lastSettledWeekly = $this->lastSettledDraw('weekly', $userId);
 
         return view('entertainment.lottery', compact(
-            'daily', 'weekly',
-            'dailyTickets', 'weeklyTickets',
-            'recentDaily', 'recentWeekly',
+            'daily', 'weekly', 'jackpot',
+            'dailyTickets', 'weeklyTickets', 'myJackpotTickets',
+            'recentDaily', 'recentWeekly', 'recentJackpot',
             'balance', 'myHistory',
             'lastSettledDaily', 'lastSettledWeekly'
         ));
@@ -50,17 +56,29 @@ class LotteryController extends Controller
     /** GET /entertainment/lottery/state — AJAX polling */
     public function state()
     {
-        $userId = Auth::id();
+        $userId  = Auth::id();
+        $daily   = LotteryDraw::getOrCreateOpen('daily');
+        $weekly  = LotteryDraw::getOrCreateOpen('weekly');
+        $jackpot = LotteryDraw::getOrCreateJackpot();
 
-        $daily  = LotteryDraw::getOrCreateOpen('daily');
-        $weekly = LotteryDraw::getOrCreateOpen('weekly');
+        $myJackpotTickets = LotteryTicket::where('lottery_draw_id', $jackpot->id)
+            ->where('user_id', $userId)->orderByDesc('id')->take(5)->get()
+            ->map(fn($t) => [
+                'id'              => $t->id,
+                'picked_numbers'  => $t->picked_numbers,
+                'bet_amount'      => $t->bet_amount,
+                'is_winner'       => $t->is_winner,
+                'payout'          => $t->payout,
+            ])->values()->toArray();
 
         return response()->json([
             'daily'                => $this->drawData($daily, $userId),
             'weekly'               => $this->drawData($weekly, $userId),
+            'jackpot'              => $this->jackpotData($jackpot, $myJackpotTickets),
             'balance'              => Auth::user()->z_coins,
             'recent_daily'         => $this->recentDraws('daily'),
             'recent_weekly'        => $this->recentDraws('weekly'),
+            'recent_jackpot'       => $this->recentJackpotDraws(),
             'my_history'           => $this->myHistory($userId),
             'last_settled_daily'   => $this->lastSettledDraw('daily',  $userId),
             'last_settled_weekly'  => $this->lastSettledDraw('weekly', $userId),
@@ -84,7 +102,6 @@ class LotteryController extends Controller
         $user   = Auth::user();
         $amount = (int) $request->bet_amount;
 
-        // One ticket per draw per user
         if (LotteryTicket::where('lottery_draw_id', $draw->id)->where('user_id', $user->id)->exists()) {
             return response()->json(['error' => 'Bạn đã mua vé cho giải này rồi.'], 422);
         }
@@ -116,7 +133,6 @@ class LotteryController extends Controller
                 'bet_amount'      => $amount,
             ]);
 
-            // Update draw totals
             $draw->increment('total_tickets');
             $draw->increment('total_pot', $amount);
 
@@ -130,7 +146,133 @@ class LotteryController extends Controller
         ]);
     }
 
+    /** POST /entertainment/lottery/jackpot — buy one jackpot ticket */
+    public function buyJackpotTicket(Request $request)
+    {
+        $request->validate([
+            'numbers' => 'required|array|size:2',
+            'numbers.*' => 'required|integer|min:1|max:99',
+        ]);
+
+        $n1 = (int) $request->numbers[0];
+        $n2 = (int) $request->numbers[1];
+
+        if ($n1 === $n2) {
+            return response()->json(['error' => 'Hai số phải khác nhau.'], 422);
+        }
+
+        $jackpot = LotteryDraw::getOrCreateJackpot();
+
+        if ($jackpot->status !== 'open') {
+            return response()->json(['error' => 'Jackpot chưa mở.'], 422);
+        }
+
+        $user  = Auth::user();
+        $price = LotteryDraw::JACKPOT_PRICE;
+
+        $result = DB::transaction(function () use ($user, $jackpot, $n1, $n2, $price) {
+            $user = User::where('id', $user->id)->lockForUpdate()->first();
+
+            $available = $user->z_coins - $user->z_coins_frozen;
+            if ($available < $price) {
+                throw new \Exception('Không đủ Zoo. Cần ' . $price . ' Zoo.');
+            }
+
+            $balBefore = $user->z_coins;
+            $user->decrement('z_coins', $price);
+
+            ZooCoinTransaction::create([
+                'user_id'        => $user->id,
+                'type'           => 'lottery_bet',
+                'amount'         => $price,
+                'balance_before' => $balBefore,
+                'balance_after'  => $balBefore - $price,
+                'note'           => 'Mua vé Jackpot',
+            ]);
+
+            // Create ticket
+            $ticket = LotteryTicket::create([
+                'lottery_draw_id' => $jackpot->id,
+                'user_id'         => $user->id,
+                'picked_number'   => $n1, // first number for legacy compat
+                'picked_numbers'  => [$n1, $n2],
+                'bet_amount'      => $price,
+            ]);
+
+            // Add to pot
+            $jackpot->increment('total_tickets');
+            $jackpot->increment('total_pot', $price);
+            $jackpot->refresh();
+
+            // Check win: both numbers must match winning_numbers (any order)
+            $winning = $jackpot->winning_numbers;
+            sort($winning);
+            $picked = [$n1, $n2];
+            sort($picked);
+
+            $isWinner = ($picked === $winning);
+
+            if ($isWinner) {
+                $pot = $jackpot->total_pot;
+
+                // Pay out
+                $userNow = User::where('id', $user->id)->lockForUpdate()->first();
+                $before  = $userNow->z_coins;
+                $after   = $before + $pot;
+                $userNow->update(['z_coins' => $after]);
+
+                ZooCoinTransaction::create([
+                    'user_id'        => $userNow->id,
+                    'type'           => 'lottery_payout',
+                    'amount'         => $pot,
+                    'balance_before' => $before,
+                    'balance_after'  => $after,
+                    'note'           => 'Trúng Jackpot!',
+                ]);
+
+                $ticket->update(['is_winner' => true, 'payout' => $pot]);
+
+                $jackpot->update([
+                    'status'         => 'settled',
+                    'drawn_at'       => now(),
+                    'total_payout'   => $pot,
+                ]);
+
+                return [
+                    'won'     => true,
+                    'payout'  => $pot,
+                    'numbers' => $winning,
+                    'balance' => $after,
+                ];
+            }
+
+            $ticket->update(['is_winner' => false]);
+
+            return [
+                'won'     => false,
+                'pot'     => $jackpot->total_pot,
+                'balance' => $userNow->z_coins ?? $user->fresh()->z_coins,
+            ];
+        });
+
+        return response()->json(['ok' => true] + $result);
+    }
+
     // ── Helpers ────────────────────────────────────────────────────────────
+
+    private function jackpotData(LotteryDraw $jackpot, array $myTickets): array
+    {
+        return [
+            'id'           => $jackpot->id,
+            'status'       => $jackpot->status,
+            'total_tickets'=> $jackpot->total_tickets,
+            'total_pot'    => $jackpot->total_pot,
+            'ticket_price' => $jackpot->ticket_price,
+            'pick_count'   => $jackpot->pick_count,
+            'my_tickets'   => $myTickets,
+            // winning_numbers intentionally NOT sent until settled
+        ];
+    }
 
     private function drawData(LotteryDraw $draw, int $userId): array
     {
@@ -149,33 +291,36 @@ class LotteryController extends Controller
             'id'                 => $draw->id,
             'type'               => $draw->type,
             'status'             => $draw->status,
-            'draw_at'            => $draw->draw_at->toIso8601String(),
+            'draw_at'            => $draw->draw_at?->toIso8601String(),
             'opens_at'           => $draw->opens_at?->toIso8601String(),
             'seconds_left'       => $draw->secondsUntilClose(),
             'seconds_until_draw' => $draw->secondsUntilDraw(),
             'seconds_until_open' => $draw->secondsUntilOpen(),
-            'winning_numbers'   => $draw->winning_numbers,
-            'multiplier'        => $draw->multiplier,
-            'pick_count'        => $draw->pick_count,
-            'total_tickets'     => $draw->total_tickets,
-            'total_pot'         => $draw->total_pot,
-            'my_tickets'        => $myTickets,
+            'winning_numbers'    => $draw->winning_numbers,
+            'multiplier'         => $draw->multiplier,
+            'pick_count'         => $draw->pick_count,
+            'total_tickets'      => $draw->total_tickets,
+            'total_pot'          => $draw->total_pot,
+            'my_tickets'         => $myTickets,
         ];
     }
 
     private function myHistory(int $userId): array
     {
         return LotteryTicket::where('user_id', $userId)
-            ->with(['draw:id,type,draw_at,winning_numbers,status'])
+            ->with(['draw:id,type,draw_at,drawn_at,winning_numbers,status'])
             ->orderByDesc('created_at')
             ->take(20)
             ->get()
             ->map(fn($t) => [
                 'id'             => $t->id,
                 'draw_type'      => $t->draw?->type,
-                'draw_at'        => $t->draw?->draw_at?->format('d/m H:i'),
+                'draw_at'        => $t->draw?->type === 'jackpot'
+                    ? ($t->draw->drawn_at?->format('d/m H:i') ?? '—')
+                    : $t->draw?->draw_at?->format('d/m H:i'),
                 'draw_status'    => $t->draw?->status,
                 'picked_number'  => $t->picked_number,
+                'picked_numbers' => $t->picked_numbers,
                 'bet_amount'     => $t->bet_amount,
                 'is_winner'      => $t->is_winner,
                 'payout'         => $t->payout,
@@ -224,6 +369,22 @@ class LotteryController extends Controller
                 'total_tickets'   => $d->total_tickets,
                 'total_pot'       => $d->total_pot,
                 'total_payout'    => $d->total_payout,
+            ])->toArray();
+    }
+
+    private function recentJackpotDraws(): array
+    {
+        return LotteryDraw::where('type', 'jackpot')
+            ->where('status', 'settled')
+            ->orderByDesc('drawn_at')
+            ->take(5)
+            ->get()
+            ->map(fn($d) => [
+                'id'              => $d->id,
+                'drawn_at'        => $d->drawn_at?->format('d/m H:i'),
+                'winning_numbers' => $d->winning_numbers,
+                'total_tickets'   => $d->total_tickets,
+                'total_pot'       => $d->total_pot,
             ])->toArray();
     }
 }
