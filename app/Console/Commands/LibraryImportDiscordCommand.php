@@ -70,16 +70,24 @@ class LibraryImportDiscordCommand extends Command
                 continue;
             }
 
-            $author = $thread['owner_id'] ?? null;
-            // Get author name from members list if possible
             $authorName = $this->resolveAuthorName($token, $content['author'] ?? []);
 
             $detectedCategory = $this->detectCategory($threadName . ' ' . $content['text']) ?? $category;
 
+            // Build content: text + image HTML
+            $body = $content['text'];
+            if (!empty($content['images'])) {
+                $imgHtml = implode("\n", array_map(
+                    fn($url) => '<img src="' . htmlspecialchars($url, ENT_QUOTES) . '" style="max-width:100%;border-radius:8px;margin:8px 0;" alt="">',
+                    $content['images']
+                ));
+                $body = ($body !== '' ? $body . "\n\n" : '') . $imgHtml;
+            }
+
             LibraryArticle::create([
                 'title'              => mb_substr($threadName ?: 'Bài nhập từ Discord', 0, 255),
                 'category'           => $detectedCategory,
-                'content'            => $content['text'],
+                'content'            => $body,
                 'status'             => 'draft',
                 'discord_message_id' => $threadId,
                 'discord_author'     => $authorName,
@@ -163,10 +171,34 @@ class LibraryImportDiscordCommand extends Command
             $text = preg_replace('/<a?:[\w]+:\d+>/', '', $text);
             $text = trim($text);
 
-            if (mb_strlen($text) >= $minLen) {
+            // Collect image attachments
+            $images = [];
+            foreach ($msg['attachments'] ?? [] as $att) {
+                $ct  = $att['content_type'] ?? '';
+                $fn  = $att['filename'] ?? '';
+                if (str_starts_with($ct, 'image/') || preg_match('/\.(jpg|jpeg|png|gif|webp)$/i', $fn)) {
+                    $images[] = $att['proxy_url'] ?? $att['url'];
+                }
+            }
+            // Also grab images from embeds (e.g. image-only posts)
+            foreach ($msg['embeds'] ?? [] as $embed) {
+                if (!empty($embed['image']['proxy_url'])) {
+                    $images[] = $embed['image']['proxy_url'];
+                } elseif (!empty($embed['image']['url'])) {
+                    $images[] = $embed['image']['url'];
+                }
+                if (!empty($embed['thumbnail']['proxy_url'])) {
+                    $images[] = $embed['thumbnail']['proxy_url'];
+                }
+            }
+            $images = array_unique($images);
+
+            // Accept message if text is long enough OR has at least one image
+            if (mb_strlen($text) >= $minLen || !empty($images)) {
                 return [
                     'text'   => $text,
                     'author' => $msg['author'] ?? [],
+                    'images' => $images,
                 ];
             }
         }

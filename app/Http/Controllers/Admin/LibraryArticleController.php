@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\LibraryArticle;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 
 class LibraryArticleController extends Controller
 {
@@ -96,5 +97,17 @@ class LibraryArticleController extends Controller
     {
         $library->update(['status' => 'draft']);
         return back()->with('success', 'Đã chuyển về bản nháp.');
+    }
+
+    public function uploadImage(Request $request)
+    {
+        $request->validate([
+            'image' => 'required|image|max:5120', // max 5MB
+        ]);
+
+        $path = $request->file('image')->store('library', 'public');
+        $url  = Storage::disk('public')->url($path);
+
+        return response()->json(['url' => $url]);
     }
 }
