@@ -85,6 +85,19 @@
 .ent-card-lottery .ent-card-stripe { background: linear-gradient(90deg,#7b2fbe,#f0c040,#7b2fbe); }
 .ent-card-lottery .ent-play-btn { background: linear-gradient(90deg,#7b2fbe,#a855f7); color: #fff; }
 
+/* Tiến Lên – forest green */
+.ent-card-tienlen {
+    background: linear-gradient(145deg, #0a2010 0%, #1a5030 55%, #0a2010 100%);
+}
+.ent-card-tienlen .ent-suit-bg {
+    position: absolute; right: -6px; top: 50%; transform: translateY(-50%);
+    font-size: 100px; opacity: .1; line-height: 1; pointer-events: none;
+    user-select: none; color: #4caf50;
+}
+.ent-card-tienlen .ent-card-tag { background: rgba(76,175,80,.15); color: #4caf50; border: 1px solid rgba(76,175,80,.35); }
+.ent-card-tienlen .ent-card-stripe { background: linear-gradient(90deg,#1b5e20,#4caf50,#1b5e20); }
+.ent-card-tienlen .ent-play-btn { background: linear-gradient(90deg,#1b5e20,#4caf50); color: #fff; }
+
 /* Tài Xỉu – crimson red */
 .ent-card-taixiu {
     background: linear-gradient(145deg, #2e0606 0%, #8b1a1a 55%, #2e0606 100%);
@@ -272,6 +285,36 @@
             </div>
             <span class="ent-play-btn">
                 <i class="fas fa-ticket-alt"></i> Mua Vé
+            </span>
+        </div>
+    </a>
+
+    {{-- Tiến Lên --}}
+    <a href="{{ route('entertainment.tienlen.index') }}" class="ent-card ent-card-tienlen">
+        <div class="ent-card-stripe"></div>
+        <div class="ent-suit-bg">🃏 ♠</div>
+        <div class="ent-card-body">
+            <div>
+                <div class="ent-card-tag">Card Game</div>
+                <div class="ent-card-title">Tiến Lên</div>
+                <div class="ent-card-sub">Miền Nam · Miền Bắc · 4 người · Chặt heo</div>
+                <div class="ent-stats">
+                    <div class="ent-stat">
+                        <div class="ent-stat-num">{{ $stats['tienlen']['total'] }}</div>
+                        <div class="ent-stat-lbl">Bàn chơi</div>
+                    </div>
+                    <div class="ent-stat">
+                        <div class="ent-stat-num" style="color:#4caf50;">{{ $stats['tienlen']['playing'] }}</div>
+                        <div class="ent-stat-lbl">Đang chơi</div>
+                    </div>
+                    <div class="ent-stat">
+                        <div class="ent-stat-num" style="color:#f6c23e;">{{ $stats['tienlen']['waiting'] }}</div>
+                        <div class="ent-stat-lbl">Chờ người</div>
+                    </div>
+                </div>
+            </div>
+            <span class="ent-play-btn">
+                <i class="fas fa-play"></i> Chơi ngay
             </span>
         </div>
     </a>
