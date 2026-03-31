@@ -170,6 +170,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/entertainment/lottery',        [LotteryController::class, 'index'])->name('entertainment.lottery');
     Route::get('/entertainment/lottery/state',  [LotteryController::class, 'state'])->name('entertainment.lottery.state');
     Route::post('/entertainment/lottery/ticket',[LotteryController::class, 'buyTicket'])->name('entertainment.lottery.ticket');
+    Route::post('/entertainment/lottery/jackpot',[LotteryController::class, 'buyJackpotTicket'])->name('entertainment.lottery.jackpot');
 
     // Tiến Lên
     Route::get('/entertainment/tienlen',                       [TienLenController::class, 'index'])->name('entertainment.tienlen.index');

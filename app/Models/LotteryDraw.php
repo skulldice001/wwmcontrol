@@ -10,7 +10,7 @@ class LotteryDraw extends Model
 {
     protected $fillable = [
         'type', 'status', 'draw_at', 'opens_at', 'drawn_at',
-        'winning_numbers', 'pick_count', 'multiplier',
+        'winning_numbers', 'pick_count', 'multiplier', 'ticket_price',
         'total_tickets', 'total_pot', 'total_payout',
     ];
 
@@ -24,10 +24,12 @@ class LotteryDraw extends Model
     const NUMBER_MIN = 1;
     const NUMBER_MAX = 99;
 
-    const DAILY_MULTIPLIER  = 10;
-    const WEEKLY_MULTIPLIER = 70;
-    const DAILY_PICK_COUNT  = 2;
-    const WEEKLY_PICK_COUNT = 1;
+    const DAILY_MULTIPLIER   = 10;
+    const WEEKLY_MULTIPLIER  = 70;
+    const DAILY_PICK_COUNT   = 2;
+    const WEEKLY_PICK_COUNT  = 1;
+    const JACKPOT_PICK_COUNT = 2;
+    const JACKPOT_PRICE      = 500;
 
     public function tickets(): HasMany
     {
@@ -51,6 +53,29 @@ class LotteryDraw extends Model
     {
         if (!$this->opens_at || now()->gte($this->opens_at)) return 0;
         return max(0, (int) now()->diffInSeconds($this->opens_at, false));
+    }
+
+    /** Return (or create) the open jackpot draw.
+     *  The jackpot has no scheduled draw_at — it pays out instantly when matched.
+     *  Winning numbers are pre-generated and kept secret until won.
+     */
+    public static function getOrCreateJackpot(): self
+    {
+        $draw = self::where('type', 'jackpot')->where('status', 'open')->latest('id')->first();
+        if ($draw) return $draw;
+
+        return self::create([
+            'type'         => 'jackpot',
+            'status'       => 'open',
+            'draw_at'      => null,
+            'pick_count'   => self::JACKPOT_PICK_COUNT,
+            'multiplier'   => 1,
+            'ticket_price' => self::JACKPOT_PRICE,
+            'winning_numbers' => [
+                random_int(self::NUMBER_MIN, self::NUMBER_MAX),
+                random_int(self::NUMBER_MIN, self::NUMBER_MAX),
+            ],
+        ]);
     }
 
     /** Return current open draw for type, creating one if none exists.
