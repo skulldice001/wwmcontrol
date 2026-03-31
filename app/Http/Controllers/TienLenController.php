@@ -18,7 +18,9 @@ class TienLenController extends Controller
 
     public function index()
     {
+        // Only show non-AI tables in the public lobby; AI tables are private
         $tables = TienLenTable::with(['owner', 'players'])
+            ->where('is_ai_mode', false)
             ->whereIn('status', ['waiting', 'playing'])
             ->latest()
             ->get();

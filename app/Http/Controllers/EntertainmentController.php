@@ -29,7 +29,7 @@ class EntertainmentController extends Controller
             'blackjack'=> $this->tableStats(BlackjackTable::all()),
             'taixiu'   => $this->tableStats(TaixiuTable::all()),
             'bingo'    => $this->tableStats(BingoTable::all()),
-            'tienlen'  => $this->tableStats(TienLenTable::all()),
+            'tienlen'  => $this->tableStats(TienLenTable::where('is_ai_mode', false)->get()),
             'lottery'  => [
                 'daily_pot'  => $daily?->total_pot ?? 0,
                 'weekly_pot' => $weekly?->total_pot ?? 0,
