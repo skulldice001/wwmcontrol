@@ -2,8 +2,7 @@
 
 @section('title', 'Xổ Số Zoo')
 
-@section('content')
-@include('partials.notify')
+@push('scripts')
 <script>
 window.__lottery = {
     daily: {!! json_encode([
@@ -104,6 +103,10 @@ window.__lottery = {
     csrf: '{{ csrf_token() }}',
 };
 </script>
+@endpush
+
+@section('content')
+@include('partials.notify')
 <lottery-lobby
     :init-daily="window.__lottery.daily"
     :init-weekly="window.__lottery.weekly"
