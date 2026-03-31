@@ -24,11 +24,15 @@ class LotteryDraw extends Model
     const NUMBER_MIN = 1;
     const NUMBER_MAX = 99;
 
+    // Jackpot: 00–99 (2-digit number)
+    const JACKPOT_NUMBER_MIN = 0;
+    const JACKPOT_NUMBER_MAX = 99;
+
     const DAILY_MULTIPLIER   = 10;
     const WEEKLY_MULTIPLIER  = 70;
     const DAILY_PICK_COUNT   = 2;
     const WEEKLY_PICK_COUNT  = 1;
-    const JACKPOT_PICK_COUNT = 2;
+    const JACKPOT_PICK_COUNT = 1;
     const JACKPOT_PRICE      = 500;
 
     public function tickets(): HasMany
@@ -55,27 +59,49 @@ class LotteryDraw extends Model
         return max(0, (int) now()->diffInSeconds($this->opens_at, false));
     }
 
-    /** Return (or create) the open jackpot draw.
-     *  The jackpot has no scheduled draw_at — it pays out instantly when matched.
-     *  Winning numbers are pre-generated and kept secret until won.
+    /** Return (or create) the current open jackpot draw.
+     *  Draw time: daily at 08:30. Pot carries over if no winner.
      */
-    public static function getOrCreateJackpot(): self
+    public static function getOrCreateJackpot(int $carryoverPot = 0): self
     {
-        $draw = self::where('type', 'jackpot')->where('status', 'open')->latest('id')->first();
+        $draw = self::where('type', 'jackpot')
+            ->where('status', 'open')
+            ->where('draw_at', '>', now())
+            ->latest('draw_at')
+            ->first();
         if ($draw) return $draw;
+
+        // Check if one already exists for next draw_at
+        $drawAt = self::nextJackpotDrawAt();
+        $existing = self::where('type', 'jackpot')->where('draw_at', $drawAt)->first();
+        if ($existing) {
+            if ($existing->status !== 'open') $existing->update(['status' => 'open']);
+            return $existing;
+        }
 
         return self::create([
             'type'         => 'jackpot',
             'status'       => 'open',
-            'draw_at'      => null,
+            'draw_at'      => $drawAt,
+            'opens_at'     => $drawAt->copy()->startOfDay(),
             'pick_count'   => self::JACKPOT_PICK_COUNT,
             'multiplier'   => 1,
             'ticket_price' => self::JACKPOT_PRICE,
-            'winning_numbers' => [
-                random_int(self::NUMBER_MIN, self::NUMBER_MAX),
-                random_int(self::NUMBER_MIN, self::NUMBER_MAX),
-            ],
+            'total_pot'    => $carryoverPot,
         ]);
+    }
+
+    public static function nextJackpotDrawAt(): Carbon
+    {
+        $today0830 = now()->copy()->setTime(8, 30, 0);
+        return now()->lt($today0830) ? $today0830 : $today0830->addDay();
+    }
+
+    /** Seconds until jackpot draw (for countdown display). */
+    public function secondsUntilJackpotDraw(): int
+    {
+        if (!$this->draw_at) return 0;
+        return max(0, (int) now()->diffInSeconds($this->draw_at, false));
     }
 
     /** Return current open draw for type, creating one if none exists.
