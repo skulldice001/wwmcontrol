@@ -88,6 +88,7 @@ use App\Http\Controllers\BlackjackController;
 use App\Http\Controllers\TaixiuController;
 use App\Http\Controllers\LotteryController;
 use App\Http\Controllers\BingoController;
+use App\Http\Controllers\TienLenController;
 
 Route::middleware('auth')->group(function () {
     Route::get('/dashboard', function () {
@@ -169,6 +170,19 @@ Route::middleware('auth')->group(function () {
     Route::get('/entertainment/lottery',        [LotteryController::class, 'index'])->name('entertainment.lottery');
     Route::get('/entertainment/lottery/state',  [LotteryController::class, 'state'])->name('entertainment.lottery.state');
     Route::post('/entertainment/lottery/ticket',[LotteryController::class, 'buyTicket'])->name('entertainment.lottery.ticket');
+
+    // Tiến Lên
+    Route::get('/entertainment/tienlen',                       [TienLenController::class, 'index'])->name('entertainment.tienlen.index');
+    Route::post('/entertainment/tienlen',                      [TienLenController::class, 'createTable'])->name('entertainment.tienlen.create');
+    Route::post('/entertainment/tienlen/ai',                   [TienLenController::class, 'createAiTable'])->name('entertainment.tienlen.ai');
+    Route::get('/entertainment/tienlen/{table}',               [TienLenController::class, 'room'])->name('entertainment.tienlen.room')
+        ->missing(fn () => redirect()->route('entertainment.tienlen.index'));
+    Route::post('/entertainment/tienlen/{table}/ready',        [TienLenController::class, 'ready'])->name('entertainment.tienlen.ready');
+    Route::post('/entertainment/tienlen/{table}/start',        [TienLenController::class, 'start'])->name('entertainment.tienlen.start');
+    Route::post('/entertainment/tienlen/{table}/play',         [TienLenController::class, 'play'])->name('entertainment.tienlen.play');
+    Route::get('/entertainment/tienlen/{table}/state',         [TienLenController::class, 'state'])->name('entertainment.tienlen.state');
+    Route::post('/entertainment/tienlen/{table}/chat',         [TienLenController::class, 'chat'])->name('entertainment.tienlen.chat');
+    Route::delete('/entertainment/tienlen/{table}/leave',      [TienLenController::class, 'leave'])->name('entertainment.tienlen.leave');
 
     // Zoo-coin routes
     Route::post('/zoo-coins/transfer', [\App\Http\Controllers\ZooCoinController::class, 'transfer'])->name('zoo.transfer');
