@@ -24,9 +24,9 @@ class LotteryDraw extends Model
     const NUMBER_MIN = 1;
     const NUMBER_MAX = 99;
 
-    // Jackpot: 00–99 (2-digit number)
+    // Jackpot: 000–999 (3-digit number)
     const JACKPOT_NUMBER_MIN = 0;
-    const JACKPOT_NUMBER_MAX = 99;
+    const JACKPOT_NUMBER_MAX = 999;
 
     const DAILY_MULTIPLIER   = 10;
     const WEEKLY_MULTIPLIER  = 70;
