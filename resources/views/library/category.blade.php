@@ -33,32 +33,23 @@ $label  = \App\Models\LibraryArticle::CATEGORIES[$category] ?? $category;
     <i class="fas fa-inbox fa-2x mb-2"></i><br>Chưa có bài viết nào.
 </div>
 @else
-<div class="row">
+<div class="lib-list">
     @foreach($articles as $article)
-    <div class="col-lg-4 col-md-6 mb-4">
-        <div class="lib-article-card" style="--accent:{{ $accent }};">
-            <div class="lib-article-card-top"></div>
-            <div class="lib-article-body">
-                <h6 class="lib-article-title">{{ $article->title }}</h6>
-                <p class="lib-article-preview">{{ $article->preview(180) }}</p>
-            </div>
-            <div class="lib-article-footer">
-                <span class="lib-article-meta">
-                    @if($article->discord_author)
-                    <i class="fab fa-discord mr-1"></i>{{ $article->discord_author }}
-                    @elseif($article->creator)
-                    <i class="fas fa-user mr-1"></i>{{ $article->creator->name }}
-                    @endif
-                    @if($article->published_at)
-                    · {{ $article->published_at->format('d/m/Y') }}
-                    @endif
-                </span>
-                <a href="{{ route('library.show', [$category, $article]) }}" class="lib-read-btn">
-                    Đọc <i class="fas fa-chevron-right ml-1"></i>
-                </a>
-            </div>
+    <a href="{{ route('library.show', [$category, $article]) }}" class="lib-list-item">
+        <div class="lib-list-accent" style="background:{{ $accent }};"></div>
+        <div class="lib-list-title">{{ $article->title }}</div>
+        <div class="lib-list-meta">
+            @if($article->discord_author)
+                <i class="fab fa-discord mr-1" style="color:#5865F2;"></i>{{ $article->discord_author }}
+            @elseif($article->creator)
+                <i class="fas fa-user mr-1"></i>{{ $article->creator->name }}
+            @endif
+            @if($article->published_at)
+                <span class="ml-2">{{ $article->published_at->format('d/m/Y') }}</span>
+            @endif
         </div>
-    </div>
+        <i class="fas fa-chevron-right lib-list-arrow"></i>
+    </a>
     @endforeach
 </div>
 {{ $articles->links() }}
@@ -90,37 +81,38 @@ $label  = \App\Models\LibraryArticle::CATEGORIES[$category] ?? $category;
     background: rgba(0,0,0,.3); border-radius: 12px;
 }
 
-.lib-article-card {
-    position: relative; border-radius: 12px; overflow: hidden;
-    background: linear-gradient(135deg, #0d0000 0%, #150000 100%);
+/* ── Article list ── */
+.lib-list {
+    display: flex; flex-direction: column; gap: 6px;
+}
+.lib-list-item {
+    display: flex; align-items: center; gap: 14px;
+    background: rgba(0,0,0,.35);
     border: 1px solid rgba(255,255,255,.07);
-    box-shadow: 0 2px 16px rgba(0,0,0,.4);
-    display: flex; flex-direction: column;
-    height: 100%;
-    transition: transform .2s, box-shadow .2s;
+    border-radius: 10px;
+    padding: 14px 18px;
+    text-decoration: none;
+    transition: background .15s, border-color .15s;
 }
-.lib-article-card:hover { transform: translateY(-2px); box-shadow: 0 6px 24px rgba(0,0,0,.6); }
-.lib-article-card-top {
-    height: 3px; background: var(--accent); opacity: .8;
+.lib-list-item:hover {
+    background: rgba(255,255,255,.06);
+    border-color: rgba(255,255,255,.14);
+    text-decoration: none;
 }
-.lib-article-body { padding: 16px 16px 12px; flex: 1; }
-.lib-article-title {
-    font-size: 14px; font-weight: 700; color: #fff;
-    margin-bottom: 8px; line-height: 1.4;
+.lib-list-accent {
+    width: 3px; height: 20px; border-radius: 2px; flex-shrink: 0; opacity: .75;
 }
-.lib-article-preview {
-    font-size: 12px; color: rgba(255,255,255,.45); line-height: 1.6; margin: 0;
+.lib-list-title {
+    flex: 1; font-size: 14px; font-weight: 600; color: #fff;
+    line-height: 1.4;
 }
-.lib-article-footer {
-    padding: 10px 16px;
-    border-top: 1px solid rgba(255,255,255,.06);
-    display: flex; align-items: center; justify-content: space-between;
+.lib-list-meta {
+    font-size: 11px; color: rgba(255,255,255,.3);
+    white-space: nowrap; flex-shrink: 0;
 }
-.lib-article-meta { font-size: 11px; color: rgba(255,255,255,.3); }
-.lib-read-btn {
-    font-size: 12px; font-weight: 700; color: var(--accent);
-    text-decoration: none; white-space: nowrap;
+.lib-list-arrow {
+    font-size: 11px; color: rgba(255,255,255,.2); flex-shrink: 0;
 }
-.lib-read-btn:hover { color: #fff; text-decoration: none; }
+.lib-list-item:hover .lib-list-arrow { color: rgba(255,255,255,.5); }
 </style>
 @endsection
