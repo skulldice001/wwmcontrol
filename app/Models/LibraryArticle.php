@@ -21,11 +21,19 @@ class LibraryArticle extends Model
     ];
 
     const CATEGORIES = [
-        'character_development' => 'Phát triển nhân vật',
-        'arena_summary'         => 'Tổng kết đấu trường',
-        'guild_war_experience'  => 'Kinh nghiệm bang chiến',
-        'dungeon_summary'       => 'Tổng kết hang động',
-        'general'               => 'Chung',
+        'character_development' => 'Character Development',
+        'arena_summary'         => 'Arena Summary',
+        'guild_war_experience'  => 'Guild War',
+        'dungeon_summary'       => 'Dungeon Summary',
+        'general'               => 'General',
+    ];
+
+    const CATEGORY_TAGS = [
+        'character_development' => 'Character',
+        'arena_summary'         => 'Arena',
+        'guild_war_experience'  => 'Guild War',
+        'dungeon_summary'       => 'Dungeon',
+        'general'               => 'General',
     ];
 
     const CATEGORY_ICONS = [
@@ -70,6 +78,11 @@ class LibraryArticle extends Model
     public function categoryLabel(): string
     {
         return self::CATEGORIES[$this->category] ?? $this->category;
+    }
+
+    public function categoryTag(): string
+    {
+        return self::CATEGORY_TAGS[$this->category] ?? $this->category;
     }
 
     public function categoryIcon(): string

@@ -44,9 +44,16 @@
                     <td>{{ $staff->account }}</td>
                     <td>{{ $staff->email }}</td>
                     <td>
-                        <span class="badge badge-{{ $staff->role == 'master' ? 'danger' : ($staff->role == 'admin' ? 'primary' : 'secondary') }}">
-                            {{ ucfirst($staff->role) }}
-                        </span>
+                        @php
+                        $roleBadge = match($staff->role) {
+                            'master'    => ['danger',  'Master'],
+                            'admin'     => ['primary', 'Admin'],
+                            'observer'  => ['secondary', 'Observer'],
+                            'librarian' => ['info', 'Thủ Thư'],
+                            default     => ['secondary', ucfirst($staff->role)],
+                        };
+                        @endphp
+                        <span class="badge badge-{{ $roleBadge[0] }}">{{ $roleBadge[1] }}</span>
                     </td>
                     <td>
                         @if($currentStaff && $currentStaff->canManage($staff))

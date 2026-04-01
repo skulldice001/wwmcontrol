@@ -48,9 +48,10 @@
             <div class="form-group">
                 <label>{{ __('messages.role') }}</label>
                 <select name="role" class="form-control @error('role') is-invalid @enderror">
-                    <option value="master" {{ old('role') == 'master' ? 'selected' : '' }}>Master</option>
-                    <option value="admin" {{ old('role') == 'admin' ? 'selected' : '' }}>Admin</option>
-                    <option value="observer" {{ old('role') == 'observer' ? 'selected' : '' }}>Observer</option>
+                    <option value="master"    {{ old('role') == 'master'    ? 'selected' : '' }}>Master</option>
+                    <option value="admin"     {{ old('role') == 'admin'     ? 'selected' : '' }}>Admin</option>
+                    <option value="observer"  {{ old('role') == 'observer'  ? 'selected' : '' }}>Observer</option>
+                    <option value="librarian" {{ old('role') == 'librarian' ? 'selected' : '' }}>Thủ Thư (Librarian)</option>
                 </select>
                 @error('role') <span class="error invalid-feedback">{{ $message }}</span> @enderror
             </div>

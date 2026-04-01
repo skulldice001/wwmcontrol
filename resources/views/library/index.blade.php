@@ -143,18 +143,28 @@
     </form>
 </div>
 
+@php
+use App\Models\LibraryArticle;
+$cardClasses = [
+    'character_development' => 'lib-card-chara',
+    'arena_summary'         => 'lib-card-arena',
+    'guild_war_experience'  => 'lib-card-gw',
+    'dungeon_summary'       => 'lib-card-dungeon',
+    'general'               => 'lib-card-general',
+];
+@endphp
 <div class="lib-grid">
 
-    {{-- Phát triển nhân vật --}}
-    <a href="{{ route('library.category', 'character_development') }}" class="lib-card lib-card-chara">
+    @foreach(LibraryArticle::CATEGORIES as $key => $label)
+    <a href="{{ route('library.category', $key) }}" class="lib-card {{ $cardClasses[$key] ?? '' }}">
         <div class="lib-card-stripe"></div>
-        <div class="lib-card-deco-bg"><i class="fas fa-user-graduate"></i></div>
+        <div class="lib-card-deco-bg"><i class="{{ LibraryArticle::CATEGORY_ICONS[$key] }}"></i></div>
         <div class="lib-card-body">
             <div>
-                <div class="lib-card-tag">Nhân Vật</div>
-                <div class="lib-card-title">Phát Triển Nhân Vật</div>
+                <div class="lib-card-tag">{{ LibraryArticle::CATEGORY_TAGS[$key] }}</div>
+                <div class="lib-card-title">{{ $label }}</div>
                 <div class="lib-card-count">
-                    <i class="fas fa-file-alt mr-1"></i>{{ $counts['character_development'] }} bài viết
+                    <i class="fas fa-file-alt mr-1"></i>{{ $counts[$key] ?? 0 }} bài viết
                 </div>
             </div>
             <span class="lib-enter-btn">
@@ -162,78 +172,7 @@
             </span>
         </div>
     </a>
-
-    {{-- Đấu trường --}}
-    <a href="{{ route('library.category', 'arena_summary') }}" class="lib-card lib-card-arena">
-        <div class="lib-card-stripe"></div>
-        <div class="lib-card-deco-bg"><i class="fas fa-trophy"></i></div>
-        <div class="lib-card-body">
-            <div>
-                <div class="lib-card-tag">Đấu Trường</div>
-                <div class="lib-card-title">Tổng Kết Đấu Trường</div>
-                <div class="lib-card-count">
-                    <i class="fas fa-file-alt mr-1"></i>{{ $counts['arena_summary'] }} bài viết
-                </div>
-            </div>
-            <span class="lib-enter-btn">
-                <i class="fas fa-arrow-right"></i> Xem ngay
-            </span>
-        </div>
-    </a>
-
-    {{-- Bang chiến --}}
-    <a href="{{ route('library.category', 'guild_war_experience') }}" class="lib-card lib-card-gw">
-        <div class="lib-card-stripe"></div>
-        <div class="lib-card-deco-bg"><i class="fas fa-fist-raised"></i></div>
-        <div class="lib-card-body">
-            <div>
-                <div class="lib-card-tag">Bang Chiến</div>
-                <div class="lib-card-title">Kinh Nghiệm Bang Chiến</div>
-                <div class="lib-card-count">
-                    <i class="fas fa-file-alt mr-1"></i>{{ $counts['guild_war_experience'] }} bài viết
-                </div>
-            </div>
-            <span class="lib-enter-btn">
-                <i class="fas fa-arrow-right"></i> Xem ngay
-            </span>
-        </div>
-    </a>
-
-    {{-- Hang động --}}
-    <a href="{{ route('library.category', 'dungeon_summary') }}" class="lib-card lib-card-dungeon">
-        <div class="lib-card-stripe"></div>
-        <div class="lib-card-deco-bg"><i class="fas fa-dungeon"></i></div>
-        <div class="lib-card-body">
-            <div>
-                <div class="lib-card-tag">Hang Động</div>
-                <div class="lib-card-title">Tổng Kết Hang Động</div>
-                <div class="lib-card-count">
-                    <i class="fas fa-file-alt mr-1"></i>{{ $counts['dungeon_summary'] }} bài viết
-                </div>
-            </div>
-            <span class="lib-enter-btn">
-                <i class="fas fa-arrow-right"></i> Xem ngay
-            </span>
-        </div>
-    </a>
-
-    {{-- Chung --}}
-    <a href="{{ route('library.category', 'general') }}" class="lib-card lib-card-general">
-        <div class="lib-card-stripe"></div>
-        <div class="lib-card-deco-bg"><i class="fas fa-book"></i></div>
-        <div class="lib-card-body">
-            <div>
-                <div class="lib-card-tag">Chung</div>
-                <div class="lib-card-title">Kiến Thức Chung</div>
-                <div class="lib-card-count">
-                    <i class="fas fa-file-alt mr-1"></i>{{ $counts['general'] }} bài viết
-                </div>
-            </div>
-            <span class="lib-enter-btn">
-                <i class="fas fa-arrow-right"></i> Xem ngay
-            </span>
-        </div>
-    </a>
+    @endforeach
 
 </div>
 @endsection
