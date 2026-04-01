@@ -3,7 +3,6 @@
 namespace App\Console\Commands;
 
 use App\Models\LibraryArticle;
-use App\Services\DiscordService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Http;
 
@@ -12,7 +11,8 @@ class LibraryImportDiscordCommand extends Command
     protected $signature = 'library:import-discord
         {--channel=1461845830737723597 : Discord forum channel ID}
         {--category=guild_war_experience : Default category for new drafts}
-        {--min-length=30 : Skip messages shorter than this many characters}';
+        {--min-length=30 : Skip messages shorter than this many characters}
+        {--reimport : Delete existing Discord drafts and re-import all}';
 
     protected $description = 'Import posts from a Discord forum channel as library draft articles';
 
@@ -23,6 +23,7 @@ class LibraryImportDiscordCommand extends Command
         $channelId = $this->option('channel');
         $category  = $this->option('category');
         $minLen    = (int) $this->option('min-length');
+        $reimport  = $this->option('reimport');
         $token     = config('services.discord.bot_token');
 
         if (!$token) {
@@ -35,9 +36,15 @@ class LibraryImportDiscordCommand extends Command
             return self::FAILURE;
         }
 
+        if ($reimport) {
+            $deleted = LibraryArticle::whereNotNull('discord_message_id')
+                ->where('status', 'draft')
+                ->forceDelete();
+            $this->warn("Deleted {$deleted} existing Discord drafts for re-import.");
+        }
+
         $this->info("Fetching threads from forum channel {$channelId}...");
 
-        // Collect all threads (active + archived)
         $threads = $this->collectThreads($token, channelId: $channelId);
 
         if ($threads === null) {
@@ -55,38 +62,35 @@ class LibraryImportDiscordCommand extends Command
             $threadId   = $thread['id'];
             $threadName = trim($thread['name'] ?? '');
 
-            // Skip already imported (use thread ID as discord_message_id)
             if (LibraryArticle::where('discord_message_id', $threadId)->exists()) {
                 $skipped++;
                 continue;
             }
 
-            // Get the starter message (oldest = first) in this thread
-            $content = $this->getStarterContent($token, $threadId, $minLen);
+            $compiled = $this->compileThreadContent($token, $threadId, $minLen);
 
-            if ($content === null) {
+            if ($compiled === null) {
                 $empty++;
                 $this->line("  <fg=gray>~ [empty/short] {$threadName}</>");
                 continue;
             }
 
-            $author = $thread['owner_id'] ?? null;
-            // Get author name from members list if possible
-            $authorName = $this->resolveAuthorName($token, $content['author'] ?? []);
-
-            $detectedCategory = $this->detectCategory($threadName . ' ' . $content['text']) ?? $category;
+            $authorName = $this->resolveAuthorName($compiled['author']);
+            $detectedCategory = $this->detectCategory($threadName . ' ' . $compiled['text']) ?? $category;
 
             LibraryArticle::create([
                 'title'              => mb_substr($threadName ?: 'Bài nhập từ Discord', 0, 255),
                 'category'           => $detectedCategory,
-                'content'            => $content['text'],
+                'content'            => $compiled['text'],
                 'status'             => 'draft',
                 'discord_message_id' => $threadId,
                 'discord_author'     => $authorName,
             ]);
 
             $created++;
-            $this->line("  <fg=green>+ [{$detectedCategory}]</> {$threadName}");
+            $imgCount = $compiled['image_count'];
+            $imgNote  = $imgCount > 0 ? " <fg=cyan>[{$imgCount} ảnh]</>" : '';
+            $this->line("  <fg=green>+ [{$detectedCategory}]</>{$imgNote} {$threadName}");
         }
 
         $this->newLine();
@@ -102,7 +106,6 @@ class LibraryImportDiscordCommand extends Command
         $headers = ['Authorization' => "Bot {$token}"];
         $opts    = ['verify' => config('services.discord.guzzle.verify', true)];
 
-        // Active threads in the guild filtered to this channel
         $res = Http::withHeaders($headers)->withOptions($opts)
             ->get("https://discord.com/api/v10/guilds/" . self::GUILD_ID . "/threads/active");
 
@@ -116,7 +119,6 @@ class LibraryImportDiscordCommand extends Command
             ->values()
             ->toArray();
 
-        // Archived threads in the channel
         $archived = [];
         $before   = null;
 
@@ -138,43 +140,94 @@ class LibraryImportDiscordCommand extends Command
         return array_merge($active, $archived);
     }
 
-    private function getStarterContent(string $token, string $threadId, int $minLen): ?array
+    /**
+     * Fetch ALL messages from a thread, compile full content + images into one block.
+     * Returns null if the combined meaningful text is too short.
+     */
+    private function compileThreadContent(string $token, string $threadId, int $minLen): ?array
     {
-        $opts = ['verify' => config('services.discord.guzzle.verify', true)];
+        $opts    = ['verify' => config('services.discord.guzzle.verify', true)];
+        $headers = ['Authorization' => "Bot {$token}"];
 
-        // Get messages oldest-first by fetching with high limit then reversing
-        $res = Http::withHeaders(['Authorization' => "Bot {$token}"])
-            ->withOptions($opts)
-            ->get("https://discord.com/api/v10/channels/{$threadId}/messages", ['limit' => 100]);
+        // Paginate through all messages (max 100 per request, newest-first)
+        $allMessages = [];
+        $before      = null;
 
-        if (!$res->successful()) return null;
+        do {
+            $params = ['limit' => 100];
+            if ($before) $params['before'] = $before;
 
-        $messages = $res->json();
-        if (empty($messages)) return null;
+            $res = Http::withHeaders($headers)->withOptions($opts)
+                ->get("https://discord.com/api/v10/channels/{$threadId}/messages", $params);
 
-        // Discord returns newest first — reverse to get oldest (starter) first
-        $messages = array_reverse($messages);
+            if (!$res->successful()) break;
 
-        foreach ($messages as $msg) {
+            $batch = $res->json();
+            if (empty($batch)) break;
+
+            $allMessages = array_merge($allMessages, $batch);
+            $before      = end($batch)['id'] ?? null;
+        } while (count($batch) === 100);
+
+        if (empty($allMessages)) return null;
+
+        // Reverse to chronological order (oldest first)
+        $allMessages = array_reverse($allMessages);
+
+        $textParts  = [];
+        $imageLines = [];
+        $firstAuthor = [];
+
+        foreach ($allMessages as $idx => $msg) {
             $raw  = trim($msg['content'] ?? '');
-            // Clean Discord formatting
             $text = preg_replace('/<@!?\d+>/', '[thành viên]', $raw);
             $text = preg_replace('/<#\d+>/', '[kênh]', $text);
             $text = preg_replace('/<a?:[\w]+:\d+>/', '', $text);
             $text = trim($text);
 
+            if ($idx === 0 && !empty($msg['author'])) {
+                $firstAuthor = $msg['author'];
+            }
+
             if (mb_strlen($text) >= $minLen) {
-                return [
-                    'text'   => $text,
-                    'author' => $msg['author'] ?? [],
-                ];
+                $textParts[] = $text;
+            }
+
+            // Extract image attachments
+            foreach ($msg['attachments'] ?? [] as $att) {
+                $url         = $att['url'] ?? null;
+                $contentType = $att['content_type'] ?? '';
+                if ($url && str_starts_with($contentType, 'image/')) {
+                    $filename      = $att['filename'] ?? 'ảnh';
+                    $imageLines[]  = "[ảnh: {$filename}]\n{$url}";
+                }
+            }
+
+            // Extract embeds with image (type=image or thumbnail)
+            foreach ($msg['embeds'] ?? [] as $embed) {
+                $imgUrl = $embed['image']['url'] ?? ($embed['thumbnail']['url'] ?? null);
+                if ($imgUrl && str_starts_with($imgUrl, 'http')) {
+                    $imageLines[] = "[ảnh nhúng]\n{$imgUrl}";
+                }
             }
         }
 
-        return null;
+        if (empty($textParts)) return null;
+
+        $combined = implode("\n\n---\n\n", $textParts);
+
+        if (!empty($imageLines)) {
+            $combined .= "\n\n--- Hình ảnh ---\n\n" . implode("\n\n", $imageLines);
+        }
+
+        return [
+            'text'        => $combined,
+            'author'      => $firstAuthor,
+            'image_count' => count($imageLines),
+        ];
     }
 
-    private function resolveAuthorName(string $token, array $author): string
+    private function resolveAuthorName(array $author): string
     {
         return $author['global_name'] ?? $author['username'] ?? 'Unknown';
     }
@@ -186,7 +239,7 @@ class LibraryImportDiscordCommand extends Command
         $patterns = [
             'guild_war_experience'  => ['bang chiến', 'guild war', 'gw ', 'công thành', 'liên minh', 'chiến trường'],
             'arena_summary'         => ['đấu trường', 'arena', 'pvp', 'rank', 'bảng xếp hạng', 'mùa giải', 'thi đấu', 'season'],
-            'dungeon_summary'       => ['hang động', 'dungeon', 'boss', 'raid', 'instance', 'map', 'mech', 'cơ chế', 'boss'],
+            'dungeon_summary'       => ['hang động', 'dungeon', 'boss', 'raid', 'instance', 'map', 'mech', 'cơ chế'],
             'character_development' => ['nội công', 'kỹ năng', 'build', 'trang bị', 'nhân vật', 'thăng cấp', 'hướng dẫn build', 'skill', 'đồ', 'lv', 'level'],
         ];
 

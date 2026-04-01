@@ -81,4 +81,37 @@ class LibraryArticle extends Model
         $plain = strip_tags($text);
         return mb_strlen($plain) > $chars ? mb_substr($plain, 0, $chars) . '…' : $plain;
     }
+
+    /**
+     * Render content for display:
+     * - Discord CDN image URLs → <img> tags
+     * - Section separators (---) → <hr>
+     * - Plain text wrapped in <p> with line-break support
+     */
+    public function renderedContent(): string
+    {
+        $content = htmlspecialchars($this->content, ENT_QUOTES, 'UTF-8');
+
+        // Replace image blocks: [ảnh: filename]\nURL  or  [ảnh nhúng]\nURL
+        $content = preg_replace_callback(
+            '/\[(?:ảnh|anh)[^\]]*\]\n(https:\/\/[^\s]+)/u',
+            function ($m) {
+                $url = htmlspecialchars_decode($m[1]);
+                $safeUrl = htmlspecialchars($url, ENT_QUOTES, 'UTF-8');
+                return '<img src="' . $safeUrl . '" class="lib-img" alt="ảnh" loading="lazy">';
+            },
+            $content
+        );
+
+        // Image section header
+        $content = preg_replace('/--- Hình ảnh ---/', '<div class="lib-img-section-title">Hình ảnh</div>', $content);
+
+        // Separators
+        $content = preg_replace('/\n?---\n?/', '<hr class="lib-divider">', $content);
+
+        // Line breaks → <br>
+        $content = nl2br($content);
+
+        return $content;
+    }
 }
