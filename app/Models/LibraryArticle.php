@@ -83,35 +83,41 @@ class LibraryArticle extends Model
     }
 
     /**
-     * Render content for display:
-     * - Discord CDN image URLs → <img> tags
-     * - Section separators (---) → <hr>
-     * - Plain text wrapped in <p> with line-break support
+     * Render content for display.
+     * Content may contain raw <img> tags (from import) mixed with plain text.
+     * Strategy: split on <img> tags, escape text parts, keep img tags intact
+     * then apply text transforms (separators, line breaks) only to text parts.
      */
     public function renderedContent(): string
     {
-        $content = htmlspecialchars($this->content, ENT_QUOTES, 'UTF-8');
+        $raw = $this->content;
 
-        // Replace image blocks: [ảnh: filename]\nURL  or  [ảnh nhúng]\nURL
-        $content = preg_replace_callback(
-            '/\[(?:ảnh|anh)[^\]]*\]\n(https:\/\/[^\s]+)/u',
-            function ($m) {
-                $url = htmlspecialchars_decode($m[1]);
-                $safeUrl = htmlspecialchars($url, ENT_QUOTES, 'UTF-8');
-                return '<img src="' . $safeUrl . '" class="lib-img" alt="ảnh" loading="lazy">';
-            },
-            $content
-        );
+        // Split content into alternating [text, img, text, img, ...] segments
+        $parts  = preg_split('/(<img[^>]+>)/i', $raw, -1, PREG_SPLIT_DELIM_CAPTURE);
+        $output = '';
 
-        // Image section header
-        $content = preg_replace('/--- Hình ảnh ---/', '<div class="lib-img-section-title">Hình ảnh</div>', $content);
+        foreach ($parts as $part) {
+            if (preg_match('/^<img[^>]+>$/i', $part)) {
+                // Add class="lib-img" and loading="lazy" to existing img tags
+                $part = preg_replace('/<img/i', '<img class="lib-img" loading="lazy"', $part);
+                $output .= $part;
+            } else {
+                // Escape plain text, then apply transforms
+                $text = htmlspecialchars($part, ENT_QUOTES, 'UTF-8');
 
-        // Separators
-        $content = preg_replace('/\n?---\n?/', '<hr class="lib-divider">', $content);
+                // Section header
+                $text = str_replace('--- Hình ảnh ---', '<div class="lib-img-section-title">Hình ảnh</div>', $text);
 
-        // Line breaks → <br>
-        $content = nl2br($content);
+                // Separators (--- on its own line)
+                $text = preg_replace('/\n?---\n?/', '<hr class="lib-divider">', $text);
 
-        return $content;
+                // Line breaks
+                $text = nl2br($text);
+
+                $output .= $text;
+            }
+        }
+
+        return $output;
     }
 }
