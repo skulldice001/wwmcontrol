@@ -75,13 +75,24 @@ class LibraryImportDiscordCommand extends Command
                 continue;
             }
 
-            $authorName = $this->resolveAuthorName($compiled['author']);
-            $detectedCategory = $this->detectCategory($threadName . ' ' . $compiled['text']) ?? $category;
+            $authorName = $this->resolveAuthorName($token, $content['author'] ?? []);
+
+            $detectedCategory = $this->detectCategory($threadName . ' ' . $content['text']) ?? $category;
+
+            // Build content: text + image HTML
+            $body = $content['text'];
+            if (!empty($content['images'])) {
+                $imgHtml = implode("\n", array_map(
+                    fn($url) => '<img src="' . htmlspecialchars($url, ENT_QUOTES) . '" style="max-width:100%;border-radius:8px;margin:8px 0;" alt="">',
+                    $content['images']
+                ));
+                $body = ($body !== '' ? $body . "\n\n" : '') . $imgHtml;
+            }
 
             LibraryArticle::create([
                 'title'              => mb_substr($threadName ?: 'Bài nhập từ Discord', 0, 255),
                 'category'           => $detectedCategory,
-                'content'            => $compiled['text'],
+                'content'            => $body,
                 'status'             => 'draft',
                 'discord_message_id' => $threadId,
                 'discord_author'     => $authorName,
@@ -189,42 +200,39 @@ class LibraryImportDiscordCommand extends Command
                 $firstAuthor = $msg['author'];
             }
 
-            if (mb_strlen($text) >= $minLen) {
-                $textParts[] = $text;
-            }
-
-            // Extract image attachments
+            // Collect image attachments
+            $images = [];
             foreach ($msg['attachments'] ?? [] as $att) {
-                $url         = $att['url'] ?? null;
-                $contentType = $att['content_type'] ?? '';
-                if ($url && str_starts_with($contentType, 'image/')) {
-                    $filename      = $att['filename'] ?? 'ảnh';
-                    $imageLines[]  = "[ảnh: {$filename}]\n{$url}";
+                $ct  = $att['content_type'] ?? '';
+                $fn  = $att['filename'] ?? '';
+                if (str_starts_with($ct, 'image/') || preg_match('/\.(jpg|jpeg|png|gif|webp)$/i', $fn)) {
+                    $images[] = $att['proxy_url'] ?? $att['url'];
                 }
             }
-
-            // Extract embeds with image (type=image or thumbnail)
+            // Also grab images from embeds (e.g. image-only posts)
             foreach ($msg['embeds'] ?? [] as $embed) {
-                $imgUrl = $embed['image']['url'] ?? ($embed['thumbnail']['url'] ?? null);
-                if ($imgUrl && str_starts_with($imgUrl, 'http')) {
-                    $imageLines[] = "[ảnh nhúng]\n{$imgUrl}";
+                if (!empty($embed['image']['proxy_url'])) {
+                    $images[] = $embed['image']['proxy_url'];
+                } elseif (!empty($embed['image']['url'])) {
+                    $images[] = $embed['image']['url'];
                 }
+                if (!empty($embed['thumbnail']['proxy_url'])) {
+                    $images[] = $embed['thumbnail']['proxy_url'];
+                }
+            }
+            $images = array_unique($images);
+
+            // Accept message if text is long enough OR has at least one image
+            if (mb_strlen($text) >= $minLen || !empty($images)) {
+                return [
+                    'text'   => $text,
+                    'author' => $msg['author'] ?? [],
+                    'images' => $images,
+                ];
             }
         }
 
-        if (empty($textParts)) return null;
-
-        $combined = implode("\n\n---\n\n", $textParts);
-
-        if (!empty($imageLines)) {
-            $combined .= "\n\n--- Hình ảnh ---\n\n" . implode("\n\n", $imageLines);
-        }
-
-        return [
-            'text'        => $combined,
-            'author'      => $firstAuthor,
-            'image_count' => count($imageLines),
-        ];
+        return null;
     }
 
     private function resolveAuthorName(array $author): string
