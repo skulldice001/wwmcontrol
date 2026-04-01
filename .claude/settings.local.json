@@ -27,7 +27,10 @@
       "Bash(powershell.exe -NoProfile -Command \":*)",
       "Bash(powershell.exe -NoProfile -Command \"Test-Path ''C:\\\\DEV\\\\wwmV3\\\\wwmcontrol\\\\node_modules\\\\@fortawesome\\\\fontawesome-free\\\\webfonts''; Get-ChildItem ''C:\\\\DEV\\\\wwmV3\\\\wwmcontrol\\\\node_modules\\\\@fortawesome\\\\fontawesome-free\\\\'' | Select-Object Name\")",
       "Bash(\"c:/DEV/wwmV3/wwmcontrol/resources/js/components/PokerRoom.vue\")",
-      "Read(//tmp/**)"
+      "Read(//tmp/**)",
+      "Bash(php -r \":*)",
+      "Bash(php update_library.php)",
+      "Bash(php -r ':*)"
     ]
   }
 }
