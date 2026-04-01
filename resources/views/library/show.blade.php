@@ -50,7 +50,7 @@ $accent = $accentMap[$article->category] ?? '#ff4444';
     <div class="lib-article-excerpt">{{ $article->excerpt }}</div>
     @endif
 
-    <div class="lib-article-content">{{ $article->content }}</div>
+    <div class="lib-article-content">{!! $article->renderedContent() !!}</div>
 </div>
 
 <a href="{{ route('library.category', $category) }}" class="lib-back-bottom">
@@ -108,8 +108,20 @@ $accent = $accentMap[$article->category] ?? '#ff4444';
     padding: 24px 28px;
     font-size: 15px; line-height: 1.9;
     color: rgba(255,255,255,.82);
-    white-space: pre-wrap;
     word-break: break-word;
+}
+.lib-article-content .lib-img {
+    max-width: 100%; border-radius: 10px;
+    margin: 14px 0; display: block;
+    box-shadow: 0 4px 20px rgba(0,0,0,.5);
+}
+.lib-article-content .lib-divider {
+    border: none; border-top: 1px solid rgba(255,255,255,.1); margin: 20px 0;
+}
+.lib-article-content .lib-img-section-title {
+    font-size: 11px; font-weight: 700; letter-spacing: 2px;
+    text-transform: uppercase; color: rgba(255,255,255,.3);
+    margin: 24px 0 12px;
 }
 
 .lib-back-bottom {
