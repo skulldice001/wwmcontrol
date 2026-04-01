@@ -133,7 +133,7 @@ class LotteryDrawCommand extends Command
             'drawn_at'        => now(),
         ]);
 
-        $this->line("Winning number: " . str_pad($winning, 2, '0', STR_PAD_LEFT));
+        $this->line("Winning number: " . str_pad($winning, 3, '0', STR_PAD_LEFT));
 
         $totalPayout  = 0;
         $carryoverPot = 0;
@@ -163,7 +163,7 @@ class LotteryDrawCommand extends Command
                         'amount'         => $potPerWinner,
                         'balance_before' => $balBefore,
                         'balance_after'  => $balBefore + $potPerWinner,
-                        'note'           => 'Trúng Jackpot! Số ' . str_pad($winning, 2, '0', STR_PAD_LEFT),
+                        'note'           => 'Trúng Jackpot! Số ' . str_pad($winning, 3, '0', STR_PAD_LEFT),
                     ]);
 
                     $totalPayout += $potPerWinner;

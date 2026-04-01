@@ -277,7 +277,7 @@
 
         <div class="lottery-jackpot-header">
           <span class="lottery-jackpot-badge">🎰 JACKPOT · Quay số mỗi ngày 08:30</span>
-          <span class="lottery-jackpot-vé">Vé: <strong style="color:#f6c23e;">500 Zoo</strong> / lần · Chọn 1 số 00–99</span>
+          <span class="lottery-jackpot-vé">Vé: <strong style="color:#f6c23e;">500 Zoo</strong> / lần · Chọn 1 số 000–999</span>
         </div>
 
         <!-- Jackpot pot -->
@@ -301,17 +301,17 @@
 
         <!-- Pick form -->
         <div v-if="jackpot.status === 'open' && !jackpotWinMsg" class="lottery-jackpot-form">
-          <div class="lottery-jackpot-picks-label">Chọn 1 số (00–99):</div>
-          <div class="lottery-number-grid jp-grid-single">
-            <button
-              v-for="n in jpNumbers" :key="'jp-'+n"
-              :class="['lottery-num-btn jackpot', jpPick === n ? 'selected' : '']"
-              @click="jpPick = n"
-            >{{ pad(n) }}</button>
-          </div>
+          <div class="lottery-jackpot-picks-label">Nhập số (000–999):</div>
+          <input
+            type="number" min="0" max="999" step="1"
+            class="form-control lottery-jackpot-input"
+            placeholder="Ví dụ: 042"
+            :value="jpPick !== null ? jpPick : ''"
+            @input="e => { const v = parseInt(e.target.value); jpPick = (!isNaN(v) && v >= 0 && v <= 999) ? v : null; }"
+          />
 
           <div v-if="jpPick !== null" class="text-center mt-2" style="font-size:13px;color:#aaa;">
-            Số chọn: <strong style="color:#f6c23e;">{{ pad(jpPick) }}</strong>
+            Số chọn: <strong style="color:#f6c23e;">{{ pad3(jpPick) }}</strong>
             · Giá: <strong>500 Zoo</strong>
             → Trúng nhận <strong style="color:#f6c23e;">{{ (jackpot.total_pot || 0).toLocaleString() }} Zoo</strong>
             <span v-if="jackpot.total_tickets > 1"> ÷ người trúng</span>
@@ -331,7 +331,7 @@
         <div v-if="jackpot.my_tickets && jackpot.my_tickets.length" class="lottery-my-tickets mt-2">
           <div class="lottery-my-tickets-title">Vé của bạn (kỳ này):</div>
           <div v-for="t in jackpot.my_tickets" :key="t.id" class="lottery-ticket-row">
-            <span class="lottery-result-num jackpot">{{ pad(t.picked_number != null ? t.picked_number : (t.picked_numbers||[])[0]) }}</span>
+            <span class="lottery-result-num jackpot">{{ pad3(t.picked_number != null ? t.picked_number : (t.picked_numbers||[])[0]) }}</span>
             <span class="text-muted ml-2">500 Zoo</span>
             <span v-if="t.is_winner === true"  class="badge badge-warning ml-auto">🎰 Trúng! +{{ (t.payout||0).toLocaleString() }}</span>
             <span v-else-if="t.is_winner === false" class="badge badge-secondary ml-auto">Chưa trúng</span>
@@ -348,7 +348,7 @@
               <tr v-for="d in recentJackpot" :key="d.id">
                 <td style="font-size:11px;">{{ d.drawn_at }}</td>
                 <td>
-                  <span v-for="n in d.winning_numbers" :key="n" class="lottery-result-num jackpot">{{ pad(n) }}</span>
+                  <span v-for="n in d.winning_numbers" :key="n" class="lottery-result-num jackpot">{{ pad3(n) }}</span>
                 </td>
                 <td>{{ d.total_tickets }}</td>
                 <td style="color:#f6c23e;">{{ d.total_pot.toLocaleString() }}</td>
@@ -383,7 +383,7 @@
             <td style="font-size:11px;">{{ t.draw_at || '—' }}</td>
             <td>
               <span :class="['lottery-result-num', t.draw_type === 'jackpot' ? 'jackpot' : t.draw_type === 'weekly' ? 'weekly' : '']">
-                {{ pad(t.picked_number) }}
+                {{ t.draw_type === 'jackpot' ? pad3(t.picked_number) : pad(t.picked_number) }}
               </span>
             </td>
             <td style="font-size:12px;">{{ t.bet_amount.toLocaleString() }}</td>
@@ -483,7 +483,6 @@ export default {
       weeklyBet:  100,
 
       jpPick:        null,
-      jpNumbers:     Array.from({ length: 100 }, (_, i) => i), // 0..99
       jackpotSeconds: this.initJackpot.seconds_until_draw || 0,
       jackpotWinMsg: '',
 
@@ -519,6 +518,9 @@ export default {
   methods: {
     pad(n) {
       return String(n).padStart(2, '0');
+    },
+    pad3(n) {
+      return String(n ?? 0).padStart(3, '0');
     },
 
     claimDraw(drawId) {
@@ -729,6 +731,23 @@ export default {
 @keyframes winFlash { 0%,100% { opacity:1; } 50% { opacity:.4; } }
 
 .lottery-jackpot-form { }
+.lottery-jackpot-input {
+  background: rgba(0,0,0,.5) !important;
+  border: 1px solid rgba(251,191,36,.5) !important;
+  color: #fff !important;
+  font-size: 26px !important;
+  font-weight: 800;
+  text-align: center;
+  letter-spacing: 6px;
+  border-radius: 8px !important;
+  padding: 10px !important;
+}
+.lottery-jackpot-input:focus {
+  outline: none !important;
+  border-color: #f59e0b !important;
+  box-shadow: 0 0 0 2px rgba(245,158,11,.3) !important;
+}
+.lottery-jackpot-input::placeholder { color: rgba(255,255,255,.25); letter-spacing: 2px; font-size: 16px; }
 .lottery-jackpot-picks-label { font-size: 12px; color: rgba(255,255,255,.5); margin-bottom: 8px; }
 .jp-grid-single { max-height: 180px; overflow-y: auto; }
 

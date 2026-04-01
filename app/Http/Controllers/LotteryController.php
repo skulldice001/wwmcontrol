@@ -146,11 +146,11 @@ class LotteryController extends Controller
         ]);
     }
 
-    /** POST /entertainment/lottery/jackpot — buy one jackpot ticket (single 2-digit number 00–99) */
+    /** POST /entertainment/lottery/jackpot — buy one jackpot ticket (single 3-digit number 000–999) */
     public function buyJackpotTicket(Request $request)
     {
         $request->validate([
-            'number' => 'required|integer|min:0|max:99',
+            'number' => 'required|integer|min:0|max:999',
         ]);
 
         $number  = (int) $request->number;
@@ -162,6 +162,11 @@ class LotteryController extends Controller
 
         $user  = Auth::user();
         $price = LotteryDraw::JACKPOT_PRICE;
+
+        // Giới hạn 1 vé/ngày cho jackpot
+        if (LotteryTicket::where('lottery_draw_id', $jackpot->id)->where('user_id', $user->id)->exists()) {
+            return response()->json(['error' => 'Bạn đã mua vé Jackpot hôm nay rồi.'], 422);
+        }
 
         $ticket = DB::transaction(function () use ($user, $jackpot, $number, $price) {
             $user = User::where('id', $user->id)->lockForUpdate()->first();
@@ -180,7 +185,7 @@ class LotteryController extends Controller
                 'amount'         => $price,
                 'balance_before' => $balBefore,
                 'balance_after'  => $balBefore - $price,
-                'note'           => 'Mua vé Jackpot số ' . str_pad($number, 2, '0', STR_PAD_LEFT),
+                'note'           => 'Mua vé Jackpot số ' . str_pad($number, 3, '0', STR_PAD_LEFT),
             ]);
 
             $ticket = LotteryTicket::create([
