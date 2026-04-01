@@ -41,31 +41,32 @@ $accentMap = [
 
 .lib-list-item {
     display: flex; align-items: center; gap: 14px;
-    background: rgba(0,0,0,.5);
-    border: 1px solid rgba(255,255,255,.1);
+    background: #1a0a0a;
+    border: 1px solid #2e1a1a;
     border-radius: 10px;
     padding: 14px 18px;
     text-decoration: none;
     transition: background .15s, border-color .15s;
 }
 .lib-list-item:hover {
-    background: rgba(255,255,255,.08);
-    border-color: rgba(255,255,255,.2);
+    background: #2a1212;
+    border-color: #5a2020;
     text-decoration: none;
 }
 .lib-list-accent {
-    width: 3px; height: 20px; border-radius: 2px; flex-shrink: 0; opacity: .8;
+    width: 3px; height: 20px; border-radius: 2px; flex-shrink: 0; opacity: .85;
 }
 .lib-list-title {
-    flex: 1; font-size: 14px; font-weight: 600; color: #fff; line-height: 1.4;
+    flex: 1; font-size: 14px; font-weight: 600; color: #f0f0f0; line-height: 1.4;
 }
 .lib-list-meta {
-    font-size: 11px; color: rgba(255,255,255,.4); white-space: nowrap; flex-shrink: 0;
+    font-size: 11px; color: #888; white-space: nowrap; flex-shrink: 0;
 }
 .lib-list-arrow {
-    font-size: 11px; color: rgba(255,255,255,.25); flex-shrink: 0;
+    font-size: 11px; color: #555; flex-shrink: 0;
 }
-.lib-list-item:hover .lib-list-arrow { color: rgba(255,255,255,.6); }
+.lib-list-item:hover .lib-list-title { color: #fff; }
+.lib-list-item:hover .lib-list-arrow { color: #aaa; }
 </style>
 @endpush
 
