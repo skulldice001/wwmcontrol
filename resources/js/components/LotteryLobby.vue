@@ -968,10 +968,11 @@ export default {
 .lottery-history { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
 @media (max-width: 768px) { .lottery-history { grid-template-columns: 1fr; } }
 
-.lottery-history-title { font-size: 13px; font-weight: 700; color: rgba(255,255,255,.6); margin-bottom: 8px; }
-.lottery-table { background: rgba(0,0,0,.2); border-radius: 8px; overflow: hidden; }
-.lottery-table thead th { font-size: 10px; color: rgba(255,255,255,.35); border-color: rgba(255,255,255,.08); }
-.lottery-table tbody td { font-size: 12px; border-color: rgba(255,255,255,.05); vertical-align: middle; }
+.lottery-history-title { font-size: 13px; font-weight: 700; color: rgba(255,255,255,.75); margin-bottom: 8px; }
+.lottery-table { background: rgba(0,0,0,.45); border-radius: 8px; overflow: hidden; }
+.lottery-table thead th { font-size: 10px; font-weight: 700; color: rgba(255,255,255,.65); background: rgba(255,255,255,.07); border-color: rgba(255,255,255,.12); letter-spacing: .5px; text-transform: uppercase; }
+.lottery-table tbody td { font-size: 12px; color: rgba(255,255,255,.82); border-color: rgba(255,255,255,.08); vertical-align: middle; }
+.lottery-table tbody tr:hover td { background: rgba(255,255,255,.05); }
 
 .lottery-result-num {
   display: inline-flex; align-items: center; justify-content: center;
