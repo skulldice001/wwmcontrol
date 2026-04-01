@@ -44,6 +44,14 @@ class LibraryArticle extends Model
         'general'               => 'secondary',
     ];
 
+    const CATEGORY_ACCENTS = [
+        'character_development' => '#ff4444',
+        'arena_summary'         => '#c084fc',
+        'guild_war_experience'  => '#f59e0b',
+        'dungeon_summary'       => '#22d3ee',
+        'general'               => '#9ca3af',
+    ];
+
     public function creator(): BelongsTo
     {
         return $this->belongsTo(Staff::class, 'created_by');
@@ -72,6 +80,11 @@ class LibraryArticle extends Model
     public function categoryColor(): string
     {
         return self::CATEGORY_COLORS[$this->category] ?? 'secondary';
+    }
+
+    public function categoryAccent(): string
+    {
+        return self::CATEGORY_ACCENTS[$this->category] ?? '#ff4444';
     }
 
     /** Short preview for cards. */
