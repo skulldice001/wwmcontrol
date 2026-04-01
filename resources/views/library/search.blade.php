@@ -30,8 +30,7 @@
 <div class="row">
     @foreach($articles as $article)
     @php
-    $accentMap = ['character_development'=>'#ff4444','arena_summary'=>'#c084fc','guild_war_experience'=>'#f59e0b','dungeon_summary'=>'#22d3ee','general'=>'#9ca3af'];
-    $accent = $accentMap[$article->category] ?? '#ff4444';
+    $accent = $article->categoryAccent();
     @endphp
     <div class="col-lg-4 col-md-6 mb-4">
         <div class="lib-article-card" style="--accent:{{ $accent }};">

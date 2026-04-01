@@ -3,15 +3,6 @@
 
 @push('styles')
 <style>
-@php
-$accentMap = [
-    'character_development' => '#ff4444',
-    'arena_summary'         => '#c084fc',
-    'guild_war_experience'  => '#f59e0b',
-    'dungeon_summary'       => '#22d3ee',
-    'general'               => '#9ca3af',
-];
-@endphp
 .lib-cat-header {
     background: linear-gradient(135deg, #0d0000 0%, #1a0000 100%);
     border: 1px solid rgba(255,255,255,.08);
@@ -72,14 +63,7 @@ $accentMap = [
 
 @section('content')
 @php
-$accentMap = [
-    'character_development' => '#ff4444',
-    'arena_summary'         => '#c084fc',
-    'guild_war_experience'  => '#f59e0b',
-    'dungeon_summary'       => '#22d3ee',
-    'general'               => '#9ca3af',
-];
-$accent = $accentMap[$category] ?? '#ff4444';
+$accent = \App\Models\LibraryArticle::CATEGORY_ACCENTS[$category] ?? '#ff4444';
 $icon   = \App\Models\LibraryArticle::CATEGORY_ICONS[$category] ?? 'fas fa-book';
 $label  = \App\Models\LibraryArticle::CATEGORIES[$category] ?? $category;
 @endphp
