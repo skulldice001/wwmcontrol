@@ -165,15 +165,15 @@ class LotteryDraw extends Model
             return $saturday21;
         }
 
-        // Daily: 08:00 today, or 08:00 tomorrow if already past
-        $today08 = now()->copy()->setTime(8, 0, 0);
-        return now()->lt($today08) ? $today08 : $today08->addDay();
+        // Daily: 20:00 today, or 20:00 tomorrow if already past
+        $today20 = now()->copy()->setTime(20, 0, 0);
+        return now()->lt($today20) ? $today20 : $today20->addDay();
     }
 
     /** Calculate when ticket sales open for a draw. */
     public static function nextOpensAt(string $type, Carbon $drawAt): Carbon
     {
-        // Daily: open immediately (right after previous draw settles at 08:00)
+        // Daily: open immediately (right after previous draw settles at 20:00)
         // Weekly: open at midnight of the draw day (Saturday)
         if ($type === 'daily') {
             return now();
