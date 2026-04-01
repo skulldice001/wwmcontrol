@@ -21,9 +21,10 @@ class Staff extends Authenticatable
         'role',
     ];
 
-    const ROLE_MASTER = 'master';
-    const ROLE_ADMIN = 'admin';
-    const ROLE_OBSERVER = 'observer';
+    const ROLE_MASTER    = 'master';
+    const ROLE_ADMIN     = 'admin';
+    const ROLE_OBSERVER  = 'observer';
+    const ROLE_LIBRARIAN = 'librarian';
 
     public function isMaster(): bool
     {
@@ -40,13 +41,24 @@ class Staff extends Authenticatable
         return $this->role === self::ROLE_OBSERVER;
     }
 
+    public function isLibrarian(): bool
+    {
+        return $this->role === self::ROLE_LIBRARIAN;
+    }
+
+    public function canManageLibrary(): bool
+    {
+        return in_array($this->role, [self::ROLE_MASTER, self::ROLE_ADMIN, self::ROLE_LIBRARIAN]);
+    }
+
     public function roleRank(): int
     {
         return match ($this->role) {
-            self::ROLE_MASTER => 3,
-            self::ROLE_ADMIN => 2,
-            self::ROLE_OBSERVER => 1,
-            default => 0,
+            self::ROLE_MASTER    => 3,
+            self::ROLE_ADMIN     => 2,
+            self::ROLE_OBSERVER  => 1,
+            self::ROLE_LIBRARIAN => 1,
+            default              => 0,
         };
     }
 

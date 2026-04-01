@@ -45,7 +45,7 @@ class StaffController extends Controller
             'account' => ['required', 'string', 'max:255', 'unique:staffs'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:staffs'],
             'password' => ['required', 'string', 'min:6', 'confirmed'],
-            'role' => ['required', Rule::in([Staff::ROLE_MASTER, Staff::ROLE_ADMIN, Staff::ROLE_OBSERVER])],
+            'role' => ['required', Rule::in([Staff::ROLE_MASTER, Staff::ROLE_ADMIN, Staff::ROLE_OBSERVER, Staff::ROLE_LIBRARIAN])],
         ]);
 
         if (!$current->isMaster() && $validated['role'] === Staff::ROLE_MASTER) {
@@ -81,7 +81,7 @@ class StaffController extends Controller
             'account' => ['string', 'max:255', Rule::unique('staffs')->ignore($staff->id)],
             'email' => ['string', 'email', 'max:255', Rule::unique('staffs')->ignore($staff->id)],
             'password' => ['nullable', 'string', 'min:6'],
-            'role' => [Rule::in([Staff::ROLE_MASTER, Staff::ROLE_ADMIN, Staff::ROLE_OBSERVER])],
+            'role' => [Rule::in([Staff::ROLE_MASTER, Staff::ROLE_ADMIN, Staff::ROLE_OBSERVER, Staff::ROLE_LIBRARIAN])],
         ]);
 
         if (!empty($validated['password'])) {

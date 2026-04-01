@@ -171,6 +171,7 @@
                 <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
                     <!-- Add icons to the links using the .nav-icon class with font-awesome or any other icon font library -->
                     @if(Auth::guard('staff')->check())
+                        @php $staffUser = Auth::guard('staff')->user(); @endphp
                         <li class="nav-item">
                             <a href="{{ route('admin.dashboard') }}" class="nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
                                 <i class="nav-icon fas fa-tachometer-alt"></i>
@@ -183,6 +184,7 @@
                                 <p>{{ __('messages.profile_info') }}</p>
                             </a>
                         </li>
+                        @if(!$staffUser->isLibrarian())
                         <li class="nav-item">
                             <a href="{{ route('admin.events.index') }}" class="nav-link {{ request()->routeIs('admin.events.*') ? 'active' : '' }}">
                                 <i class="nav-icon fas fa-calendar-alt"></i>
@@ -201,7 +203,8 @@
                                 <p>{{ __('messages.create_new_user') }}</p>
                             </a>
                         </li>
-                        @if(Auth::guard('staff')->user()->isAdmin())
+                        @endif
+                        @if($staffUser->isAdmin())
                         <li class="nav-item">
                             <a href="{{ route('admin.staff.index') }}" class="nav-link {{ request()->routeIs('admin.staff.*') ? 'active' : '' }}">
                                 <i class="nav-icon fas fa-users-cog"></i>
