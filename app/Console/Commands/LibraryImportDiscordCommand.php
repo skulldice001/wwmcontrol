@@ -75,18 +75,17 @@ class LibraryImportDiscordCommand extends Command
                 continue;
             }
 
-            $authorName = $this->resolveAuthorName($token, $content['author'] ?? []);
+            $authorName       = $this->resolveAuthorName($compiled['author']);
+            $detectedCategory = $this->detectCategory($threadName . ' ' . $compiled['text']) ?? $category;
 
-            $detectedCategory = $this->detectCategory($threadName . ' ' . $content['text']) ?? $category;
-
-            // Build content: text + image HTML
-            $body = $content['text'];
-            if (!empty($content['images'])) {
+            // Build content: plain text + inline image HTML
+            $body = $compiled['text'];
+            if (!empty($compiled['images'])) {
                 $imgHtml = implode("\n", array_map(
                     fn($url) => '<img src="' . htmlspecialchars($url, ENT_QUOTES) . '" style="max-width:100%;border-radius:8px;margin:8px 0;" alt="">',
-                    $content['images']
+                    $compiled['images']
                 ));
-                $body = ($body !== '' ? $body . "\n\n" : '') . $imgHtml;
+                $body .= "\n\n" . $imgHtml;
             }
 
             LibraryArticle::create([
@@ -99,7 +98,7 @@ class LibraryImportDiscordCommand extends Command
             ]);
 
             $created++;
-            $imgCount = $compiled['image_count'];
+            $imgCount = count($compiled['images']);
             $imgNote  = $imgCount > 0 ? " <fg=cyan>[{$imgCount} ảnh]</>" : '';
             $this->line("  <fg=green>+ [{$detectedCategory}]</>{$imgNote} {$threadName}");
         }
@@ -152,8 +151,9 @@ class LibraryImportDiscordCommand extends Command
     }
 
     /**
-     * Fetch ALL messages from a thread, compile full content + images into one block.
-     * Returns null if the combined meaningful text is too short.
+     * Fetch ALL messages from a thread and compile into one content block.
+     * Collects all meaningful text parts and all image attachments.
+     * Returns null if there is no meaningful content at all.
      */
     private function compileThreadContent(string $token, string $threadId, int $minLen): ?array
     {
@@ -185,54 +185,58 @@ class LibraryImportDiscordCommand extends Command
         // Reverse to chronological order (oldest first)
         $allMessages = array_reverse($allMessages);
 
-        $textParts  = [];
-        $imageLines = [];
+        $textParts   = [];
+        $imageUrls   = [];
         $firstAuthor = [];
 
         foreach ($allMessages as $idx => $msg) {
-            $raw  = trim($msg['content'] ?? '');
-            $text = preg_replace('/<@!?\d+>/', '[thành viên]', $raw);
-            $text = preg_replace('/<#\d+>/', '[kênh]', $text);
-            $text = preg_replace('/<a?:[\w]+:\d+>/', '', $text);
-            $text = trim($text);
-
             if ($idx === 0 && !empty($msg['author'])) {
                 $firstAuthor = $msg['author'];
             }
 
+            // Clean Discord formatting tokens
+            $text = trim($msg['content'] ?? '');
+            $text = preg_replace('/<@!?\d+>/', '[thành viên]', $text);
+            $text = preg_replace('/<#\d+>/', '[kênh]', $text);
+            $text = preg_replace('/<a?:[\w]+:\d+>/', '', $text);
+            $text = trim($text);
+
+            if (mb_strlen($text) >= $minLen) {
+                $textParts[] = $text;
+            }
+
             // Collect image attachments
-            $images = [];
             foreach ($msg['attachments'] ?? [] as $att) {
                 $ct  = $att['content_type'] ?? '';
                 $fn  = $att['filename'] ?? '';
                 if (str_starts_with($ct, 'image/') || preg_match('/\.(jpg|jpeg|png|gif|webp)$/i', $fn)) {
-                    $images[] = $att['proxy_url'] ?? $att['url'];
+                    $imageUrls[] = $att['proxy_url'] ?? $att['url'];
                 }
             }
-            // Also grab images from embeds (e.g. image-only posts)
+
+            // Collect images from embeds
             foreach ($msg['embeds'] ?? [] as $embed) {
                 if (!empty($embed['image']['proxy_url'])) {
-                    $images[] = $embed['image']['proxy_url'];
+                    $imageUrls[] = $embed['image']['proxy_url'];
                 } elseif (!empty($embed['image']['url'])) {
-                    $images[] = $embed['image']['url'];
+                    $imageUrls[] = $embed['image']['url'];
                 }
                 if (!empty($embed['thumbnail']['proxy_url'])) {
-                    $images[] = $embed['thumbnail']['proxy_url'];
+                    $imageUrls[] = $embed['thumbnail']['proxy_url'];
                 }
-            }
-            $images = array_unique($images);
-
-            // Accept message if text is long enough OR has at least one image
-            if (mb_strlen($text) >= $minLen || !empty($images)) {
-                return [
-                    'text'   => $text,
-                    'author' => $msg['author'] ?? [],
-                    'images' => $images,
-                ];
             }
         }
 
-        return null;
+        $imageUrls = array_values(array_unique($imageUrls));
+
+        // Skip threads with no text and no images
+        if (empty($textParts) && empty($imageUrls)) return null;
+
+        return [
+            'text'   => implode("\n\n", $textParts),
+            'author' => $firstAuthor,
+            'images' => $imageUrls,
+        ];
     }
 
     private function resolveAuthorName(array $author): string

@@ -41,6 +41,10 @@ return Application::configure(basePath: dirname(__DIR__))
             }
             return redirect()->route('login')->with('error', 'Phiên làm việc đã hết hạn. Vui lòng đăng nhập lại.');
         });
+
+        $exceptions->render(function (\Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException $e, Request $request) {
+            return redirect('/')->with('error', 'Bạn không có quyền truy cập trang này.');
+        });
     })
     ->withSchedule(function (Schedule $schedule): void {
         $schedule->command('events:close-expired')->dailyAt('00:00');
