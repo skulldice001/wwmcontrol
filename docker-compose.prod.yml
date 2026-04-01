@@ -1,119 +1,206 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Production Docker Compose
+# Usage: see DOCKER.md
+# Copy .env.docker.example → .env and fill in secrets before running.
+# ─────────────────────────────────────────────────────────────────────────────
+
 services:
-    app:
-        build:
-            context: .
-            dockerfile: Dockerfile
-        image: wwmcontrol-app
-        restart: unless-stopped
-        ports:
-            - "${APP_PORT:-80}:80"
-        environment:
-            APP_ENV: ${APP_ENV:-production}
-            APP_KEY: ${APP_KEY}
-            APP_DEBUG: ${APP_DEBUG:-false}
-            APP_URL: ${APP_URL}
-            DB_CONNECTION: pgsql
-            DB_HOST: db
-            DB_PORT: 5432
-            DB_DATABASE: ${DB_DATABASE}
-            DB_USERNAME: ${DB_USERNAME}
-            DB_PASSWORD: ${DB_PASSWORD}
-            REDIS_HOST: redis
-            REDIS_PASSWORD: ${REDIS_PASSWORD:-null}
-            REDIS_PORT: 6379
-            QUEUE_CONNECTION: redis
-            SESSION_DRIVER: redis
-            CACHE_STORE: redis
-        depends_on:
-            - db
-            - redis
-        networks:
-            - app-network
 
-    queue:
-        image: wwmcontrol-app
-        restart: unless-stopped
-        command: php artisan queue:work --tries=3 --timeout=90
-        environment:
-            APP_ENV: ${APP_ENV:-production}
-            APP_KEY: ${APP_KEY}
-            APP_DEBUG: ${APP_DEBUG:-false}
-            DB_CONNECTION: pgsql
-            DB_HOST: db
-            DB_PORT: 5432
-            DB_DATABASE: ${DB_DATABASE}
-            DB_USERNAME: ${DB_USERNAME}
-            DB_PASSWORD: ${DB_PASSWORD}
-            REDIS_HOST: redis
-            REDIS_PASSWORD: ${REDIS_PASSWORD:-null}
-            REDIS_PORT: 6379
-            QUEUE_CONNECTION: redis
-            CACHE_STORE: redis
-        depends_on:
-            - db
-            - redis
-        networks:
-            - app-network
+  # ── Web application (Nginx + PHP-FPM via Supervisor) ──────────────────────
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        VITE_APP_NAME: ${APP_NAME:-TheZoo}
+        VITE_REVERB_APP_KEY: ${REVERB_APP_KEY}
+        VITE_REVERB_HOST: ${VITE_REVERB_HOST}
+        VITE_REVERB_PORT: ${VITE_REVERB_PORT:-8080}
+        VITE_REVERB_SCHEME: ${VITE_REVERB_SCHEME:-https}
+    image: wwmcontrol-app
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT:-80}:80"
+    environment:
+      APP_NAME: ${APP_NAME:-TheZoo}
+      APP_ENV: ${APP_ENV:-production}
+      APP_KEY: ${APP_KEY}
+      APP_DEBUG: ${APP_DEBUG:-false}
+      APP_URL: ${APP_URL}
+      FRONTEND_URL: ${FRONTEND_URL}
+      LOG_CHANNEL: stack
+      LOG_LEVEL: ${LOG_LEVEL:-error}
+      # Database
+      DB_CONNECTION: pgsql
+      DB_HOST: ${DB_HOST:-db}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_DATABASE: ${DB_DATABASE}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      # Redis
+      REDIS_HOST: redis
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-null}
+      REDIS_PORT: 6379
+      # Drivers
+      QUEUE_CONNECTION: redis
+      SESSION_DRIVER: redis
+      SESSION_LIFETIME: ${SESSION_LIFETIME:-120}
+      SESSION_DOMAIN: ${SESSION_DOMAIN}
+      CACHE_STORE: redis
+      # Broadcasting (Reverb)
+      BROADCAST_CONNECTION: reverb
+      REVERB_APP_ID: ${REVERB_APP_ID}
+      REVERB_APP_KEY: ${REVERB_APP_KEY}
+      REVERB_APP_SECRET: ${REVERB_APP_SECRET}
+      REVERB_HOST: reverb            # internal Docker service name
+      REVERB_PORT: 8080
+      REVERB_SCHEME: http
+      # Auth / Sanctum
+      SANCTUM_STATEFUL_DOMAINS: ${SANCTUM_STATEFUL_DOMAINS}
+      # Discord
+      DISCORD_CLIENT_ID: ${DISCORD_CLIENT_ID}
+      DISCORD_CLIENT_SECRET: ${DISCORD_CLIENT_SECRET}
+      DISCORD_REDIRECT_URI: ${DISCORD_REDIRECT_URI}
+      DISCORD_BOT_TOKEN: ${DISCORD_BOT_TOKEN}
+      DISCORD_GUILD_ID: ${DISCORD_GUILD_ID}
+    volumes:
+      # Persist user-uploaded files (library:upload-image, etc.)
+      - storage-data:/var/www/storage/app/public
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - app-network
 
-    scheduler:
-        image: wwmcontrol-app
-        restart: unless-stopped
-        command: php artisan schedule:work
-        environment:
-            APP_ENV: ${APP_ENV:-production}
-            APP_KEY: ${APP_KEY}
-            APP_DEBUG: ${APP_DEBUG:-false}
-            DB_CONNECTION: pgsql
-            DB_HOST: db
-            DB_PORT: 5432
-            DB_DATABASE: ${DB_DATABASE}
-            DB_USERNAME: ${DB_USERNAME}
-            DB_PASSWORD: ${DB_PASSWORD}
-            REDIS_HOST: redis
-            REDIS_PASSWORD: ${REDIS_PASSWORD:-null}
-            REDIS_PORT: 6379
-            QUEUE_CONNECTION: redis
-            CACHE_STORE: redis
-        depends_on:
-            - db
-            - redis
-        networks:
-            - app-network
+  # ── Laravel Reverb WebSocket server ───────────────────────────────────────
+  reverb:
+    image: wwmcontrol-app
+    restart: unless-stopped
+    command: php artisan reverb:start --host=0.0.0.0 --port=8080
+    ports:
+      - "${REVERB_SERVER_PORT:-8080}:8080"
+    environment:
+      APP_KEY: ${APP_KEY}
+      APP_ENV: ${APP_ENV:-production}
+      REVERB_APP_ID: ${REVERB_APP_ID}
+      REVERB_APP_KEY: ${REVERB_APP_KEY}
+      REVERB_APP_SECRET: ${REVERB_APP_SECRET}
+      REVERB_HOST: 0.0.0.0
+      REVERB_PORT: 8080
+      DB_CONNECTION: pgsql
+      DB_HOST: ${DB_HOST:-db}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_DATABASE: ${DB_DATABASE}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      REDIS_HOST: redis
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-null}
+      REDIS_PORT: 6379
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - app-network
 
-    db:
-        image: postgres:14-alpine
-        restart: unless-stopped
-        environment:
-            POSTGRES_DB: ${DB_DATABASE}
-            POSTGRES_USER: ${DB_USERNAME}
-            POSTGRES_PASSWORD: ${DB_PASSWORD}
-        volumes:
-            - db-data:/var/lib/postgresql/data
-        networks:
-            - app-network
-        healthcheck:
-            test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME} -d ${DB_DATABASE}"]
-            interval: 10s
-            timeout: 5s
-            retries: 5
+  # ── Queue worker ──────────────────────────────────────────────────────────
+  queue:
+    image: wwmcontrol-app
+    restart: unless-stopped
+    command: php artisan queue:work --tries=3 --timeout=90
+    environment:
+      APP_KEY: ${APP_KEY}
+      APP_ENV: ${APP_ENV:-production}
+      DB_CONNECTION: pgsql
+      DB_HOST: ${DB_HOST:-db}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_DATABASE: ${DB_DATABASE}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      REDIS_HOST: redis
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-null}
+      REDIS_PORT: 6379
+      QUEUE_CONNECTION: redis
+      CACHE_STORE: redis
+      BROADCAST_CONNECTION: reverb
+      REVERB_APP_ID: ${REVERB_APP_ID}
+      REVERB_APP_KEY: ${REVERB_APP_KEY}
+      REVERB_APP_SECRET: ${REVERB_APP_SECRET}
+      REVERB_HOST: reverb
+      REVERB_PORT: 8080
+      REVERB_SCHEME: http
+      DISCORD_BOT_TOKEN: ${DISCORD_BOT_TOKEN}
+      DISCORD_GUILD_ID: ${DISCORD_GUILD_ID}
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - app-network
 
-    redis:
-        image: redis:alpine
-        restart: unless-stopped
-        volumes:
-            - redis-data:/data
-        networks:
-            - app-network
-        healthcheck:
-            test: ["CMD", "redis-cli", "ping"]
-            interval: 10s
-            timeout: 5s
-            retries: 5
+  # ── Task scheduler (cron equivalent) ──────────────────────────────────────
+  scheduler:
+    image: wwmcontrol-app
+    restart: unless-stopped
+    command: php artisan schedule:work
+    environment:
+      APP_KEY: ${APP_KEY}
+      APP_ENV: ${APP_ENV:-production}
+      DB_CONNECTION: pgsql
+      DB_HOST: ${DB_HOST:-db}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_DATABASE: ${DB_DATABASE}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      REDIS_HOST: redis
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-null}
+      REDIS_PORT: 6379
+      QUEUE_CONNECTION: redis
+      CACHE_STORE: redis
+      DISCORD_BOT_TOKEN: ${DISCORD_BOT_TOKEN}
+      DISCORD_GUILD_ID: ${DISCORD_GUILD_ID}
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - app-network
+
+  # ── PostgreSQL (optional — comment out if using an external DB) ───────────
+  db:
+    image: postgres:14-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_DATABASE}
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME} -d ${DB_DATABASE}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Redis (cache, sessions, queues) ───────────────────────────────────────
+  redis:
+    image: redis:alpine
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - redis-data:/data
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
 networks:
-    app-network:
-        driver: bridge
+  app-network:
+    driver: bridge
 
 volumes:
-    db-data:
-    redis-data:
+  db-data:
+  redis-data:
+  storage-data:
