@@ -110,15 +110,29 @@ class LibraryArticle extends Model
 
     /**
      * Render content for display.
-     * Content may contain raw <img> tags (from import) mixed with plain text.
-     * Strategy: split on <img> tags, escape text parts, keep img tags intact
-     * then apply text transforms (separators, line breaks) only to text parts.
+     *
+     * Two modes:
+     *  - Rich HTML: content contains block-level tags (<div>, <h1-6>, etc.) written
+     *    by staff — returned as-is with lib-img class injected on img tags.
+     *  - Plain text: Discord-imported content with embedded <img> tags mixed into
+     *    plain text — img tags are preserved, text parts are escaped and transformed.
      */
     public function renderedContent(): string
     {
         $raw = $this->content;
 
-        // Split content into alternating [text, img, text, img, ...] segments
+        // Rich HTML mode: staff-authored content with block-level markup
+        if (preg_match('/<(div|h[1-6]|ul|ol|li|table|blockquote|section|p)\b/i', $raw)) {
+            return preg_replace_callback('/<img([^>]*)>/i', function ($m) {
+                $attrs = $m[1];
+                if (!str_contains($attrs, 'class=')) {
+                    $attrs = ' class="lib-img" loading="lazy"' . $attrs;
+                }
+                return '<img' . $attrs . '>';
+            }, $raw);
+        }
+
+        // Plain text mode: split on <img> tags, escape text parts, keep img tags intact
         $parts  = preg_split('/(<img[^>]+>)/i', $raw, -1, PREG_SPLIT_DELIM_CAPTURE);
         $output = '';
 
