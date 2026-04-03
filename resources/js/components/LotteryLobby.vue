@@ -23,7 +23,7 @@
       <div class="lottery-card lottery-card-daily">
         <div class="lottery-card-stripe"></div>
         <div class="lottery-card-body">
-          <div class="lottery-badge">Hàng Ngày · Đóng bán 7h · Rút thưởng 8h</div>
+          <div class="lottery-badge">Hàng Ngày · Đóng bán 19h · Rút thưởng 20h</div>
           <div class="lottery-mult">×{{ daily.multiplier }}</div>
           <div class="lottery-label">Rút {{ daily.pick_count }} số · Phạm vi 01–99</div>
 
@@ -35,7 +35,7 @@
           </div>
           <div class="lottery-countdown" v-else-if="daily.status === 'open' && dailyOpenSeconds === 0 && dailySeconds === 0">
             <i class="fas fa-hourglass-half mr-1" style="color:#f6c23e;"></i>
-            <span style="color:rgba(255,255,255,.6);font-size:13px;">Đang chuẩn bị rút thưởng lúc 08:00...</span>
+            <span style="color:rgba(255,255,255,.6);font-size:13px;">Đang chuẩn bị rút thưởng lúc 20:00...</span>
           </div>
           <div class="lottery-drawn-badge" v-else>
             <i class="fas fa-check-circle mr-1"></i>
@@ -276,7 +276,7 @@
       <div class="lottery-jackpot-body">
 
         <div class="lottery-jackpot-header">
-          <span class="lottery-jackpot-badge">🎰 JACKPOT · Quay số mỗi ngày 08:30</span>
+          <span class="lottery-jackpot-badge">🎰 JACKPOT · Quay số mỗi ngày 20:30</span>
           <span class="lottery-jackpot-vé">Vé: <strong style="color:#f6c23e;">500 Zoo</strong> / lần · Chọn 1 số 000–999</span>
         </div>
 
@@ -289,7 +289,7 @@
           </div>
           <div class="lottery-jackpot-pot-sub">
             {{ jackpot.total_tickets || 0 }} vé đã mua
-            <span v-if="jackpotSeconds > 0"> · Quay lúc 08:30 · còn <strong style="color:#fbbf24;">{{ fmtCountdown(jackpotSeconds) }}</strong></span>
+            <span v-if="jackpotSeconds > 0"> · Quay lúc 20:30 · còn <strong style="color:#fbbf24;">{{ fmtCountdown(jackpotSeconds) }}</strong></span>
             <span v-else-if="jackpot.status === 'open'"> · Đang chờ quay số...</span>
           </div>
         </div>
