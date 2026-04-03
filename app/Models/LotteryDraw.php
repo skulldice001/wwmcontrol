@@ -44,7 +44,7 @@ class LotteryDraw extends Model
     {
         if ($this->status !== 'open') return false;
         if ($this->opens_at && now()->lt($this->opens_at)) return false;
-        // Daily: ticket sales close 1 hour before draw (07:00); Weekly: close at draw time
+        // Daily: ticket sales close 1 hour before draw (19:00); Weekly/Jackpot: close at draw time
         $cutoff = $this->type === 'daily'
             ? $this->draw_at->copy()->subHour()
             : $this->draw_at;
@@ -60,7 +60,7 @@ class LotteryDraw extends Model
     }
 
     /** Return (or create) the current open jackpot draw.
-     *  Draw time: daily at 08:30. Pot carries over if no winner.
+     *  Draw time: daily at 20:30. Pot carries over if no winner.
      */
     public static function getOrCreateJackpot(int $carryoverPot = 0): self
     {
@@ -93,8 +93,8 @@ class LotteryDraw extends Model
 
     public static function nextJackpotDrawAt(): Carbon
     {
-        $today0830 = now()->copy()->setTime(8, 30, 0);
-        return now()->lt($today0830) ? $today0830 : $today0830->addDay();
+        $today2030 = now()->copy()->setTime(20, 30, 0);
+        return now()->lt($today2030) ? $today2030 : $today2030->addDay();
     }
 
     /** Seconds until jackpot draw (for countdown display). */
