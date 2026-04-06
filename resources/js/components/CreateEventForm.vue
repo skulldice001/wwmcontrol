@@ -35,23 +35,23 @@
         </div>
 
         <div class="form-group">
-            <label>{{ isLuckyDraw ? 'Thời gian đăng ký (hạn chót)' : translations.start_time_label }}</label>
+            <label>{{ isLuckyDraw ? translations.ld_reg_label : translations.start_time_label }}</label>
             <input type="datetime-local" name="start_time" class="form-control"
                    :class="{'is-invalid': errors.start_time}"
                    v-model="form.start_time"
                    :readonly="isGuildWar">
-            <small v-if="isLuckyDraw" class="text-muted">Sau thời gian này người chơi không thể đăng ký tham gia.</small>
+            <small v-if="isLuckyDraw" class="text-muted">{{ translations.ld_reg_hint }}</small>
             <span v-if="errors.start_time" class="error invalid-feedback">{{ errors.start_time }}</span>
         </div>
 
         <div class="form-group">
-            <label>{{ isLuckyDraw ? '⏰ Thời gian quay số' : translations.end_time_label }}</label>
+            <label>{{ isLuckyDraw ? translations.ld_time_label : translations.end_time_label }}</label>
             <input type="datetime-local" name="end_time" class="form-control"
                    :class="{'is-invalid': errors.end_time}"
                    v-model="form.end_time"
                    :required="isLuckyDraw"
                    :readonly="isGuildWar">
-            <small v-if="isLuckyDraw" class="text-muted">Hệ thống tự quay khi đến giờ. Staff cũng có thể quay thủ công.</small>
+            <small v-if="isLuckyDraw" class="text-muted">{{ translations.ld_time_hint }}</small>
             <span v-if="errors.end_time" class="error invalid-feedback">{{ errors.end_time }}</span>
         </div>
 
@@ -74,34 +74,32 @@
         <template v-if="isLuckyDraw">
             <hr>
             <div class="d-flex align-items-center mb-2">
-                <h6 class="mb-0">🎁 Danh sách giải thưởng</h6>
+                <h6 class="mb-0">{{ translations.ld_prizes_title }}</h6>
                 <button type="button" class="btn btn-sm btn-success ml-3" @click="addPrize">
-                    <i class="fas fa-plus"></i> Thêm giải
+                    <i class="fas fa-plus"></i> {{ translations.ld_add_prize }}
                 </button>
             </div>
-            <small class="text-muted d-block mb-3">
-                Mỗi giải quay 1 người trúng, không trùng nhau. Thứ tự từ trên xuống = thứ hạng giải.
-            </small>
+            <small class="text-muted d-block mb-3">{{ translations.ld_multi_hint }}</small>
 
             <div v-for="(prize, i) in prizes" :key="i"
                  class="card card-outline card-secondary mb-2">
                 <div class="card-body py-2">
                     <div class="row align-items-center">
                         <div class="col-auto">
-                            <span class="badge badge-warning">Giải {{ i + 1 }}</span>
+                            <span class="badge badge-warning">{{ translations.ld_prize_badge }} {{ i + 1 }}</span>
                         </div>
                         <div class="col">
                             <input type="text"
                                    :name="`prizes[${i}][name]`"
                                    class="form-control form-control-sm"
-                                   placeholder="Tên giải (VD: Giải nhất)"
+                                   :placeholder="translations.ld_prize_name_ph"
                                    v-model="prize.name" required>
                         </div>
                         <div class="col">
                             <input type="text"
                                    :name="`prizes[${i}][description]`"
                                    class="form-control form-control-sm"
-                                   placeholder="Mô tả phần thưởng"
+                                   :placeholder="translations.ld_prize_desc_ph"
                                    v-model="prize.description">
                         </div>
                         <div class="col-3">

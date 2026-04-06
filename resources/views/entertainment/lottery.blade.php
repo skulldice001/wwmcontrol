@@ -1,6 +1,6 @@
 @extends('layouts.admin')
 
-@section('title', 'Xổ Số Zoo')
+@section('title', __('messages.lottery_title'))
 
 @push('scripts')
 <script>

@@ -14,13 +14,13 @@
         <h4 class="mb-0">{{ msg.bjLobby }}</h4>
         <div class="d-flex gap-2">
           <button class="btn btn-outline-info btn-sm mr-2" @click="refresh" :disabled="refreshing">
-            <i :class="['fas fa-sync-alt mr-1', refreshing ? 'fa-spin' : '']"></i>Làm mới danh sách bàn
+            <i :class="['fas fa-sync-alt mr-1', refreshing ? 'fa-spin' : '']"></i>{{ msg.bjRefresh }}
           </button>
           <button class="btn btn-success btn-sm mr-2" @click="showCreateModal = true">
             <i class="fas fa-plus"></i> {{ msg.bjCreateTable }}
           </button>
           <button class="btn btn-warning btn-sm" @click="playVsAi" :disabled="creatingAi">
-            <i class="fas fa-robot mr-1"></i>{{ creatingAi ? 'Đang tạo...' : 'Chơi vs AI' }}
+            <i class="fas fa-robot mr-1"></i>{{ creatingAi ? msg.bjCreating : msg.bjVsAi }}
           </button>
         </div>
       </div>
@@ -176,18 +176,18 @@ export default {
           if (data.redirect) { window.location = data.redirect; return; }
           if (data.message && window.notify) window.notify('error', data.message);
         })
-        .catch(() => { if (window.notify) window.notify('error', 'Connection error.'); })
+        .catch(() => { if (window.notify) window.notify('error', this.msg.connError); })
         .finally(() => { this.joiningId = null; this.loading = false; });
     },
 
     createTable() {
       const { name, min_bet, max_bet, max_players } = this.form;
       if (!name.trim()) {
-        if (window.notify) window.notify('warning', 'Please enter a table name.');
+        if (window.notify) window.notify('warning', this.msg.bjEnterName);
         return;
       }
       if (!min_bet || !max_bet || max_bet < min_bet) {
-        if (window.notify) window.notify('warning', 'Invalid bet range.');
+        if (window.notify) window.notify('warning', this.msg.bjInvalidBet);
         return;
       }
 
@@ -206,7 +206,7 @@ export default {
             if (window.notify) window.notify('error', m);
           }
         })
-        .catch(() => { if (window.notify) window.notify('error', 'Connection error.'); })
+        .catch(() => { if (window.notify) window.notify('error', this.msg.connError); })
         .finally(() => { this.creating = false; this.loading = false; });
     },
 
@@ -218,7 +218,7 @@ export default {
       })
         .then(r => r.json())
         .then(data => { if (data.redirect) window.location.href = data.redirect; })
-        .catch(() => { if (window.notify) window.notify('error', 'Không thể tạo bàn AI.'); })
+        .catch(() => { if (window.notify) window.notify('error', this.msg.connError); })
         .finally(() => { this.creatingAi = false; });
     },
 
@@ -227,7 +227,7 @@ export default {
       fetch(this.routes.list, { headers: { 'Accept': 'application/json' } })
         .then(r => r.json())
         .then(data => { this.tables = data.tables || []; })
-        .catch(() => { if (window.notify) window.notify('error', 'Connection error.'); })
+        .catch(() => { if (window.notify) window.notify('error', this.msg.connError); })
         .finally(() => { this.refreshing = false; });
     },
 

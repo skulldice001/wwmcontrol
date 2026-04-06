@@ -30,6 +30,12 @@ window.__bjLobby = {
         'minBuyIn'          => __('messages.min_buy_in'),
         'maxBuyIn'          => __('messages.max_buy_in'),
         'maxPlayers'        => __('messages.max_players'),
+        'bjRefresh'         => __('messages.bj_refresh'),
+        'bjVsAi'            => __('messages.bj_vs_ai'),
+        'bjCreating'        => __('messages.bj_creating'),
+        'bjEnterName'       => __('messages.bj_enter_name'),
+        'bjInvalidBet'      => __('messages.bj_invalid_bet'),
+        'connError'         => __('messages.conn_error'),
     ], JSON_HEX_TAG | JSON_HEX_APOS) !!},
 };
 </script>

@@ -30,6 +30,9 @@ window.__txLobby = {
         'cancel'            => __('messages.cancel'),
         'failJoin'          => __('messages.tx_fail_join'),
         'failCreate'        => __('messages.tx_fail_create'),
+        'noTables'          => __('messages.tx_no_tables'),
+        'joining'           => __('messages.tx_joining'),
+        'enterName'         => __('messages.tx_enter_name'),
     ], JSON_HEX_TAG | JSON_HEX_APOS) !!},
 };
 </script>
