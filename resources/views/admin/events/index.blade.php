@@ -156,25 +156,48 @@
                 </button>
             </div>
             <div class="modal-body text-center">
-                <p>{{ __('messages.select_event_type_help') }}</p>
-                <div class="row">
-                    <div class="col-4">
-                        <a href="{{ route('admin.events.create', ['type' => 'casual']) }}" class="btn btn-success btn-block btn-lg p-4">
-                            <i class="fas fa-calendar-check fa-2x mb-2"></i><br>
-                            {{ __('messages.casual_event') }}
-                        </a>
+                <!-- Step 1: main type choice -->
+                <div id="eventTypeStep1">
+                    <p>{{ __('messages.select_event_type_help') }}</p>
+                    <div class="row">
+                        <div class="col-6">
+                            <button type="button" class="btn btn-success btn-block btn-lg p-4"
+                                    onclick="document.getElementById('eventTypeStep1').style.display='none';document.getElementById('eventTypeStep2').style.display='block'">
+                                <i class="fas fa-calendar-check fa-2x mb-2"></i><br>
+                                {{ __('messages.casual_event') }}
+                            </button>
+                        </div>
+                        <div class="col-6">
+                            <a href="{{ route('admin.events.create', ['type' => 'guild_war']) }}" class="btn btn-danger btn-block btn-lg p-4">
+                                <i class="fas fa-khanda fa-2x mb-2"></i><br>
+                                {{ __('messages.guild_war_event') }}
+                            </a>
+                        </div>
                     </div>
-                    <div class="col-4">
-                        <a href="{{ route('admin.events.create', ['type' => 'guild_war']) }}" class="btn btn-danger btn-block btn-lg p-4">
-                            <i class="fas fa-khanda fa-2x mb-2"></i><br>
-                            {{ __('messages.guild_war_event') }}
-                        </a>
+                </div>
+
+                <!-- Step 2: casual sub-choice -->
+                <div id="eventTypeStep2" style="display:none">
+                    <div class="d-flex align-items-center mb-3">
+                        <button type="button" class="btn btn-sm btn-secondary mr-2"
+                                onclick="document.getElementById('eventTypeStep2').style.display='none';document.getElementById('eventTypeStep1').style.display='block'">
+                            <i class="fas fa-arrow-left"></i>
+                        </button>
+                        <span class="font-weight-bold">{{ __('messages.casual_event') }}</span>
                     </div>
-                    <div class="col-4">
-                        <a href="{{ route('admin.events.create', ['type' => 'lucky_draw']) }}" class="btn btn-block btn-lg p-4" style="background:#6f42c1;color:#fff">
-                            <i class="fas fa-dice fa-2x mb-2"></i><br>
-                            Quay Số
-                        </a>
+                    <div class="row">
+                        <div class="col-6">
+                            <a href="{{ route('admin.events.create', ['type' => 'casual']) }}" class="btn btn-success btn-block btn-lg p-4">
+                                <i class="fas fa-calendar-check fa-2x mb-2"></i><br>
+                                Sự kiện bình thường
+                            </a>
+                        </div>
+                        <div class="col-6">
+                            <a href="{{ route('admin.events.create', ['type' => 'lucky_draw']) }}" class="btn btn-block btn-lg p-4" style="background:#6f42c1;color:#fff">
+                                <i class="fas fa-dice fa-2x mb-2"></i><br>
+                                Quay Số Ngẫu Nhiên
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -186,6 +209,11 @@
 @push('scripts')
 <script type="module">
     $(function () {
+        $('#createEventModal').on('hidden.bs.modal', function () {
+            document.getElementById('eventTypeStep1').style.display = 'block';
+            document.getElementById('eventTypeStep2').style.display = 'none';
+        });
+
         $('#confirmCompleteModal').on('show.bs.modal', function (event) {
             var button = $(event.relatedTarget);
             var action = button.data('action');
