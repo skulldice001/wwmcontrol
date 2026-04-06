@@ -11,7 +11,7 @@
         <div class="alert alert-success m-3">
             {{ session('success') }}
             <br>
-            <a href="{{ route('admin.staff.index') }}" class="btn btn-success mt-2">Back to List</a>
+            <a href="{{ route('admin.staff.index') }}" class="btn btn-success mt-2">{{ __('messages.back') }}</a>
         </div>
     @elseif(session('error'))
         <div class="alert alert-danger m-3">
@@ -48,10 +48,10 @@
             <div class="form-group">
                 <label>{{ __('messages.role') }}</label>
                 <select name="role" class="form-control @error('role') is-invalid @enderror">
-                    <option value="master"    {{ old('role') == 'master'    ? 'selected' : '' }}>Master</option>
-                    <option value="admin"     {{ old('role') == 'admin'     ? 'selected' : '' }}>Admin</option>
-                    <option value="observer"  {{ old('role') == 'observer'  ? 'selected' : '' }}>Observer</option>
-                    <option value="librarian" {{ old('role') == 'librarian' ? 'selected' : '' }}>Thủ Thư (Librarian)</option>
+                    <option value="master"    {{ old('role') == 'master'    ? 'selected' : '' }}>{{ __('messages.role_master') }}</option>
+                    <option value="admin"     {{ old('role') == 'admin'     ? 'selected' : '' }}>{{ __('messages.role_admin') }}</option>
+                    <option value="observer"  {{ old('role') == 'observer'  ? 'selected' : '' }}>{{ __('messages.role_observer') }}</option>
+                    <option value="librarian" {{ old('role') == 'librarian' ? 'selected' : '' }}>{{ __('messages.role_librarian') }}</option>
                 </select>
                 @error('role') <span class="error invalid-feedback">{{ $message }}</span> @enderror
             </div>

@@ -1,30 +1,30 @@
 @extends('layouts.admin')
 
-@section('title', 'Lịch sử Zoo-coin: ' . $user->account)
+@section('title', __('messages.coin_history_title') . ': ' . $user->account)
 
 @section('content')
 <div class="card">
     <div class="card-header d-flex justify-content-between align-items-center">
         <h3 class="card-title">
             <i class="fas fa-history mr-2" style="color:#f6c23e;"></i>
-            Lịch sử Zoo-coin &mdash; <strong>{{ $user->account }}</strong>
+            {{ __('messages.coin_history_title') }} &mdash; <strong>{{ $user->account }}</strong>
             <span class="badge badge-warning ml-2">{{ number_format($user->z_coins) }} Zoo</span>
         </h3>
         <a href="{{ route('admin.users.index') }}" class="btn btn-sm btn-secondary">
-            <i class="fas fa-arrow-left mr-1"></i> Quay lại
+            <i class="fas fa-arrow-left mr-1"></i> {{ __('messages.coin_history_back') }}
         </a>
     </div>
     <div class="card-body p-0">
         <table class="table table-striped table-hover mb-0">
             <thead class="thead-dark">
                 <tr>
-                    <th style="width:160px;">Thời gian</th>
-                    <th style="width:110px;">Loại</th>
-                    <th class="text-right" style="width:130px;">Số lượng</th>
-                    <th class="text-right" style="width:130px;">Trước</th>
-                    <th class="text-right" style="width:130px;">Sau</th>
-                    <th>Ghi chú / Liên quan</th>
-                    <th style="width:120px;">Thực hiện</th>
+                    <th style="width:160px;">{{ __('messages.coin_col_time') }}</th>
+                    <th style="width:110px;">{{ __('messages.coin_col_type') }}</th>
+                    <th class="text-right" style="width:130px;">{{ __('messages.coin_col_amount') }}</th>
+                    <th class="text-right" style="width:130px;">{{ __('messages.coin_col_before') }}</th>
+                    <th class="text-right" style="width:130px;">{{ __('messages.coin_col_after') }}</th>
+                    <th>{{ __('messages.coin_col_note') }}</th>
+                    <th style="width:120px;">{{ __('messages.coin_col_by') }}</th>
                 </tr>
             </thead>
             <tbody>
@@ -50,7 +50,7 @@
                         @if($tx->staff)
                             <i class="fas fa-user-shield mr-1"></i>{{ $tx->staff->account }}
                         @elseif($tx->type === 'daily_bonus')
-                            <i class="fas fa-robot mr-1"></i>Hệ thống
+                            <i class="fas fa-robot mr-1"></i>{{ __('messages.coin_system') }}
                         @elseif(in_array($tx->type, ['transfer_in','transfer_out']))
                             <i class="fas fa-exchange-alt mr-1"></i>User
                         @endif
@@ -58,7 +58,7 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="7" class="text-center text-muted py-4">Chưa có giao dịch nào.</td>
+                    <td colspan="7" class="text-center text-muted py-4">{{ __('messages.coin_no_transactions') }}</td>
                 </tr>
                 @endforelse
             </tbody>

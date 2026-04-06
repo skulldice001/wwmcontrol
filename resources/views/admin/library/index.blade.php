@@ -1,5 +1,5 @@
 @extends('layouts.admin')
-@section('title', 'Thư Viện · Quản lý')
+@section('title', __('messages.lib_manage_title'))
 
 @section('content')
 @if(session('success'))
@@ -11,10 +11,10 @@
 
 <div class="card card-outline card-primary">
     <div class="card-header d-flex align-items-center">
-        <h3 class="card-title mr-3">Bài viết thư viện</h3>
+        <h3 class="card-title mr-3">{{ __('messages.lib_list_title') }}</h3>
         <div class="ml-auto d-flex gap-2" style="gap:8px;">
             <a href="{{ route('admin.library.create') }}" class="btn btn-success btn-sm">
-                <i class="fas fa-plus mr-1"></i>Tạo bài viết
+                <i class="fas fa-plus mr-1"></i>{{ __('messages.lib_page_title') }}
             </a>
         </div>
     </div>
@@ -25,19 +25,19 @@
             <li class="nav-item">
                 <a class="nav-link {{ !request('status') ? 'active' : '' }}"
                    href="{{ route('admin.library.index', array_merge(request()->except('status','page'), [])) }}">
-                   Tất cả <span class="badge badge-secondary ml-1">{{ $counts['all'] }}</span>
+                   {{ __('messages.lib_all') }} <span class="badge badge-secondary ml-1">{{ $counts['all'] }}</span>
                 </a>
             </li>
             <li class="nav-item">
                 <a class="nav-link {{ request('status') === 'draft' ? 'active' : '' }}"
                    href="{{ route('admin.library.index', array_merge(request()->except('status','page'), ['status'=>'draft'])) }}">
-                   Bản nháp <span class="badge badge-warning ml-1">{{ $counts['draft'] }}</span>
+                   {{ __('messages.lib_draft') }} <span class="badge badge-warning ml-1">{{ $counts['draft'] }}</span>
                 </a>
             </li>
             <li class="nav-item">
                 <a class="nav-link {{ request('status') === 'published' ? 'active' : '' }}"
                    href="{{ route('admin.library.index', array_merge(request()->except('status','page'), ['status'=>'published'])) }}">
-                   Đã xuất bản <span class="badge badge-success ml-1">{{ $counts['published'] }}</span>
+                   {{ __('messages.lib_published') }} <span class="badge badge-success ml-1">{{ $counts['published'] }}</span>
                 </a>
             </li>
         </ul>
@@ -47,15 +47,15 @@
     <div class="card-header border-top-0">
         <form method="GET" action="{{ route('admin.library.index') }}" class="form-inline" style="gap:8px;flex-wrap:wrap;">
             @if(request('status'))<input type="hidden" name="status" value="{{ request('status') }}">@endif
-            <input type="text" name="search" class="form-control form-control-sm" placeholder="Tìm kiếm..." value="{{ request('search') }}" style="width:200px;">
+            <input type="text" name="search" class="form-control form-control-sm" placeholder="{{ __('messages.lib_search_placeholder') }}" value="{{ request('search') }}" style="width:200px;">
             <select name="category" class="form-control form-control-sm" style="width:200px;">
-                <option value="">-- Tất cả danh mục --</option>
+                <option value="">{{ __('messages.lib_all_categories') }}</option>
                 @foreach(\App\Models\LibraryArticle::CATEGORIES as $key => $label)
                 <option value="{{ $key }}" {{ request('category') === $key ? 'selected' : '' }}>{{ $label }}</option>
                 @endforeach
             </select>
-            <button class="btn btn-sm btn-primary" type="submit"><i class="fas fa-search mr-1"></i>Lọc</button>
-            <a href="{{ route('admin.library.index') }}" class="btn btn-sm btn-secondary">Xoá lọc</a>
+            <button class="btn btn-sm btn-primary" type="submit"><i class="fas fa-search mr-1"></i>{{ __('messages.lib_filter') }}</button>
+            <a href="{{ route('admin.library.index') }}" class="btn btn-sm btn-secondary">{{ __('messages.lib_clear_filter') }}</a>
         </form>
     </div>
 
@@ -63,12 +63,12 @@
         <table class="table table-hover table-sm mb-0">
             <thead>
                 <tr>
-                    <th style="width:40%">Tiêu đề</th>
-                    <th>Danh mục</th>
-                    <th>Trạng thái</th>
-                    <th>Nguồn</th>
-                    <th>Ngày xuất bản</th>
-                    <th>Thao tác</th>
+                    <th style="width:40%">{{ __('messages.lib_col_title') }}</th>
+                    <th>{{ __('messages.lib_col_category') }}</th>
+                    <th>{{ __('messages.lib_col_status') }}</th>
+                    <th>{{ __('messages.lib_col_source') }}</th>
+                    <th>{{ __('messages.lib_col_published_at') }}</th>
+                    <th>{{ __('messages.lib_col_actions') }}</th>
                 </tr>
             </thead>
             <tbody>
@@ -87,9 +87,9 @@
                     </td>
                     <td>
                         @if($article->isPublished())
-                        <span class="badge badge-success">Đã xuất bản</span>
+                        <span class="badge badge-success">{{ __('messages.lib_published') }}</span>
                         @else
-                        <span class="badge badge-warning">Bản nháp</span>
+                        <span class="badge badge-warning">{{ __('messages.lib_draft') }}</span>
                         @endif
                     </td>
                     <td>
@@ -108,16 +108,16 @@
                             @if($article->isPublished())
                             <form method="POST" action="{{ route('admin.library.unpublish', $article) }}" class="d-inline">
                                 @csrf
-                                <button class="btn btn-warning btn-sm" title="Chuyển về nháp"><i class="fas fa-eye-slash"></i></button>
+                                <button class="btn btn-warning btn-sm" title="{{ __('messages.lib_unpublish') }}"><i class="fas fa-eye-slash"></i></button>
                             </form>
                             @else
                             <form method="POST" action="{{ route('admin.library.publish', $article) }}" class="d-inline">
                                 @csrf
-                                <button class="btn btn-success btn-sm" title="Xuất bản"><i class="fas fa-check"></i></button>
+                                <button class="btn btn-success btn-sm" title="{{ __('messages.lib_publish') }}"><i class="fas fa-check"></i></button>
                             </form>
                             @endif
                             <form method="POST" action="{{ route('admin.library.destroy', $article) }}" class="d-inline"
-                                  onsubmit="return confirm('Xoá bài viết này?')">
+                                  onsubmit="return confirm('{{ __('messages.are_you_sure') }}')">
                                 @csrf @method('DELETE')
                                 <button class="btn btn-danger btn-sm"><i class="fas fa-trash"></i></button>
                             </form>
@@ -125,7 +125,7 @@
                     </td>
                 </tr>
                 @empty
-                <tr><td colspan="6" class="text-center text-muted py-3">Không có bài viết nào.</td></tr>
+                <tr><td colspan="6" class="text-center text-muted py-3">{{ __('messages.lib_no_articles') }}</td></tr>
                 @endforelse
             </tbody>
         </table>
@@ -138,14 +138,13 @@
 
 <div class="card card-outline card-secondary">
     <div class="card-header">
-        <h3 class="card-title"><i class="fab fa-discord mr-1"></i>Import từ Discord</h3>
+        <h3 class="card-title"><i class="fab fa-discord mr-1"></i>{{ __('messages.lib_import_title') }}</h3>
     </div>
     <div class="card-body">
         <p class="text-muted">Channel: <code>1461845830737723597</code></p>
-        <p class="text-muted mb-2">Chạy lệnh sau trong terminal để import bài từ Discord:</p>
         <pre class="bg-dark text-white p-3 rounded" style="font-size:13px;">php artisan library:import-discord</pre>
-        <p class="text-muted" style="font-size:12px;">Các bài nhập sẽ ở trạng thái <strong>Bản nháp</strong>. Bạn cần biên tập và xuất bản thủ công.</p>
-        <p class="text-muted" style="font-size:12px;">Options: <code>--limit=100</code> &nbsp;|&nbsp; <code>--category=general</code> &nbsp;|&nbsp; <code>--before=[message_id]</code></p>
+        <p class="text-muted" style="font-size:12px;">{{ __('messages.lib_import_hint') }}</p>
+        <p class="text-muted" style="font-size:12px;">{{ __('messages.lib_import_options') }}</p>
     </div>
 </div>
 @endsection

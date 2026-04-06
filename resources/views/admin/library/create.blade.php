@@ -1,5 +1,5 @@
 @extends('layouts.admin')
-@section('title', 'Tạo bài viết')
+@section('title', __('messages.lib_page_title'))
 
 @push('styles')
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.css">
@@ -12,10 +12,10 @@
 @section('content')
 <div class="card card-outline card-success">
     <div class="card-header">
-        <h3 class="card-title"><i class="fas fa-plus mr-1"></i>Tạo bài viết mới</h3>
+        <h3 class="card-title"><i class="fas fa-plus mr-1"></i>{{ __('messages.lib_create_new') }}</h3>
         <div class="card-tools">
             <a href="{{ route('admin.library.index') }}" class="btn btn-sm btn-secondary">
-                <i class="fas fa-arrow-left mr-1"></i>Quay lại
+                <i class="fas fa-arrow-left mr-1"></i>{{ __('messages.lib_back') }}
             </a>
         </div>
     </div>
@@ -26,7 +26,7 @@
         </div>
         <div class="card-footer">
             <button type="submit" class="btn btn-success">
-                <i class="fas fa-save mr-1"></i>Lưu bản nháp
+                <i class="fas fa-save mr-1"></i>{{ __('messages.lib_save_draft') }}
             </button>
         </div>
     </form>

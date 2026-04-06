@@ -38,7 +38,7 @@
                     <td>
                         {{ $staff->name }}
                         @if($staff->trashed())
-                            <span class="badge badge-danger ml-1">Disabled</span>
+                            <span class="badge badge-danger ml-1">{{ __('messages.staff_disabled') }}</span>
                         @endif
                     </td>
                     <td>{{ $staff->account }}</td>
@@ -46,10 +46,10 @@
                     <td>
                         @php
                         $roleBadge = match($staff->role) {
-                            'master'    => ['danger',  'Master'],
-                            'admin'     => ['primary', 'Admin'],
-                            'observer'  => ['secondary', 'Observer'],
-                            'librarian' => ['info', 'Thủ Thư'],
+                            'master'    => ['danger',   __('messages.role_master')],
+                            'admin'     => ['primary',  __('messages.role_admin')],
+                            'observer'  => ['secondary',__('messages.role_observer')],
+                            'librarian' => ['info',     __('messages.role_librarian')],
                             default     => ['secondary', ucfirst($staff->role)],
                         };
                         @endphp

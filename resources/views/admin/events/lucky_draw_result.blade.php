@@ -1,5 +1,5 @@
 @extends('layouts.admin')
-@section('title', 'Kết Quả Quay Số — ' . $event->title)
+@section('title', __('messages.lucky_draw_result_btn') . ' — ' . $event->title)
 
 @section('content')
 @php $data = $event->lucky_draw_data; @endphp
@@ -8,11 +8,11 @@
     <div class="card-header">
         <h3 class="card-title">
             <i class="fas fa-trophy mr-2 text-warning"></i>
-            Kết Quả Quay Số — {{ $event->title }}
+            {{ __('messages.lucky_draw_result_btn') }} — {{ $event->title }}
         </h3>
         <div class="card-tools">
             <a href="{{ route('admin.events.index') }}" class="btn btn-sm btn-secondary">
-                <i class="fas fa-arrow-left"></i> Quay lại
+                <i class="fas fa-arrow-left"></i> {{ __('messages.lucky_draw_back') }}
             </a>
         </div>
     </div>
@@ -27,7 +27,7 @@
                 <div class="info-box">
                     <span class="info-box-icon bg-info"><i class="fas fa-user-clock"></i></span>
                     <div class="info-box-content">
-                        <span class="info-box-text">Hạn đăng ký</span>
+                        <span class="info-box-text">{{ __('messages.lucky_draw_reg_deadline') }}</span>
                         <span class="info-box-number">{{ $event->start_time ? \Carbon\Carbon::parse($event->start_time)->format('H:i d/m/Y') : '—' }}</span>
                     </div>
                 </div>
@@ -36,7 +36,7 @@
                 <div class="info-box">
                     <span class="info-box-icon bg-warning"><i class="fas fa-clock"></i></span>
                     <div class="info-box-content">
-                        <span class="info-box-text">Giờ quay dự kiến</span>
+                        <span class="info-box-text">{{ __('messages.lucky_draw_scheduled_at') }}</span>
                         <span class="info-box-number">{{ $event->end_time ? \Carbon\Carbon::parse($event->end_time)->format('H:i d/m/Y') : '—' }}</span>
                     </div>
                 </div>
@@ -45,7 +45,7 @@
                 <div class="info-box">
                     <span class="info-box-icon bg-success"><i class="fas fa-check"></i></span>
                     <div class="info-box-content">
-                        <span class="info-box-text">Thời điểm quay thực tế</span>
+                        <span class="info-box-text">{{ __('messages.lucky_draw_drawn_at') }}</span>
                         <span class="info-box-number">
                             {{ $data['drawn_at'] ? \Carbon\Carbon::parse($data['drawn_at'])->format('H:i d/m/Y') : '—' }}
                         </span>
@@ -56,7 +56,7 @@
                 <div class="info-box">
                     <span class="info-box-icon bg-primary"><i class="fas fa-users"></i></span>
                     <div class="info-box-content">
-                        <span class="info-box-text">Tham gia / Trúng thưởng</span>
+                        <span class="info-box-text">{{ __('messages.lucky_draw_participants') }}</span>
                         <span class="info-box-number">
                             {{ $event->participants()->count() }} / {{ count($data['winners'] ?? []) }}
                         </span>
@@ -66,15 +66,15 @@
         </div>
 
         @if(!empty($data['winners']))
-            <h5 class="mb-3"><i class="fas fa-medal mr-1 text-warning"></i> Người trúng thưởng</h5>
+            <h5 class="mb-3"><i class="fas fa-medal mr-1 text-warning"></i> {{ __('messages.lucky_draw_winners') }}</h5>
             <table class="table table-bordered">
                 <thead class="thead-dark">
                     <tr>
-                        <th width="60">Hạng</th>
-                        <th>Giải thưởng</th>
-                        <th>Mô tả</th>
-                        <th>Zoo Coins</th>
-                        <th>Người trúng</th>
+                        <th width="60">{{ __('messages.lucky_draw_rank') }}</th>
+                        <th>{{ __('messages.lucky_draw_prize') }}</th>
+                        <th>{{ __('messages.lucky_draw_desc') }}</th>
+                        <th>{{ __('messages.lucky_draw_zoo_coins') }}</th>
+                        <th>{{ __('messages.lucky_draw_winner_name') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -107,17 +107,17 @@
         @else
             <div class="alert alert-warning">
                 <i class="fas fa-exclamation-triangle mr-1"></i>
-                Chưa quay số hoặc không có người tham gia.
+                {{ __('messages.lucky_draw_no_winners') }}
             </div>
         @endif
 
         @if(!empty($data['prizes']) && empty($data['drawn_at']))
             <hr>
-            <h5>Giải thưởng đã thiết lập (chưa quay)</h5>
+            <h5>{{ __('messages.lucky_draw_prizes_setup') }}</h5>
             <ul>
                 @foreach($data['prizes'] as $i => $p)
                     <li>
-                        <strong>Giải {{ $i + 1 }}: {{ $p['name'] }}</strong>
+                        <strong>{{ __('messages.lucky_draw_prize_label') }} {{ $i + 1 }}: {{ $p['name'] }}</strong>
                         @if(!empty($p['description'])) — {{ $p['description'] }} @endif
                         @if(!empty($p['zoo_coin_amount'])) · 🪙 {{ number_format($p['zoo_coin_amount']) }} @endif
                     </li>
@@ -125,10 +125,10 @@
             </ul>
 
             <form action="{{ route('admin.events.run_draw', $event->id) }}" method="POST"
-                  onsubmit="return confirm('Xác nhận quay số ngay bây giờ? Hành động này không thể hoàn tác.')">
+                  onsubmit="return confirm('{{ __('messages.lucky_draw_confirm') }}')">
                 @csrf
                 <button type="submit" class="btn btn-danger btn-lg">
-                    <i class="fas fa-dice mr-1"></i> Quay số thủ công ngay
+                    <i class="fas fa-dice mr-1"></i> {{ __('messages.lucky_draw_run_manual') }}
                 </button>
             </form>
         @endif

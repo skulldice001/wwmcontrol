@@ -18,7 +18,7 @@
     <!-- /.login-logo -->
     <div class="card">
         <div class="card-body login-card-body">
-            <p class="login-box-msg">Sign in to start your session</p>
+            <p class="login-box-msg">{{ __('messages.login_tagline') }}</p>
 
             <form action="{{ route('admin.login') }}" method="post">
                 @csrf
@@ -53,13 +53,13 @@
                         <div class="icheck-primary">
                             <input type="checkbox" id="remember" name="remember">
                             <label for="remember">
-                                Remember Me
+                                {{ __('messages.login_remember_me') }}
                             </label>
                         </div>
                     </div>
                     <!-- /.col -->
                     <div class="col-4">
-                        <button type="submit" class="btn btn-primary btn-block">Sign In</button>
+                        <button type="submit" class="btn btn-primary btn-block">{{ __('messages.login_btn') }}</button>
                     </div>
                     <!-- /.col -->
                 </div>

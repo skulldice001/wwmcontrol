@@ -39,7 +39,7 @@
                         @if($event->type === 'guild_war')
                             <span class="badge badge-danger">{{ __('messages.event_guild_war') }}</span>
                         @elseif($event->type === 'lucky_draw')
-                            <span class="badge badge-purple" style="background:#6f42c1">🎲 Quay Số</span>
+                            <span class="badge badge-purple" style="background:#6f42c1">🎲 {{ __('messages.lucky_draw_run_btn') }}</span>
                         @else
                             <span class="badge badge-success">{{ __('messages.event_casual') }}</span>
                         @endif
@@ -84,11 +84,11 @@
                         @if($event->type === 'lucky_draw')
                             @if(!empty($event->lucky_draw_data['drawn_at']))
                                 <a href="{{ route('admin.events.lucky_draw_result', $event->id) }}" class="btn btn-warning btn-sm mr-1">
-                                    <i class="fas fa-trophy"></i> Kết quả
+                                    <i class="fas fa-trophy"></i> {{ __('messages.lucky_draw_result_btn') }}
                                 </a>
                             @elseif(!in_array($event->status, ['completed','cancelled']))
                                 <a href="{{ route('admin.events.lucky_draw_result', $event->id) }}" class="btn btn-info btn-sm mr-1">
-                                    <i class="fas fa-dice"></i> Quay số
+                                    <i class="fas fa-dice"></i> {{ __('messages.lucky_draw_run_btn') }}
                                 </a>
                             @endif
                         @endif
@@ -189,13 +189,13 @@
                         <div class="col-6">
                             <a href="{{ route('admin.events.create', ['type' => 'casual']) }}" class="btn btn-success btn-block btn-lg p-4">
                                 <i class="fas fa-calendar-check fa-2x mb-2"></i><br>
-                                Sự kiện bình thường
+                                {{ __('messages.lucky_draw_normal_event') }}
                             </a>
                         </div>
                         <div class="col-6">
                             <a href="{{ route('admin.events.create', ['type' => 'lucky_draw']) }}" class="btn btn-block btn-lg p-4" style="background:#6f42c1;color:#fff">
                                 <i class="fas fa-dice fa-2x mb-2"></i><br>
-                                Quay Số Ngẫu Nhiên
+                                {{ __('messages.lucky_draw_event') }}
                             </a>
                         </div>
                     </div>
