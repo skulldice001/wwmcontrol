@@ -11,7 +11,7 @@ class LibraryArticle extends Model
     use SoftDeletes;
 
     protected $fillable = [
-        'title', 'category', 'content', 'excerpt',
+        'title', 'category', 'content', 'content_format', 'excerpt',
         'status', 'discord_message_id', 'discord_author',
         'created_by', 'published_at',
     ];
@@ -111,18 +111,34 @@ class LibraryArticle extends Model
     /**
      * Render content for display.
      *
-     * Two modes:
-     *  - Rich HTML: content contains block-level tags (<div>, <h1-6>, etc.) written
-     *    by staff — returned as-is with lib-img class injected on img tags.
-     *  - Plain text: Discord-imported content with embedded <img> tags mixed into
-     *    plain text — img tags are preserved, text parts are escaped and transformed.
+     * Three modes based on content_format column:
+     *  - markdown : CommonMark rendering (new staff-authored articles via EasyMDE)
+     *  - html     : Rich HTML authored by staff — returned as-is with lib-img class on img tags
+     *  - plain    : Discord-imported content — img tags preserved, text escaped/transformed
      */
     public function renderedContent(): string
     {
-        $raw = $this->content;
+        $format = $this->content_format ?? 'plain';
+        $raw    = $this->content;
 
-        // Rich HTML mode: staff-authored content with block-level markup
-        if (preg_match('/<(div|h[1-6]|ul|ol|li|table|blockquote|section|p)\b/i', $raw)) {
+        if ($format === 'markdown') {
+            $converter = new \League\CommonMark\CommonMarkConverter([
+                'html_input'         => 'allow',
+                'allow_unsafe_links' => false,
+            ]);
+            $html = $converter->convert($raw)->getContent();
+
+            // Inject lib-img class on images
+            return preg_replace_callback('/<img([^>]*)>/i', function ($m) {
+                $attrs = $m[1];
+                if (!str_contains($attrs, 'class=')) {
+                    $attrs = ' class="lib-img" loading="lazy"' . $attrs;
+                }
+                return '<img' . $attrs . '>';
+            }, $html);
+        }
+
+        if ($format === 'html') {
             return preg_replace_callback('/<img([^>]*)>/i', function ($m) {
                 $attrs = $m[1];
                 if (!str_contains($attrs, 'class=')) {
@@ -132,28 +148,19 @@ class LibraryArticle extends Model
             }, $raw);
         }
 
-        // Plain text mode: split on <img> tags, escape text parts, keep img tags intact
+        // plain text mode (Discord imports): split on <img> tags, escape text parts
         $parts  = preg_split('/(<img[^>]+>)/i', $raw, -1, PREG_SPLIT_DELIM_CAPTURE);
         $output = '';
 
         foreach ($parts as $part) {
             if (preg_match('/^<img[^>]+>$/i', $part)) {
-                // Add class="lib-img" and loading="lazy" to existing img tags
                 $part = preg_replace('/<img/i', '<img class="lib-img" loading="lazy"', $part);
                 $output .= $part;
             } else {
-                // Escape plain text, then apply transforms
                 $text = htmlspecialchars($part, ENT_QUOTES, 'UTF-8');
-
-                // Section header
                 $text = str_replace('--- Hình ảnh ---', '<div class="lib-img-section-title">Hình ảnh</div>', $text);
-
-                // Separators (--- on its own line)
                 $text = preg_replace('/\n?---\n?/', '<hr class="lib-divider">', $text);
-
-                // Line breaks
                 $text = nl2br($text);
-
                 $output .= $text;
             }
         }
