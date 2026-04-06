@@ -255,13 +255,12 @@ class EventController extends Controller
             'rules'        => ['nullable', 'string'],
             'rewards'      => ['nullable', 'string'],
             'start_time'   => ['required', 'date'],
-            'end_time'     => ['nullable', 'date', 'after_or_equal:start_time'],
+            'end_time'     => [$isLuckyDraw ? 'required' : 'nullable', 'date', 'after_or_equal:start_time'],
             'location'     => ['nullable', 'string', 'max:255'],
             'status'       => ['nullable', Rule::in(['upcoming', 'ongoing', 'completed', 'cancelled'])],
             'participant_ids'   => ['nullable', 'array'],
             'participant_ids.*' => ['exists:users,id'],
-            // lucky draw fields
-            'draw_at'               => [$isLuckyDraw ? 'required' : 'nullable', 'date'],
+            // lucky draw fields (draw time is end_time)
             'prizes'                => [$isLuckyDraw ? 'required' : 'nullable', 'array', 'min:1'],
             'prizes.*.name'         => ['required_with:prizes', 'string', 'max:100'],
             'prizes.*.description'  => ['nullable', 'string', 'max:255'],
@@ -271,13 +270,14 @@ class EventController extends Controller
         $validated['created_by'] = $request->user()->id;
 
         if ($validated['type'] === 'lucky_draw') {
+            // end_time is the draw time for lucky draw events
             $validated['lucky_draw_data'] = [
-                'draw_at'  => $validated['draw_at'],
+                'draw_at'  => $validated['end_time'],
                 'drawn_at' => null,
                 'prizes'   => array_values($validated['prizes']),
                 'winners'  => [],
             ];
-            unset($validated['draw_at'], $validated['prizes']);
+            unset($validated['prizes']);
 
             $event = Event::create($validated);
             return redirect()->route('admin.events.index')
