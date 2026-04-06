@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Event;
+use App\Models\ZooCoinTransaction;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Carbon\Carbon;
@@ -118,6 +119,124 @@ class EventController extends Controller
         $users = User::all();
 
         return view('admin.events.create', compact('users'));
+    }
+
+    public function createLuckyDraw()
+    {
+        return view('admin.events.create_lucky_draw');
+    }
+
+    public function storeLuckyDraw(Request $request)
+    {
+        $this->authorizeAdmin($request);
+
+        $validated = $request->validate([
+            'title'           => ['required', 'string', 'max:255'],
+            'description'     => ['nullable', 'string'],
+            'draw_at'         => ['required', 'date', 'after:now'],
+            'prizes'          => ['required', 'array', 'min:1'],
+            'prizes.*.name'   => ['required', 'string', 'max:100'],
+            'prizes.*.description' => ['nullable', 'string', 'max:255'],
+            'prizes.*.zoo_coin_amount' => ['nullable', 'integer', 'min:0'],
+        ]);
+
+        $event = Event::create([
+            'title'       => $validated['title'],
+            'description' => $validated['description'] ?? null,
+            'type'        => Event::TYPE_LUCKY_DRAW,
+            'status'      => 'upcoming',
+            'start_time'  => $validated['draw_at'],
+            'created_by'  => $request->user()->id,
+            'lucky_draw_data' => [
+                'draw_at'   => $validated['draw_at'],
+                'drawn_at'  => null,
+                'prizes'    => array_values($validated['prizes']),
+                'winners'   => [],
+            ],
+        ]);
+
+        return redirect()->route('admin.events.index')
+            ->with('success', "Đã tạo sự kiện Quay Số: {$event->title}. Quay lúc " . Carbon::parse($validated['draw_at'])->format('H:i d/m/Y'));
+    }
+
+    public function runDraw(Request $request, Event $event)
+    {
+        $this->authorizeAdmin($request);
+
+        if (!$event->isLuckyDraw()) {
+            return back()->with('error', 'Sự kiện này không phải loại Quay Số.');
+        }
+
+        $data = $event->lucky_draw_data;
+
+        if (!empty($data['drawn_at'])) {
+            return back()->with('error', 'Sự kiện này đã được quay số rồi.');
+        }
+
+        $participants = $event->participants()->get();
+        $prizes       = $data['prizes'] ?? [];
+
+        if ($participants->isEmpty()) {
+            return back()->with('error', 'Chưa có người tham gia. Không thể quay số.');
+        }
+
+        if (count($prizes) === 0) {
+            return back()->with('error', 'Chưa có giải thưởng nào được thiết lập.');
+        }
+
+        // Shuffle participants, pick one per prize (no duplicate winners)
+        $pool    = $participants->shuffle();
+        $winners = [];
+
+        foreach ($prizes as $index => $prize) {
+            if ($pool->isEmpty()) break;
+
+            $winner = $pool->shift();
+
+            $winnerData = [
+                'rank'            => $index + 1,
+                'prize_name'      => $prize['name'],
+                'prize_desc'      => $prize['description'] ?? '',
+                'zoo_coin_amount' => (int) ($prize['zoo_coin_amount'] ?? 0),
+                'user_id'         => $winner->id,
+                'username'        => $winner->name,
+                'ingame_name'     => $winner->ingame_name ?? $winner->name,
+            ];
+
+            // Award Zoo Coins if amount specified
+            if ($winnerData['zoo_coin_amount'] > 0) {
+                $winner->increment('z_coins', $winnerData['zoo_coin_amount']);
+                ZooCoinTransaction::create([
+                    'user_id'     => $winner->id,
+                    'amount'      => $winnerData['zoo_coin_amount'],
+                    'type'        => 'earn',
+                    'description' => "Trúng thưởng {$prize['name']} — {$event->title}",
+                ]);
+            }
+
+            $winners[] = $winnerData;
+        }
+
+        $data['drawn_at'] = now()->toDateTimeString();
+        $data['winners']  = $winners;
+
+        $event->update([
+            'lucky_draw_data' => $data,
+            'status'          => 'completed',
+            'end_time'        => now(),
+        ]);
+
+        return redirect()->route('admin.events.lucky_draw_result', $event->id)
+            ->with('success', 'Quay số hoàn tất! Đã chọn ' . count($winners) . ' người trúng thưởng.');
+    }
+
+    public function luckyDrawResult(Event $event)
+    {
+        if (!$event->isLuckyDraw()) {
+            return redirect()->route('admin.events.index');
+        }
+
+        return view('admin.events.lucky_draw_result', compact('event'));
     }
 
     public function store(Request $request)

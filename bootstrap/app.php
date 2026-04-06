@@ -52,5 +52,6 @@ return Application::configure(basePath: dirname(__DIR__))
         $schedule->command('lottery:draw daily')->dailyAt('20:00');
         $schedule->command('lottery:draw weekly')->weeklyOn(6, '21:00');
         $schedule->command('lottery:draw jackpot')->dailyAt('08:30');
+        $schedule->command('events:run-lucky-draws')->everyMinute();
     })
     ->create();
