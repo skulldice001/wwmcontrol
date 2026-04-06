@@ -1,6 +1,14 @@
 @extends('layouts.admin')
 @section('title', 'Chỉnh sửa bài viết')
 
+@push('styles')
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.css">
+@endpush
+
+@push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.js"></script>
+@endpush
+
 @section('content')
 @if(session('success'))
 <div class="alert alert-success alert-dismissible fade show">

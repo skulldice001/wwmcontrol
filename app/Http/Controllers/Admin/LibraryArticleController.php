@@ -44,14 +44,16 @@ class LibraryArticleController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'title'    => 'required|string|max:255',
-            'category' => 'required|in:' . implode(',', array_keys(LibraryArticle::CATEGORIES)),
-            'content'  => 'required|string',
-            'excerpt'  => 'nullable|string|max:500',
+            'title'          => 'required|string|max:255',
+            'category'       => 'required|in:' . implode(',', array_keys(LibraryArticle::CATEGORIES)),
+            'content'        => 'required|string',
+            'content_format' => 'nullable|in:markdown,html,plain',
+            'excerpt'        => 'nullable|string|max:500',
         ]);
 
-        $data['created_by'] = Auth::guard('staff')->id();
-        $data['status']     = 'draft';
+        $data['created_by']     = Auth::guard('staff')->id();
+        $data['status']         = 'draft';
+        $data['content_format'] = $data['content_format'] ?? 'markdown';
 
         LibraryArticle::create($data);
 
@@ -66,11 +68,14 @@ class LibraryArticleController extends Controller
     public function update(Request $request, LibraryArticle $library)
     {
         $data = $request->validate([
-            'title'    => 'required|string|max:255',
-            'category' => 'required|in:' . implode(',', array_keys(LibraryArticle::CATEGORIES)),
-            'content'  => 'required|string',
-            'excerpt'  => 'nullable|string|max:500',
+            'title'          => 'required|string|max:255',
+            'category'       => 'required|in:' . implode(',', array_keys(LibraryArticle::CATEGORIES)),
+            'content'        => 'required|string',
+            'content_format' => 'nullable|in:markdown,html,plain',
+            'excerpt'        => 'nullable|string|max:500',
         ]);
+
+        $data['content_format'] = $data['content_format'] ?? $library->content_format ?? 'markdown';
 
         $library->update($data);
 
