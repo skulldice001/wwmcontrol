@@ -171,7 +171,7 @@
                         </a>
                     </div>
                     <div class="col-4">
-                        <a href="{{ route('admin.events.lucky_draw.create') }}" class="btn btn-block btn-lg p-4" style="background:#6f42c1;color:#fff">
+                        <a href="{{ route('admin.events.create', ['type' => 'lucky_draw']) }}" class="btn btn-block btn-lg p-4" style="background:#6f42c1;color:#fff">
                             <i class="fas fa-dice fa-2x mb-2"></i><br>
                             Quay Số
                         </a>
