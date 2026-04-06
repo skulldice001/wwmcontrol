@@ -86,7 +86,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::resource('library', LibraryArticleController::class);
         Route::post('library/{library}/publish',   [LibraryArticleController::class, 'publish'])->name('library.publish');
         Route::post('library/{library}/unpublish', [LibraryArticleController::class, 'unpublish'])->name('library.unpublish');
-        Route::post('library-upload-image',        [LibraryArticleController::class, 'uploadImage'])->name('admin.library.upload-image');
+        Route::post('library-upload-image',        [LibraryArticleController::class, 'uploadImage'])->name('library.upload-image');
     });
 });
 
