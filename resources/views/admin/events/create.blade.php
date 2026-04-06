@@ -12,6 +12,7 @@
         "type_label" => __("messages.event_field_type"),
         "type_casual" => __("messages.event_type_casual"),
         "type_guild_war" => __("messages.event_type_guild_war"),
+        "type_lucky_draw" => "Quay Số Ngẫu Nhiên",
         "start_time_label" => __("messages.event_field_start_time"),
         "end_time_label" => __("messages.event_field_end_time"),
         "location_label" => __("messages.event_field_location"),

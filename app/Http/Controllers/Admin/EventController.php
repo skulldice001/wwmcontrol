@@ -245,22 +245,44 @@ class EventController extends Controller
 
         $this->prepareGuildWarData($request);
 
+        $isLuckyDraw = $request->input('type') === 'lucky_draw';
+
         $validated = $request->validate([
-            'title' => ['required', 'string', 'max:255'],
-            'description' => ['nullable', 'string'],
-            'discord_id' => ['nullable', 'string'],
-            'type' => ['required', Rule::in(['casual', 'guild_war'])],
-            'rules' => ['nullable', 'string'],
-            'rewards' => ['nullable', 'string'],
-            'start_time' => ['required', 'date'],
-            'end_time' => ['nullable', 'date', 'after_or_equal:start_time'],
-            'location' => ['nullable', 'string', 'max:255'],
-            'status' => ['nullable', Rule::in(['upcoming', 'ongoing', 'completed', 'cancelled'])],
-            'participant_ids' => ['nullable', 'array'],
+            'title'        => ['required', 'string', 'max:255'],
+            'description'  => ['nullable', 'string'],
+            'discord_id'   => ['nullable', 'string'],
+            'type'         => ['required', Rule::in(['casual', 'guild_war', 'lucky_draw'])],
+            'rules'        => ['nullable', 'string'],
+            'rewards'      => ['nullable', 'string'],
+            'start_time'   => ['required', 'date'],
+            'end_time'     => ['nullable', 'date', 'after_or_equal:start_time'],
+            'location'     => ['nullable', 'string', 'max:255'],
+            'status'       => ['nullable', Rule::in(['upcoming', 'ongoing', 'completed', 'cancelled'])],
+            'participant_ids'   => ['nullable', 'array'],
             'participant_ids.*' => ['exists:users,id'],
+            // lucky draw fields
+            'draw_at'               => [$isLuckyDraw ? 'required' : 'nullable', 'date'],
+            'prizes'                => [$isLuckyDraw ? 'required' : 'nullable', 'array', 'min:1'],
+            'prizes.*.name'         => ['required_with:prizes', 'string', 'max:100'],
+            'prizes.*.description'  => ['nullable', 'string', 'max:255'],
+            'prizes.*.zoo_coin_amount' => ['nullable', 'integer', 'min:0'],
         ]);
 
         $validated['created_by'] = $request->user()->id;
+
+        if ($validated['type'] === 'lucky_draw') {
+            $validated['lucky_draw_data'] = [
+                'draw_at'  => $validated['draw_at'],
+                'drawn_at' => null,
+                'prizes'   => array_values($validated['prizes']),
+                'winners'  => [],
+            ];
+            unset($validated['draw_at'], $validated['prizes']);
+
+            $event = Event::create($validated);
+            return redirect()->route('admin.events.index')
+                ->with('success', "Đã tạo sự kiện Quay Số: {$event->title}. Quay lúc " . Carbon::parse($event->lucky_draw_data['draw_at'])->format('H:i d/m/Y'));
+        }
 
         if ($validated['type'] === 'guild_war') {
             $baseTime = Carbon::parse($validated['start_time']);
@@ -335,17 +357,17 @@ class EventController extends Controller
         $this->prepareGuildWarData($request, $event);
 
         $validated = $request->validate([
-            'title' => ['string', 'max:255'],
-            'description' => ['nullable', 'string'],
-            'discord_id' => ['nullable', 'string'],
-            'type' => [Rule::in(['casual', 'guild_war'])],
-            'rules' => ['nullable', 'string'],
-            'rewards' => ['nullable', 'string'],
-            'start_time' => ['date'],
-            'end_time' => ['nullable', 'date', 'after_or_equal:start_time'],
-            'location' => ['nullable', 'string', 'max:255'],
-            'status' => [Rule::in(['upcoming', 'ongoing', 'completed', 'cancelled'])],
-            'participant_ids' => ['nullable', 'array'],
+            'title'        => ['string', 'max:255'],
+            'description'  => ['nullable', 'string'],
+            'discord_id'   => ['nullable', 'string'],
+            'type'         => [Rule::in(['casual', 'guild_war', 'lucky_draw'])],
+            'rules'        => ['nullable', 'string'],
+            'rewards'      => ['nullable', 'string'],
+            'start_time'   => ['date'],
+            'end_time'     => ['nullable', 'date', 'after_or_equal:start_time'],
+            'location'     => ['nullable', 'string', 'max:255'],
+            'status'       => [Rule::in(['upcoming', 'ongoing', 'completed', 'cancelled'])],
+            'participant_ids'   => ['nullable', 'array'],
             'participant_ids.*' => ['exists:users,id'],
         ]);
 
