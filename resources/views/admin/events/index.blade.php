@@ -36,9 +36,13 @@
                 <tr>
                     <td>{{ $event->title }}</td>
                     <td>
-                        <span class="badge badge-{{ $event->type == 'guild_war' ? 'danger' : 'success' }}">
-                            {{ $event->type == 'guild_war' ? __('messages.event_guild_war') : __('messages.event_casual') }}
-                        </span>
+                        @if($event->type === 'guild_war')
+                            <span class="badge badge-danger">{{ __('messages.event_guild_war') }}</span>
+                        @elseif($event->type === 'lucky_draw')
+                            <span class="badge badge-purple" style="background:#6f42c1">🎲 Quay Số</span>
+                        @else
+                            <span class="badge badge-success">{{ __('messages.event_casual') }}</span>
+                        @endif
                     </td>
                     <td>
                         <span class="badge badge-{{ $event->status == 'ongoing' ? 'success' : ($event->status == 'upcoming' ? 'warning' : 'secondary') }}">
@@ -76,6 +80,17 @@
                             <a href="{{ route('admin.events.formation', $event->id) }}" class="btn btn-warning btn-sm mr-1">
                                 <i class="fas fa-users-cog"></i> {{ __('messages.sort_formation') }}
                             </a>
+                        @endif
+                        @if($event->type === 'lucky_draw')
+                            @if(!empty($event->lucky_draw_data['drawn_at']))
+                                <a href="{{ route('admin.events.lucky_draw_result', $event->id) }}" class="btn btn-warning btn-sm mr-1">
+                                    <i class="fas fa-trophy"></i> Kết quả
+                                </a>
+                            @elseif(!in_array($event->status, ['completed','cancelled']))
+                                <a href="{{ route('admin.events.lucky_draw_result', $event->id) }}" class="btn btn-info btn-sm mr-1">
+                                    <i class="fas fa-dice"></i> Quay số
+                                </a>
+                            @endif
                         @endif
                         @if(!in_array($event->status, ['completed', 'cancelled']))
                             <button type="button"
@@ -143,16 +158,22 @@
             <div class="modal-body text-center">
                 <p>{{ __('messages.select_event_type_help') }}</p>
                 <div class="row">
-                    <div class="col-6">
+                    <div class="col-4">
                         <a href="{{ route('admin.events.create', ['type' => 'casual']) }}" class="btn btn-success btn-block btn-lg p-4">
                             <i class="fas fa-calendar-check fa-2x mb-2"></i><br>
                             {{ __('messages.casual_event') }}
                         </a>
                     </div>
-                    <div class="col-6">
+                    <div class="col-4">
                         <a href="{{ route('admin.events.create', ['type' => 'guild_war']) }}" class="btn btn-danger btn-block btn-lg p-4">
                             <i class="fas fa-khanda fa-2x mb-2"></i><br>
                             {{ __('messages.guild_war_event') }}
+                        </a>
+                    </div>
+                    <div class="col-4">
+                        <a href="{{ route('admin.events.lucky_draw.create') }}" class="btn btn-block btn-lg p-4" style="background:#6f42c1;color:#fff">
+                            <i class="fas fa-dice fa-2x mb-2"></i><br>
+                            Quay Số
                         </a>
                     </div>
                 </div>

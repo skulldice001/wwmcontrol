@@ -72,6 +72,11 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('events/{event}/formation', [EventController::class, 'formation'])->name('events.formation');
         Route::post('events/{event}/formation', [EventController::class, 'saveFormation'])->name('events.formation.save');
         Route::post('events/{event}/complete', [EventController::class, 'complete'])->name('events.complete');
+        // Lucky draw
+        Route::get('events/lucky-draw/create', [EventController::class, 'createLuckyDraw'])->name('events.lucky_draw.create');
+        Route::post('events/lucky-draw', [EventController::class, 'storeLuckyDraw'])->name('events.lucky_draw.store');
+        Route::post('events/{event}/run-draw', [EventController::class, 'runDraw'])->name('events.run_draw');
+        Route::get('events/{event}/draw-result', [EventController::class, 'luckyDrawResult'])->name('events.lucky_draw_result');
         Route::resource('events', EventController::class);
         Route::resource('users', UserController::class);
         Route::post('users/{user}/restore', [UserController::class, 'restore'])->name('users.restore')->withTrashed();
