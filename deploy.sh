@@ -1,19 +1,22 @@
 #!/usr/bin/env bash
 # ─────────────────────────────────────────────────────────────────────────────
-# deploy.sh — WWMControl production deployment helper
-# Usage: bash deploy.sh [--skip-build] [--down]
+# deploy.sh — WWMControl Docker deployment with auto-revert on failure
+# Usage: bash deploy.sh [--skip-build] [--down] [--rollback]
 # ─────────────────────────────────────────────────────────────────────────────
-set -e
+set -euo pipefail
 
 COMPOSE="docker compose -f docker-compose.prod.yml"
+IMAGE_NAME="wwmcontrol-app"
 
 # ── Parse flags ──────────────────────────────────────────────────────────────
 SKIP_BUILD=0
 DO_DOWN=0
+DO_ROLLBACK=0
 for arg in "$@"; do
   case $arg in
     --skip-build) SKIP_BUILD=1 ;;
     --down)       DO_DOWN=1 ;;
+    --rollback)   DO_ROLLBACK=1 ;;
   esac
 done
 
@@ -23,6 +26,35 @@ if [ "$DO_DOWN" -eq 1 ]; then
   $COMPOSE down
   exit 0
 fi
+
+# ── Manual rollback ───────────────────────────────────────────────────────────
+if [ "$DO_ROLLBACK" -eq 1 ]; then
+  if ! docker image inspect "${IMAGE_NAME}:rollback" &>/dev/null; then
+    echo "[!] No rollback image found. Nothing to revert to."
+    exit 1
+  fi
+  echo "[deploy] Rolling back to previous image..."
+  docker tag "${IMAGE_NAME}:rollback" "${IMAGE_NAME}:latest"
+  $COMPOSE up -d --remove-orphans
+  echo "[deploy] ✓ Rolled back to previous image."
+  exit 0
+fi
+
+# ── Rollback function (called on error) ───────────────────────────────────────
+rollback() {
+  echo ""
+  echo "[!] Deploy failed — reverting to previous image..."
+  if docker image inspect "${IMAGE_NAME}:rollback" &>/dev/null; then
+    docker tag "${IMAGE_NAME}:rollback" "${IMAGE_NAME}:latest"
+    $COMPOSE up -d --remove-orphans
+    echo "[deploy] ✓ Rolled back. Site restored to previous version."
+  else
+    echo "[!] No rollback image available. Manual intervention required."
+    $COMPOSE logs app | tail -30
+  fi
+  exit 1
+}
+trap rollback ERR
 
 # ── Verify .env ──────────────────────────────────────────────────────────────
 if [ ! -f ".env" ]; then
@@ -54,6 +86,12 @@ set -o allexport
 source .env
 set +o allexport
 
+# ── Tag current image as rollback target ─────────────────────────────────────
+if docker image inspect "${IMAGE_NAME}:latest" &>/dev/null; then
+  echo "[deploy] Tagging current image as rollback target..."
+  docker tag "${IMAGE_NAME}:latest" "${IMAGE_NAME}:rollback"
+fi
+
 # ── Build Docker image ────────────────────────────────────────────────────────
 if [ "$SKIP_BUILD" -eq 0 ]; then
   echo "[deploy] Building Docker image..."
@@ -84,6 +122,7 @@ until docker compose -f docker-compose.prod.yml exec -T app php artisan --versio
   sleep 2
 done
 
+trap - ERR
 echo ""
 echo "[deploy] ✓ Deployment complete."
 echo "[deploy]   App URL : ${APP_URL:-http://localhost:${APP_PORT:-80}}"
@@ -93,3 +132,4 @@ echo "Useful commands:"
 echo "  View logs      : docker compose -f docker-compose.prod.yml logs -f"
 echo "  Shell into app : docker compose -f docker-compose.prod.yml exec app bash"
 echo "  Stop all       : bash deploy.sh --down"
+echo "  Rollback       : bash deploy.sh --rollback"
