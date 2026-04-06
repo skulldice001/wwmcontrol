@@ -1,5 +1,5 @@
 @extends('layouts.admin')
-@section('title', 'Thư Viện')
+@section('title', __('messages.lib_hero_title'))
 
 @push('styles')
 <style>
@@ -126,17 +126,17 @@
 @endpush
 
 @section('content')
-<h2 class="lib-hall-title"><i class="fas fa-book-open mr-2"></i>THƯ VIỆN</h2>
-<div class="lib-hall-sub">Kiến thức · Hướng dẫn · Kinh nghiệm</div>
+<h2 class="lib-hall-title"><i class="fas fa-book-open mr-2"></i>{{ __('messages.lib_hero_title') }}</h2>
+<div class="lib-hall-sub">{{ __('messages.lib_hero_subtitle') }}</div>
 
 <div class="lib-search-wrap">
     <form method="GET" action="{{ route('library.index') }}">
         <div class="input-group">
             <input type="text" name="search" class="form-control lib-search-input"
-                   placeholder="Tìm kiếm bài viết..." value="{{ request('search') }}">
+                   placeholder="{{ __('messages.lib_search_placeholder_u') }}" value="{{ request('search') }}">
             <div class="input-group-append">
                 <button class="btn lib-search-btn" type="submit">
-                    <i class="fas fa-search mr-1"></i>Tìm
+                    <i class="fas fa-search mr-1"></i>{{ __('messages.lib_search_btn') }}
                 </button>
             </div>
         </div>
@@ -164,11 +164,11 @@ $cardClasses = [
                 <div class="lib-card-tag">{{ LibraryArticle::CATEGORY_TAGS[$key] }}</div>
                 <div class="lib-card-title">{{ $label }}</div>
                 <div class="lib-card-count">
-                    <i class="fas fa-file-alt mr-1"></i>{{ $counts[$key] ?? 0 }} bài viết
+                    <i class="fas fa-file-alt mr-1"></i>{{ $counts[$key] ?? 0 }} {{ __('messages.lib_articles_count') }}
                 </div>
             </div>
             <span class="lib-enter-btn">
-                <i class="fas fa-arrow-right"></i> Xem ngay
+                <i class="fas fa-arrow-right"></i> {{ __('messages.lib_read_now') }}
             </span>
         </div>
     </a>

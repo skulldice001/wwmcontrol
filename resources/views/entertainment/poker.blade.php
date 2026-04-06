@@ -12,7 +12,7 @@
             <i class="fas fa-plus"></i> {{ __('messages.create_table') }}
         </button>
         <button id="play-vs-ai-poker" class="btn btn-warning float-right ml-2">
-            <i class="fas fa-robot mr-1"></i> Chơi vs AI
+            <i class="fas fa-robot mr-1"></i> {{ __('messages.tienlen_vs_ai') }}
         </button>
         <button id="refresh-tables-btn" class="btn btn-outline-info float-right">
             <i class="fas fa-sync-alt mr-1"></i> {{ __('messages.refresh_tables') }}

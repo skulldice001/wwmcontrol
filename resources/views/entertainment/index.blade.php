@@ -241,7 +241,7 @@
             <div>
                 <div class="ent-card-tag">Bingo</div>
                 <div class="ent-card-title">Bingo Zoo</div>
-                <div class="ent-card-sub">5×5 · 75 số · Bắt đầu khi đủ 2 người</div>
+                <div class="ent-card-sub">5×5 · 75 {{ __('messages.bingo_players') }} · {{ __('messages.bingo_need_to_start', ['n' => 2]) }}</div>
                 <div class="ent-stats">
                     <div class="ent-stat">
                         <div class="ent-stat-num">{{ $stats['bingo']['total'] }}</div>
@@ -258,7 +258,7 @@
                 </div>
             </div>
             <span class="ent-play-btn">
-                <i class="fas fa-th"></i> Chơi Ngay
+                <i class="fas fa-th"></i> {{ __('messages.ent_play_now') }}
             </span>
         </div>
     </a>
@@ -275,16 +275,16 @@
                 <div class="ent-stats">
                     <div class="ent-stat">
                         <div class="ent-stat-num" style="color:#f0c040;">{{ number_format($stats['lottery']['daily_pot']) }}</div>
-                        <div class="ent-stat-lbl">Quỹ hôm nay</div>
+                        <div class="ent-stat-lbl">{{ __('messages.ent_daily_fund') }}</div>
                     </div>
                     <div class="ent-stat">
                         <div class="ent-stat-num" style="color:#a855f7;">{{ number_format($stats['lottery']['weekly_pot']) }}</div>
-                        <div class="ent-stat-lbl">Quỹ tuần</div>
+                        <div class="ent-stat-lbl">{{ __('messages.ent_weekly_fund') }}</div>
                     </div>
                 </div>
             </div>
             <span class="ent-play-btn">
-                <i class="fas fa-ticket-alt"></i> Mua Vé
+                <i class="fas fa-ticket-alt"></i> {{ __('messages.ent_buy_ticket') }}
             </span>
         </div>
     </a>
@@ -301,20 +301,20 @@
                 <div class="ent-stats">
                     <div class="ent-stat">
                         <div class="ent-stat-num">{{ $stats['tienlen']['total'] }}</div>
-                        <div class="ent-stat-lbl">Bàn chơi</div>
+                        <div class="ent-stat-lbl">{{ __('messages.ent_tables') }}</div>
                     </div>
                     <div class="ent-stat">
                         <div class="ent-stat-num" style="color:#4caf50;">{{ $stats['tienlen']['playing'] }}</div>
-                        <div class="ent-stat-lbl">Đang chơi</div>
+                        <div class="ent-stat-lbl">{{ __('messages.ent_playing') }}</div>
                     </div>
                     <div class="ent-stat">
                         <div class="ent-stat-num" style="color:#f6c23e;">{{ $stats['tienlen']['waiting'] }}</div>
-                        <div class="ent-stat-lbl">Chờ người</div>
+                        <div class="ent-stat-lbl">{{ __('messages.ent_waiting') }}</div>
                     </div>
                 </div>
             </div>
             <span class="ent-play-btn">
-                <i class="fas fa-play"></i> Chơi ngay
+                <i class="fas fa-play"></i> {{ __('messages.ent_play_now') }}
             </span>
         </div>
     </a>
