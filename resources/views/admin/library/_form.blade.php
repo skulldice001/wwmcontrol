@@ -1,12 +1,12 @@
 <div class="form-group">
-    <label>Tiêu đề <span class="text-danger">*</span></label>
+    <label>{{ __('messages.lib_title') }} <span class="text-danger">*</span></label>
     <input type="text" name="title" class="form-control @error('title') is-invalid @enderror"
            value="{{ old('title', $article->title ?? '') }}" required maxlength="255">
     @error('title')<div class="invalid-feedback">{{ $message }}</div>@enderror
 </div>
 
 <div class="form-group">
-    <label>Danh mục <span class="text-danger">*</span></label>
+    <label>{{ __('messages.lib_category') }} <span class="text-danger">*</span></label>
     <select name="category" class="form-control @error('category') is-invalid @enderror" required>
         @foreach(\App\Models\LibraryArticle::CATEGORIES as $key => $label)
         <option value="{{ $key }}" {{ old('category', $article->category ?? '') === $key ? 'selected' : '' }}>
@@ -18,15 +18,15 @@
 </div>
 
 <div class="form-group">
-    <label>Tóm tắt <small class="text-muted">(tùy chọn, hiển thị trên thẻ bài)</small></label>
+    <label>{{ __('messages.lib_excerpt') }} <small class="text-muted">({{ __('messages.lib_excerpt_hint') }})</small></label>
     <input type="text" name="excerpt" class="form-control @error('excerpt') is-invalid @enderror"
            value="{{ old('excerpt', $article->excerpt ?? '') }}" maxlength="500"
-           placeholder="Tóm tắt ngắn...">
+           placeholder="{{ __('messages.lib_excerpt_placeholder') }}">
     @error('excerpt')<div class="invalid-feedback">{{ $message }}</div>@enderror
 </div>
 
 <div class="form-group">
-    <label>Nội dung <span class="text-danger">*</span></label>
+    <label>{{ __('messages.lib_content') }} <span class="text-danger">*</span></label>
     @php $fmt = old('content_format', $article->content_format ?? 'markdown'); @endphp
     <input type="hidden" name="content_format" id="contentFormat" value="{{ $fmt }}">
 
@@ -38,7 +38,7 @@
         {{-- Raw textarea for html/plain legacy articles --}}
         <div class="mb-1 d-flex align-items-center" style="gap:8px;">
             <button type="button" class="btn btn-sm btn-outline-info" id="insertImgBtn">
-                <i class="fas fa-image mr-1"></i> Chèn ảnh
+                <i class="fas fa-image mr-1"></i> {{ __('messages.lib_insert_image') }}
             </button>
             <input type="file" id="imgFileInput" accept="image/*" class="d-none">
             <span id="imgUploadStatus" class="text-muted" style="font-size:12px;"></span>
@@ -46,7 +46,7 @@
         <textarea id="articleContent" name="content" rows="22"
                   class="form-control @error('content') is-invalid @enderror"
                   style="font-family:monospace;font-size:13px;">{{ old('content', $article->content ?? '') }}</textarea>
-        <small class="form-text text-muted">Chế độ HTML thô (bài viết cũ). Lưu nguyên định dạng gốc.</small>
+        <small class="form-text text-muted">{{ __('messages.lib_html_mode_hint') }}</small>
     @endif
     @error('content')<div class="invalid-feedback">{{ $message }}</div>@enderror
 </div>
@@ -69,8 +69,8 @@
             form.append('_token', '{{ csrf_token() }}');
             fetch('{{ route('admin.library.upload-image') }}', { method: 'POST', body: form })
                 .then(r => r.json())
-                .then(data => { if (data.url) onSuccess(data.url); else onError('Upload thất bại'); })
-                .catch(() => onError('Lỗi kết nối'));
+                .then(data => { if (data.url) onSuccess(data.url); else onError('{{ __('messages.lib_upload_failed') }}'); })
+                .catch(() => onError('{{ __('messages.lib_upload_error') }}'));
         },
         toolbar: [
             'bold', 'italic', 'heading', '|',
@@ -79,11 +79,8 @@
             'preview', 'side-by-side', 'fullscreen', '|',
             'guide',
         ],
-        previewRender: function(text) {
-            return this.parent.markdown(text);
-        },
         minHeight: '420px',
-        placeholder: 'Viết nội dung bằng Markdown...\n\n# Tiêu đề\n\n**In đậm**, *in nghiêng*\n\n- Danh sách\n\nKéo & thả ảnh vào editor hoặc dùng nút Upload Image.',
+        placeholder: '{{ __('messages.lib_content') }}...',
     });
 })();
 </script>
@@ -101,7 +98,7 @@
         const file = input.files[0];
         if (!file) return;
 
-        status.textContent = 'Đang tải lên...';
+        status.textContent = '{{ __('messages.lib_uploading') }}';
         btn.disabled = true;
 
         const form = new FormData();
@@ -119,12 +116,12 @@
                 ta.value    = ta.value.slice(0, start) + tag + ta.value.slice(end);
                 ta.selectionStart = ta.selectionEnd = start + tag.length;
                 ta.focus();
-                status.textContent = 'Đã chèn ảnh ✓';
+                status.textContent = '{{ __('messages.lib_inserted') }}';
             } else {
-                status.textContent = 'Lỗi: ' + (data.message || 'upload thất bại');
+                status.textContent = '{{ __('messages.lib_upload_failed') }}';
             }
         } catch (e) {
-            status.textContent = 'Lỗi kết nối.';
+            status.textContent = '{{ __('messages.lib_upload_error') }}';
         } finally {
             btn.disabled = false;
             input.value  = '';

@@ -49,7 +49,7 @@
                     <td>
                         {{ $user->name }}
                         @if($user->trashed())
-                            <span class="badge badge-danger ml-1">Disabled</span>
+                            <span class="badge badge-danger ml-1">{{ __('messages.user_disabled') }}</span>
                         @endif
                     </td>
                     <td>{{ $user->account }}</td>
@@ -201,11 +201,11 @@
                     <form action="{{ route('admin.users.adjust-coins', $user->id) }}" method="POST" class="form-inline flex-wrap justify-content-center" style="gap:6px;">
                         @csrf
                         <select name="adjust_type" class="form-control form-control-sm" style="width:90px;" required>
-                            <option value="add">+ Nạp</option>
-                            <option value="deduct">− Trừ</option>
+                            <option value="add">{{ __('messages.coin_add') }}</option>
+                            <option value="deduct">{{ __('messages.coin_deduct') }}</option>
                         </select>
                         <input type="number" name="adjust_amount" class="form-control form-control-sm"
-                               style="width:120px;" min="1" placeholder="Số lượng" required>
+                               style="width:120px;" min="1" placeholder="{{ __('messages.coin_amount_label') }}" required>
                         <input type="text" name="adjust_note" class="form-control form-control-sm"
                                style="width:160px;" placeholder="{{ __('messages.zcoin_tx_note') }}">
                         <button type="submit" class="btn btn-sm btn-success">

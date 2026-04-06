@@ -259,8 +259,8 @@
                             <a href="#" class="nav-link disabled" style="opacity:.55; cursor:not-allowed;">
                                 <i class="nav-icon fas fa-gift"></i>
                                 <p>
-                                    Đổi Thưởng
-                                    <span class="badge badge-secondary ml-1" style="font-size:.65rem;">Sắp ra mắt</span>
+                                    {{ __('messages.nav_redeem') }}
+                                    <span class="badge badge-secondary ml-1" style="font-size:.65rem;">{{ __('messages.nav_coming_soon') }}</span>
                                 </p>
                             </a>
                         </li>
