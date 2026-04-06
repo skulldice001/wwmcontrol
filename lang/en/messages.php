@@ -748,4 +748,32 @@ return [
 
     // Auth user login
     'login_or'                 => '- OR -',
+
+    // Lucky Draw form (CreateEventForm.vue)
+    'event_type_lucky_draw'       => 'Lucky Draw',
+    'lucky_draw_reg_label'        => 'Registration Deadline',
+    'lucky_draw_reg_hint'         => 'After this time, players cannot register.',
+    'lucky_draw_time_label'       => '⏰ Draw Time',
+    'lucky_draw_time_hint'        => 'System auto-draws at this time. Staff can also draw manually.',
+    'lucky_draw_prizes_title'     => '🎁 Prize List',
+    'lucky_draw_add_prize'        => 'Add Prize',
+    'lucky_draw_multi_hint'       => 'Each prize draws 1 winner, no duplicates. Order from top = prize rank.',
+    'lucky_draw_prize_badge'      => 'Prize',
+    'lucky_draw_prize_name_ph'    => 'Prize name (e.g. First Prize)',
+    'lucky_draw_prize_desc_ph'    => 'Prize description',
+
+    // Tài Xỉu / Blackjack lobby (Vue msg keys)
+    'tx_no_tables'                => 'No tables yet. Create one!',
+    'tx_joining'                  => 'Joining table...',
+    'tx_enter_name'               => 'Please enter a table name.',
+    'bj_refresh'                  => 'Refresh table list',
+    'bj_vs_ai'                    => 'Play vs AI',
+    'bj_creating'                 => 'Creating...',
+    'bj_enter_name'               => 'Please enter a table name.',
+    'bj_invalid_bet'              => 'Invalid bet range.',
+    'conn_error'                  => 'Connection error.',
+
+    // Lottery lobby
+    'lottery_title'               => 'Zoo Lottery',
+    'lottery_back'                => 'Entertainment',
 ];

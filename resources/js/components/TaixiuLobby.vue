@@ -51,7 +51,7 @@
                 </td>
               </tr>
               <tr v-if="tables.length === 0">
-                <td colspan="5" class="text-center text-muted py-4">Chưa có bàn nào. Tạo bàn mới!</td>
+                <td colspan="5" class="text-center text-muted py-4">{{ msg.noTables }}</td>
               </tr>
             </tbody>
           </table>
@@ -101,7 +101,7 @@
     <!-- Loading overlay -->
     <div v-if="joining" style="position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.6);display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;">
       <div class="spinner-border mb-3" style="width:3rem;height:3rem;"></div>
-      <h5>Đang vào bàn...</h5>
+      <h5>{{ msg.joining }}</h5>
     </div>
   </div>
 </template>
@@ -176,7 +176,7 @@ export default {
         },
 
         createTable() {
-            if (!this.form.name.trim()) { window.notify && window.notify('warning', 'Nhập tên bàn.'); return; }
+            if (!this.form.name.trim()) { window.notify && window.notify('warning', this.msg.enterName); return; }
             this.creating = true;
             fetch(this.routes.create, {
                 method: 'POST',

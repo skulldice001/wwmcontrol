@@ -62,7 +62,7 @@
                   </div>
 
                   <h5 class="font-weight-bold mb-1 user-account">{{ user.account || user.name }}</h5>
-                  <p class="text-muted small mb-0 user-ingame">{{ user.ingame_name || 'N/A' }}</p>
+                  <p class="text-muted small mb-0 user-ingame">{{ user.ingame_name || t('not_available') }}</p>
                 </div>
               </div>
             </div>

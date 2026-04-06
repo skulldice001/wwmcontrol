@@ -710,4 +710,32 @@ return [
 
     // Auth user login
     'login_or'                 => '- HOẶC -',
+
+    // Lucky Draw form (CreateEventForm.vue)
+    'event_type_lucky_draw'       => 'Quay Số Ngẫu Nhiên',
+    'lucky_draw_reg_label'        => 'Thời gian đăng ký (hạn chót)',
+    'lucky_draw_reg_hint'         => 'Sau thời gian này người chơi không thể đăng ký tham gia.',
+    'lucky_draw_time_label'       => '⏰ Thời gian quay số',
+    'lucky_draw_time_hint'        => 'Hệ thống tự quay khi đến giờ. Staff cũng có thể quay thủ công.',
+    'lucky_draw_prizes_title'     => '🎁 Danh sách giải thưởng',
+    'lucky_draw_add_prize'        => 'Thêm giải',
+    'lucky_draw_multi_hint'       => 'Mỗi giải quay 1 người trúng, không trùng nhau. Thứ tự từ trên xuống = thứ hạng giải.',
+    'lucky_draw_prize_badge'      => 'Giải',
+    'lucky_draw_prize_name_ph'    => 'Tên giải (VD: Giải nhất)',
+    'lucky_draw_prize_desc_ph'    => 'Mô tả phần thưởng',
+
+    // Tài Xỉu / Blackjack lobby (Vue msg keys)
+    'tx_no_tables'                => 'Chưa có bàn nào. Tạo bàn mới!',
+    'tx_joining'                  => 'Đang vào bàn...',
+    'tx_enter_name'               => 'Nhập tên bàn.',
+    'bj_refresh'                  => 'Làm mới danh sách bàn',
+    'bj_vs_ai'                    => 'Chơi vs AI',
+    'bj_creating'                 => 'Đang tạo...',
+    'bj_enter_name'               => 'Nhập tên bàn.',
+    'bj_invalid_bet'              => 'Khoảng cược không hợp lệ.',
+    'conn_error'                  => 'Lỗi kết nối.',
+
+    // Lottery lobby
+    'lottery_title'               => 'Xổ Số Zoo',
+    'lottery_back'                => 'Sảnh Giải Trí',
 ];
