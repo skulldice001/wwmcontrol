@@ -540,4 +540,5 @@ return [
     'tx_rooms_total'      => 'Tổng phòng',
     'tx_rooms_playing'    => 'Đang chơi',
     'tx_rooms_waiting'    => 'Chờ mới',
+    'nav_library'         => 'Thư Viện',
 ];
