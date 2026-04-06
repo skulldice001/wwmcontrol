@@ -35,20 +35,23 @@
         </div>
 
         <div class="form-group">
-            <label>{{ translations.start_time_label }}</label>
+            <label>{{ isLuckyDraw ? 'Thời gian đăng ký (hạn chót)' : translations.start_time_label }}</label>
             <input type="datetime-local" name="start_time" class="form-control"
                    :class="{'is-invalid': errors.start_time}"
                    v-model="form.start_time"
                    :readonly="isGuildWar">
+            <small v-if="isLuckyDraw" class="text-muted">Sau thời gian này người chơi không thể đăng ký tham gia.</small>
             <span v-if="errors.start_time" class="error invalid-feedback">{{ errors.start_time }}</span>
         </div>
 
         <div class="form-group">
-            <label>{{ translations.end_time_label }}</label>
+            <label>{{ isLuckyDraw ? '⏰ Thời gian quay số' : translations.end_time_label }}</label>
             <input type="datetime-local" name="end_time" class="form-control"
                    :class="{'is-invalid': errors.end_time}"
                    v-model="form.end_time"
+                   :required="isLuckyDraw"
                    :readonly="isGuildWar">
+            <small v-if="isLuckyDraw" class="text-muted">Hệ thống tự quay khi đến giờ. Staff cũng có thể quay thủ công.</small>
             <span v-if="errors.end_time" class="error invalid-feedback">{{ errors.end_time }}</span>
         </div>
 
@@ -70,13 +73,6 @@
         <!-- ── Lucky Draw section ───────────────────────────────────── -->
         <template v-if="isLuckyDraw">
             <hr>
-            <div class="form-group">
-                <label>⏰ Thời gian quay số <span class="text-danger">*</span></label>
-                <input type="datetime-local" name="draw_at" class="form-control"
-                       v-model="form.draw_at" required>
-                <small class="text-muted">Hệ thống tự quay khi đến giờ. Staff cũng có thể quay thủ công.</small>
-            </div>
-
             <div class="d-flex align-items-center mb-2">
                 <h6 class="mb-0">🎁 Danh sách giải thưởng</h6>
                 <button type="button" class="btn btn-sm btn-success ml-3" @click="addPrize">
