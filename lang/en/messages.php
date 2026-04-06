@@ -578,4 +578,5 @@ return [
     'tx_rooms_total'      => 'Total rooms',
     'tx_rooms_playing'    => 'Playing',
     'tx_rooms_waiting'    => 'Waiting',
+    'nav_library'         => 'Library',
 ];

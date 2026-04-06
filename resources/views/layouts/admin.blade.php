@@ -215,7 +215,7 @@
                         <li class="nav-item">
                             <a href="{{ route('admin.library.index') }}" class="nav-link {{ request()->routeIs('admin.library.*') ? 'active' : '' }}">
                                 <i class="nav-icon fas fa-book"></i>
-                                <p>Thư Viện</p>
+                                <p>{{ __('messages.nav_library') }}</p>
                             </a>
                         </li>
                     @else
@@ -252,7 +252,7 @@
                         <li class="nav-item">
                             <a href="{{ route('library.index') }}" class="nav-link {{ request()->routeIs('library.*') ? 'active' : '' }}">
                                 <i class="nav-icon fas fa-book-open"></i>
-                                <p>Thư Viện</p>
+                                <p>{{ __('messages.nav_library') }}</p>
                             </a>
                         </li>
                         <li class="nav-item">
