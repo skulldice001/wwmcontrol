@@ -109,7 +109,7 @@
 <div class="lib-guide-wrap" style="--accent:{{ $accent }};">
 
     <div class="lib-bc">
-        <a href="{{ route('library.index') }}"><i class="fas fa-home"></i> Thư Viện</a>
+        <a href="{{ route('library.index') }}"><i class="fas fa-home"></i> {{ __('messages.lib_breadcrumb') }}</a>
         <span class="lib-bc-sep">›</span>
         <a href="{{ route('library.category', $category) }}">{{ $article->categoryLabel() }}</a>
         <span class="lib-bc-sep">›</span>
@@ -141,7 +141,7 @@
                 @endif
                 @auth('staff')
                 <a href="{{ route('admin.library.edit', $article) }}" class="lib-guide-edit-btn">
-                    <i class="fas fa-edit mr-1"></i>Chỉnh sửa
+                    <i class="fas fa-edit mr-1"></i>{{ __('messages.lib_edit') }}
                 </a>
                 @endauth
             </div>
@@ -156,7 +156,7 @@
     </div>
 
     <a href="{{ route('library.category', $category) }}" class="lib-guide-back">
-        <i class="fas fa-arrow-left"></i> Quay lại danh mục
+        <i class="fas fa-arrow-left"></i> {{ __('messages.lib_back_to_category') }}
     </a>
 
 </div>

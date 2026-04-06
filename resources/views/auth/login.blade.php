@@ -66,7 +66,7 @@
             </form>
 
             <div class="social-auth-links text-center mb-3">
-                <p>- OR -</p>
+                <p>{{ __('messages.login_or') }}</p>
                 <a href="{{ route('auth.discord') }}" class="btn btn-block btn-primary">
                     <i class="fab fa-discord mr-2"></i> {{ __('messages.login_discord') }}
                 </a>

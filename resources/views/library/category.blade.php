@@ -71,19 +71,19 @@ $label  = \App\Models\LibraryArticle::CATEGORIES[$category] ?? $category;
 <div class="lib-cat-header mb-4" style="--accent:{{ $accent }};">
     <div class="lib-cat-header-inner">
         <a href="{{ route('library.index') }}" class="lib-back-btn">
-            <i class="fas fa-arrow-left mr-1"></i>Thư Viện
+            <i class="fas fa-arrow-left mr-1"></i>{{ __('messages.lib_breadcrumb') }}
         </a>
         <div class="lib-cat-title" style="color:{{ $accent }};">
             <i class="{{ $icon }} mr-2"></i>{{ $label }}
         </div>
-        <div class="lib-cat-count">{{ $articles->total() }} bài viết</div>
+        <div class="lib-cat-count">{{ $articles->total() }} {{ __('messages.lib_articles_count') }}</div>
     </div>
     <div class="lib-cat-stripe"></div>
 </div>
 
 @if($articles->isEmpty())
 <div class="lib-empty">
-    <i class="fas fa-inbox fa-2x mb-2"></i><br>Chưa có bài viết nào.
+    <i class="fas fa-inbox fa-2x mb-2"></i><br>{{ __('messages.lib_no_articles_cat') }}
 </div>
 @else
 <div class="lib-list">

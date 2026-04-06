@@ -1,16 +1,16 @@
 @extends('layouts.admin')
-@section('title', 'Tìm kiếm: ' . $search)
+@section('title', __('messages.lib_search_title') . $search)
 
 @section('content')
 <div class="lib-cat-header mb-4" style="--accent:#ff4444;">
     <div class="lib-cat-header-inner">
         <a href="{{ route('library.index') }}" class="lib-back-btn">
-            <i class="fas fa-arrow-left mr-1"></i>Thư Viện
+            <i class="fas fa-arrow-left mr-1"></i>{{ __('messages.lib_breadcrumb') }}
         </a>
         <div class="lib-cat-title">
-            <i class="fas fa-search mr-2"></i>Kết quả: <em style="font-weight:400;">"{{ $search }}"</em>
+            <i class="fas fa-search mr-2"></i>{{ __('messages.lib_search_results') }} <em style="font-weight:400;">"{{ $search }}"</em>
         </div>
-        <div class="lib-cat-count">{{ $articles->total() }} bài viết</div>
+        <div class="lib-cat-count">{{ $articles->total() }} {{ __('messages.lib_articles_count') }}</div>
     </div>
     <div class="lib-cat-stripe"></div>
 </div>
@@ -19,13 +19,13 @@
     <div class="input-group">
         <input type="text" name="search" class="form-control library-search-input" value="{{ $search }}">
         <div class="input-group-append">
-            <button class="btn library-search-btn" type="submit"><i class="fas fa-search mr-1"></i>Tìm</button>
+            <button class="btn library-search-btn" type="submit"><i class="fas fa-search mr-1"></i>{{ __('messages.lib_search_btn') }}</button>
         </div>
     </div>
 </form>
 
 @if($articles->isEmpty())
-<div class="lib-empty"><i class="fas fa-inbox fa-2x mb-2"></i><br>Không tìm thấy bài viết nào.</div>
+<div class="lib-empty"><i class="fas fa-inbox fa-2x mb-2"></i><br>{{ __('messages.lib_no_results') }}</div>
 @else
 <div class="row">
     @foreach($articles as $article)
@@ -45,7 +45,7 @@
             <div class="lib-article-footer">
                 <span class="lib-article-meta">{{ $article->published_at?->format('d/m/Y') }}</span>
                 <a href="{{ route('library.show', [$article->category, $article]) }}" class="lib-read-btn">
-                    Đọc <i class="fas fa-chevron-right ml-1"></i>
+                    {{ __('messages.lib_read') }} <i class="fas fa-chevron-right ml-1"></i>
                 </a>
             </div>
         </div>
