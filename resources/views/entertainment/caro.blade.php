@@ -144,14 +144,24 @@
 
 @push('scripts')
 <script>
-const CSRF = document.querySelector('meta[name=csrf-token]').content;
+const CSRF       = document.querySelector('meta[name=csrf-token]').content;
+const DIFF_LABEL = { easy: '😊 Dễ', medium: '😐 Vừa', hard: '😤 Khó' };
+const TEXT = {
+    defaultName:  'Bàn Caro',
+    defaultAiName:'Tôi vs AI',
+    joinLoading:  '...',
+    joinBtn:      'Vào bàn',
+    playing:      'Đang chơi',
+    cardMeta:     'Bàn cờ tự mở rộng · 5 quân liên tiếp',
+    emptySlot:    '—',
+    error:        'Lỗi',
+};
 
 function openModal()    { document.getElementById('createModal').classList.add('open'); }
 function closeModal()   { document.getElementById('createModal').classList.remove('open'); }
 function openAiModal()  { document.getElementById('aiModal').classList.add('open'); }
 function closeAiModal() { document.getElementById('aiModal').classList.remove('open'); }
 
-const DIFF_LABEL = { easy: '😊 Dễ', medium: '😐 Vừa', hard: '😤 Khó' };
 let selectedDiff = 'easy';
 function selectDiff(btn) {
     document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('active'));
@@ -166,7 +176,7 @@ function showToast(msg, ms=3500) {
 }
 
 async function createAiTable() {
-    const name = document.getElementById('aiTableName').value || 'Tôi vs AI';
+    const name = document.getElementById('aiTableName').value || TEXT.defaultAiName;
     const r = await fetch('{{ route("entertainment.caro.create") }}', {
         method:'POST',
         headers:{'Content-Type':'application/json','X-CSRF-TOKEN':CSRF},
@@ -174,7 +184,7 @@ async function createAiTable() {
     });
     const d = await r.json();
     if (d.redirect) window.location = d.redirect;
-    else showToast(d.error ?? 'Lỗi');
+    else showToast(d.error ?? TEXT.error);
 }
 
 async function createTable() {
@@ -182,23 +192,23 @@ async function createTable() {
         method:'POST',
         headers:{'Content-Type':'application/json','X-CSRF-TOKEN':CSRF},
         body: JSON.stringify({
-            name:       document.getElementById('tableName').value || 'Bàn Caro',
+            name:       document.getElementById('tableName').value || TEXT.defaultName,
             entry_fee:  +document.getElementById('entryFee').value || 0,
         })
     });
     const d = await r.json();
     if (d.redirect) window.location = d.redirect;
-    else showToast(d.error ?? 'Lỗi');
+    else showToast(d.error ?? TEXT.error);
 }
 
 async function joinTable(id, btn) {
-    btn.disabled = true; btn.textContent = '...';
+    btn.disabled = true; btn.textContent = TEXT.joinLoading;
     const r = await fetch(`/entertainment/caro/${id}/join`, {
         method:'POST', headers:{'X-CSRF-TOKEN':CSRF}
     });
     const d = await r.json();
     if (d.redirect) window.location = d.redirect;
-    else { showToast(d.error ?? 'Lỗi'); btn.disabled = false; btn.textContent = 'Vào bàn'; }
+    else { showToast(d.error ?? TEXT.error); btn.disabled = false; btn.textContent = TEXT.joinBtn; }
 }
 
 // Real-time lobby updates
@@ -214,12 +224,12 @@ function upsertCard(t) {
     const full = t.player_count >= 2;
     const html = `
         <div class="caro-card-name">${esc(t.name)}${t.entry_fee > 0 ? `<span class="fee-tag">${t.entry_fee.toLocaleString()} Zoo</span>` : ''}</div>
-        <div class="caro-card-meta">Bàn cờ tự mở rộng · 5 quân liên tiếp</div>
+        <div class="caro-card-meta">${TEXT.cardMeta}</div>
         <div class="caro-card-players">
-            <span class="caro-sym sym-x">X</span>${esc(t.player_x_name ?? '—')}
-            &nbsp;&nbsp;<span class="caro-sym sym-o">O</span>${esc(t.player_o_name ?? '—')}
+            <span class="caro-sym sym-x">X</span>${esc(t.player_x_name ?? TEXT.emptySlot)}
+            &nbsp;&nbsp;<span class="caro-sym sym-o">O</span>${esc(t.player_o_name ?? TEXT.emptySlot)}
         </div>
-        <button class="btn-join-caro" ${full?'disabled':''} onclick="joinTable(${t.id},this)">${full?'Đang chơi':'Vào bàn'}</button>`;
+        <button class="btn-join-caro" ${full?'disabled':''} onclick="joinTable(${t.id},this)">${full ? TEXT.playing : TEXT.joinBtn}</button>`;
     if (el) { el.innerHTML = html; }
     else {
         if (container.querySelector('.caro-empty')) {

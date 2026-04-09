@@ -92,7 +92,7 @@
     </div>
 
     <div class="status-bar">
-        <div class="status-text" id="statusText">Đang tải…</div>
+        <div class="status-text" id="statusText"></div>
         <div class="timer-bar"><div class="timer-fill" id="timerFill" style="width:100%"></div></div>
         <div class="timer-label" id="timerLabel">—</div>
     </div>
@@ -137,11 +137,31 @@
 const TABLE_ID   = {{ $table->id }};
 const MY_SYM     = '{{ $mySymbol }}';
 const IS_AI      = {{ $table->is_ai_mode ? 'true' : 'false' }};
+const AI_DIFF    = '{{ $table->ai_difficulty ?? 'medium' }}';
 const DIFF_LABEL = { easy: 'Dễ', medium: 'Vừa', hard: 'Khó' };
 const CSRF       = document.querySelector('meta[name=csrf-token]').content;
-const CELL      = 34;     // px per cell (grid spacing)
-const STONE_R   = 14;     // stone radius
-const EXPAND    = 3;      // cells to expand when near edge
+const CELL       = 34;   // px per cell (grid spacing)
+const STONE_R    = 14;   // stone radius
+const TURN_MS    = {{ \App\Services\CaroEngine::TURN_SECONDS }} * 1000;
+const TEXT = {
+    loading:        'Đang tải…',
+    myTurn:         MY_SYM === 'X' ? 'Lượt của bạn (⚪)' : 'Lượt của bạn (⚫)',
+    aiThinking:     () => `AI (${DIFF_LABEL[AI_DIFF] ?? 'Vừa'}) đang suy nghĩ`,
+    waitOpp:        name => `Chờ ${name ?? 'đối thủ'}…`,
+    waitLobby:      'Chờ đối thủ vào bàn…',
+    winTitle:       '🏆 Bạn thắng!',
+    loseTitle:      '😞 Bạn thua',
+    drawTitle:      '🤝 Hoà',
+    drawSub:        'Không ai thắng.',
+    winSub:         name => `Chúc mừng ${name}!`,
+    loseSub:        name => `${name} giành chiến thắng!`,
+    oppLeft:        'Đối thủ đã rời bàn!',
+    leaveAi:        'Rời bàn?',
+    leavePvp:       'Rời bàn? Nếu ván đang chơi bạn sẽ thua.',
+    timerEmpty:     '—',
+    timerSuffix:    's',
+    error:          'Lỗi',
+};
 
 // ── State ────────────────────────────────────────────────────────────────────
 let state      = null;
@@ -358,19 +378,19 @@ function updateStatus() {
 
     if (state.status === 'finished') {
         clearInterval(timerInt);
-        document.getElementById('timerLabel').textContent = '—';
+        document.getElementById('timerLabel').textContent = TEXT.timerEmpty;
         document.getElementById('timerFill').style.width = '0%';
 
         let title, sub;
         if (state.winner === 'X' || state.winner === 'O') {
             const winName = state.winner === 'X' ? state.player_x?.name : state.player_o?.name;
             if (state.winner === MY_SYM) {
-                title = '🏆 Bạn thắng!'; sub = `Chúc mừng ${winName}!`;
+                title = TEXT.winTitle; sub = TEXT.winSub(winName);
             } else {
-                title = '😞 Bạn thua'; sub = `${winName} giành chiến thắng!`;
+                title = TEXT.loseTitle; sub = TEXT.loseSub(winName);
             }
         } else {
-            title = '🤝 Hoà'; sub = 'Không ai thắng.';
+            title = TEXT.drawTitle; sub = TEXT.drawSub;
         }
 
         document.getElementById('resultTitle').textContent = title;
@@ -384,15 +404,14 @@ function updateStatus() {
 
     if (state.current_player === MY_SYM) {
         statusEl.className   = 'status-text';
-        statusEl.textContent = `Lượt của bạn (${MY_SYM === 'X' ? '⚪' : '⚫'})`;
+        statusEl.textContent = TEXT.myTurn;
     } else if (IS_AI && state.current_player === 'O') {
-        const diff = '{{ $table->ai_difficulty ?? "medium" }}';
         statusEl.className   = 'status-text thinking';
-        statusEl.textContent = `AI (${DIFF_LABEL[diff] ?? 'Vừa'}) đang suy nghĩ`;
+        statusEl.textContent = TEXT.aiThinking();
     } else {
         statusEl.className   = 'status-text';
         const oppName = MY_SYM === 'X' ? state.player_o?.name : state.player_x?.name;
-        statusEl.textContent = `Chờ ${oppName ?? 'đối thủ'}…`;
+        statusEl.textContent = TEXT.waitOpp(oppName);
     }
 
     // Timer
@@ -404,13 +423,12 @@ function startTimer() {
     if (!state?.turn_deadline || state.status !== 'playing') return;
 
     const deadline = state.turn_deadline * 1000;
-    const TOTAL    = {{ \App\Services\CaroEngine::TURN_SECONDS }} * 1000;
 
     timerInt = setInterval(() => {
         const left = Math.max(0, deadline - Date.now());
-        const pct  = (left / TOTAL) * 100;
+        const pct  = (left / TURN_MS) * 100;
         const secs = Math.ceil(left / 1000);
-        document.getElementById('timerLabel').textContent = secs + 's';
+        document.getElementById('timerLabel').textContent = secs + TEXT.timerSuffix;
         const fill = document.getElementById('timerFill');
         fill.style.width = pct + '%';
         fill.style.background = secs <= 10 ? '#ef4444' : secs <= 20 ? '#f59e0b' : '#10b981';
@@ -442,7 +460,7 @@ async function placeMove(row, col) {
         body: JSON.stringify({ row, col })
     });
     const d = await r.json();
-    if (d.error) showToast(d.error);
+    if (d.error) showToast(d.error ?? TEXT.error);
     else if (d.state) applyState(d.state);
 }
 
@@ -465,7 +483,7 @@ async function requestTimeout() {
 }
 
 async function leaveTable() {
-    const msg = IS_AI ? 'Rời bàn?' : 'Rời bàn? Nếu ván đang chơi bạn sẽ thua.';
+    const msg = IS_AI ? TEXT.leaveAi : TEXT.leavePvp;
     if (!confirm(msg)) return;
     const r = await fetch(`/entertainment/caro/${TABLE_ID}/leave`, {
         method:'DELETE', headers:{'X-CSRF-TOKEN':CSRF}
@@ -478,7 +496,7 @@ window.Echo?.channel('caro.' + TABLE_ID).listen('.room.updated', e => {
     if (e.type === 'move_made' || e.type === 'game_started' || e.type === 'game_over') {
         if (e.state) applyState(e.state);
     } else if (e.type === 'player_left') {
-        showToast('Đối thủ đã rời bàn!');
+        showToast(TEXT.oppLeft);
     }
 });
 
@@ -490,6 +508,7 @@ function showToast(msg, ms=3500) {
 }
 
 resizeCanvas();
+document.getElementById('statusText').textContent = TEXT.loading;
 
 // Load initial state
 (async () => {
@@ -497,7 +516,7 @@ resizeCanvas();
     const d = await r.json();
     if (d.status !== 'waiting') applyState(d);
     else {
-        document.getElementById('statusText').textContent = 'Chờ đối thủ vào bàn…';
+        document.getElementById('statusText').textContent = TEXT.waitLobby;
         // Update player names from waiting state
         if (d.player_x) document.getElementById('nameX').textContent = d.player_x.name ?? '?';
     }
