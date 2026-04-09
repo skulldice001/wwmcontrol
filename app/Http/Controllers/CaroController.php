@@ -6,6 +6,7 @@ use App\Events\CaroRoomUpdated;
 use App\Events\CaroTableUpdated;
 use App\Models\CaroGame;
 use App\Models\CaroTable;
+use App\Services\CaroAI;
 use App\Services\CaroEngine;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -18,6 +19,7 @@ class CaroController extends Controller
     {
         $tables = CaroTable::with(['playerX:id,name', 'playerO:id,name'])
             ->whereIn('status', ['waiting', 'playing'])
+            ->where('is_ai_mode', false)
             ->latest()
             ->get();
 
@@ -29,28 +31,39 @@ class CaroController extends Controller
     public function createTable(Request $request)
     {
         $data = $request->validate([
-            'name'      => 'required|string|max:60',
-            'entry_fee' => 'required|integer|min:0|max:100000',
+            'name'          => 'required|string|max:60',
+            'entry_fee'     => 'required|integer|min:0|max:100000',
+            'is_ai_mode'    => 'boolean',
+            'ai_difficulty' => 'in:easy,medium,hard',
         ]);
 
-        $user = Auth::user();
+        $user    = Auth::user();
+        $isAi    = (bool) ($data['is_ai_mode'] ?? false);
+        $entryFee = $isAi ? 0 : (int) $data['entry_fee']; // no betting in AI mode
 
-        // Check funds if entry fee required
-        if ($data['entry_fee'] > 0 && $user->z_coins < $data['entry_fee']) {
+        if ($entryFee > 0 && $user->z_coins < $entryFee) {
             return response()->json(['error' => 'Không đủ Zoo để đặt cọc.'], 422);
         }
 
-        // Leave any existing table first
         $this->leaveExistingTables($user->id);
 
         $table = CaroTable::create([
-            'name'        => $data['name'],
-            'entry_fee'   => (int) $data['entry_fee'],
-            'player_x_id' => $user->id,
-            'status'      => 'waiting',
+            'name'          => $data['name'],
+            'entry_fee'     => $entryFee,
+            'player_x_id'   => $user->id,
+            'is_ai_mode'    => $isAi,
+            'ai_difficulty' => $isAi ? ($data['ai_difficulty'] ?? 'medium') : null,
+            'status'        => $isAi ? 'playing' : 'waiting',
         ]);
 
-        event(new CaroTableUpdated($table));
+        if ($isAi) {
+            $game = CaroEngine::startGame($table);
+            event(new CaroRoomUpdated($table->id, 'game_started', [
+                'state' => CaroEngine::clientState($game, $user->id),
+            ]));
+        } else {
+            event(new CaroTableUpdated($table));
+        }
 
         return response()->json(['redirect' => route('entertainment.caro.show', $table)]);
     }
@@ -59,7 +72,10 @@ class CaroController extends Controller
     {
         $user = Auth::user();
 
-        if ($table->player_x_id !== $user->id && $table->player_o_id !== $user->id) {
+        $isPlayer = $table->player_x_id === $user->id
+            || ($table->player_o_id !== null && $table->player_o_id === $user->id);
+
+        if (!$isPlayer) {
             return redirect()->route('entertainment.caro')->with('error', 'Bạn không ở bàn này.');
         }
 
@@ -73,6 +89,10 @@ class CaroController extends Controller
     {
         $user = Auth::user();
 
+        if ($table->is_ai_mode) {
+            return response()->json(['error' => 'Đây là bàn chơi vs AI.'], 422);
+        }
+
         if ($table->player_x_id === $user->id || $table->player_o_id === $user->id) {
             return response()->json(['redirect' => route('entertainment.caro.show', $table)]);
         }
@@ -85,7 +105,6 @@ class CaroController extends Controller
             return response()->json(['error' => 'Bàn đã đủ người.'], 422);
         }
 
-        // Check funds
         if ($table->entry_fee > 0 && $user->z_coins < $table->entry_fee) {
             return response()->json(['error' => 'Không đủ Zoo để tham gia.'], 422);
         }
@@ -95,7 +114,6 @@ class CaroController extends Controller
         $table->update(['player_o_id' => $user->id, 'status' => 'playing']);
         $table->load(['playerX', 'playerO']);
 
-        // Auto-start game
         $game = CaroEngine::startGame($table);
 
         event(new CaroTableUpdated($table));
@@ -117,20 +135,17 @@ class CaroController extends Controller
             return redirect()->route('entertainment.caro');
         }
 
-        // Forfeit if game is in progress
         $game = $table->activeGame;
         if ($game) {
-            $game = CaroEngine::forfeit($game, $user->id);
-            $loser  = $isX ? $table->playerX : $table->playerO;
-            $winner = $isX ? $table->playerO : $table->playerX;
+            $game    = CaroEngine::forfeit($game, $user->id);
+            $winner  = $isX ? $table->playerO : $table->playerX;
             event(new CaroRoomUpdated($table->id, 'game_over', [
-                'state'  => CaroEngine::clientState($game, $user->id),
-                'reason' => 'forfeit',
+                'state'       => CaroEngine::clientState($game, $user->id),
+                'reason'      => 'forfeit',
                 'winner_name' => $winner?->name,
             ]));
         }
 
-        // Remove player from table
         if ($isX) {
             $table->update(['player_x_id' => null, 'status' => 'waiting']);
         } else {
@@ -140,7 +155,7 @@ class CaroController extends Controller
         $table->refresh();
         if (!$table->player_x_id && !$table->player_o_id) {
             $table->delete();
-        } else {
+        } elseif (!$table->is_ai_mode) {
             event(new CaroTableUpdated($table));
             event(new CaroRoomUpdated($table->id, 'player_left', [
                 'symbol' => $isX ? 'X' : 'O',
@@ -155,8 +170,8 @@ class CaroController extends Controller
     public function move(Request $request, CaroTable $table)
     {
         $request->validate([
-            'row' => 'required|integer|min:0',
-            'col' => 'required|integer|min:0',
+            'row' => 'required|integer|min:-10000|max:10000',
+            'col' => 'required|integer|min:-10000|max:10000',
         ]);
 
         $user = Auth::user();
@@ -178,6 +193,18 @@ class CaroController extends Controller
         $type = ($game->status === 'finished') ? 'game_over' : 'move_made';
         event(new CaroRoomUpdated($table->id, $type, ['state' => $state]));
 
+        // AI auto-reply after human move
+        if ($table->is_ai_mode && $game->status === 'playing' && $game->current_player === 'O') {
+            $aiMove = CaroAI::getBestMove($game, $table->ai_difficulty ?? 'medium');
+            $aiResult = CaroEngine::makeAiMove($game, 'O', $aiMove[0], $aiMove[1]);
+            if ($aiResult['ok']) {
+                $game  = $aiResult['game'];
+                $state = CaroEngine::clientState($game, $user->id);
+                $type  = ($game->status === 'finished') ? 'game_over' : 'move_made';
+                event(new CaroRoomUpdated($table->id, $type, ['state' => $state]));
+            }
+        }
+
         return response()->json(['state' => $state]);
     }
 
@@ -187,11 +214,20 @@ class CaroController extends Controller
         $game = $table->activeGame ?? $table->games()->latest()->first();
 
         if (!$game) {
+            $aiLabel = $table->is_ai_mode
+                ? 'AI (' . match ($table->ai_difficulty) {
+                    'easy'  => 'Dễ',
+                    'hard'  => 'Khó',
+                    default => 'Vừa',
+                } . ')'
+                : null;
+
             return response()->json([
-                'status'       => 'waiting',
-                'player_x'     => ['id' => $table->player_x_id, 'name' => $table->playerX?->name],
-                'player_o'     => ['id' => $table->player_o_id, 'name' => $table->playerO?->name],
-                'my_z_coins'   => $user->z_coins,
+                'status'     => 'waiting',
+                'is_ai_mode' => $table->is_ai_mode,
+                'player_x'   => ['id' => $table->player_x_id, 'name' => $table->playerX?->name],
+                'player_o'   => ['id' => $table->player_o_id, 'name' => $aiLabel ?? $table->playerO?->name],
+                'my_z_coins' => $user->z_coins,
             ]);
         }
 
@@ -210,17 +246,27 @@ class CaroController extends Controller
             return response()->json(['error' => 'Không có ván đang diễn ra.'], 422);
         }
 
-        // Only the waiting player can request timeout
         $currentPlayerId = ($game->current_player === 'X') ? $table->player_x_id : $table->player_o_id;
-        $waitingPlayerId  = ($game->current_player === 'X') ? $table->player_o_id : $table->player_x_id;
+        $waitingPlayerId = ($game->current_player === 'X') ? $table->player_o_id : $table->player_x_id;
 
-        if ($user->id !== $waitingPlayerId) {
+        // In AI mode, the waiting "player" has no ID — only human can request timeout on AI
+        $isAiTurn = $table->is_ai_mode && $game->current_player === 'O';
+        if (!$isAiTurn && $user->id !== $waitingPlayerId) {
             return response()->json(['error' => 'Không hợp lệ.'], 422);
         }
 
-        // Check deadline has passed
         if ($game->turn_deadline && now()->lt($game->turn_deadline)) {
             return response()->json(['error' => 'Thời gian chưa hết.'], 422);
+        }
+
+        // If AI timed out: human wins (forfeit AI)
+        if ($isAiTurn) {
+            $game->update(['winner' => 'X', 'status' => 'finished']);
+            $table->update(['status' => 'finished']);
+            $game  = $game->fresh();
+            $state = CaroEngine::clientState($game, $user->id);
+            event(new CaroRoomUpdated($table->id, 'game_over', ['state' => $state, 'reason' => 'timeout']));
+            return response()->json(['state' => $state]);
         }
 
         $game  = CaroEngine::forfeit($game, $currentPlayerId);
@@ -246,11 +292,20 @@ class CaroController extends Controller
             return response()->json(['error' => 'Ván chưa kết thúc.'], 422);
         }
 
+        if ($table->is_ai_mode) {
+            // Human stays as X; AI stays as O — just restart
+            $table->update(['status' => 'playing']);
+            $table->load(['playerX']);
+            $game  = CaroEngine::startGame($table);
+            $state = CaroEngine::clientState($game, $user->id);
+            event(new CaroRoomUpdated($table->id, 'game_started', ['state' => $state]));
+            return response()->json(['state' => $state]);
+        }
+
         if (!$table->player_x_id || !$table->player_o_id) {
             return response()->json(['error' => 'Thiếu người chơi.'], 422);
         }
 
-        // Check funds for entry fee
         if ($table->entry_fee > 0) {
             $x = $table->playerX;
             $o = $table->playerO;
@@ -296,7 +351,9 @@ class CaroController extends Controller
             } else {
                 $t->status = 'waiting';
                 $t->save();
-                event(new CaroTableUpdated($t));
+                if (!$t->is_ai_mode) {
+                    event(new CaroTableUpdated($t));
+                }
             }
         }
     }

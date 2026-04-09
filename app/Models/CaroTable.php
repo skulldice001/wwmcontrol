@@ -10,11 +10,12 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 class CaroTable extends Model
 {
     protected $fillable = [
-        'name', 'entry_fee', 'player_x_id', 'player_o_id', 'status',
+        'name', 'entry_fee', 'player_x_id', 'player_o_id', 'status', 'is_ai_mode', 'ai_difficulty',
     ];
 
     protected $casts = [
-        'entry_fee' => 'integer',
+        'entry_fee'  => 'integer',
+        'is_ai_mode' => 'boolean',
     ];
 
     public function playerX(): BelongsTo

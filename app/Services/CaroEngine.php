@@ -121,6 +121,69 @@ class CaroEngine
         });
     }
 
+    /** Make a move as AI — bypasses user-ID validation. sym must be current_player. */
+    public static function makeAiMove(CaroGame $game, string $sym, int $row, int $col): array
+    {
+        return DB::transaction(function () use ($game, $sym, $row, $col) {
+            $game  = CaroGame::where('id', $game->id)->lockForUpdate()->first();
+            $table = $game->table;
+
+            if ($game->status !== 'playing' || $game->current_player !== $sym) {
+                return ['ok' => false, 'error' => 'Not AI turn'];
+            }
+
+            $board = $game->boardDict();
+            $key   = "{$row},{$col}";
+            if (isset($board[$key])) {
+                return ['ok' => false, 'error' => 'Cell occupied'];
+            }
+
+            $board[$key] = $sym;
+            $moves       = $game->moves;
+            $moves[]     = [$row, $col, $sym];
+            $movesCount  = $game->moves_count + 1;
+
+            $EXPAND = 3;
+            $minRow = min($game->min_row, $row - $EXPAND);
+            $maxRow = max($game->max_row, $row + $EXPAND);
+            $minCol = min($game->min_col, $col - $EXPAND);
+            $maxCol = max($game->max_col, $col + $EXPAND);
+
+            $winCells = self::checkWin($board, $row, $col, $sym);
+            $winner   = null;
+            $status   = 'playing';
+
+            if ($winCells) {
+                $winner = $sym;
+                $status = 'finished';
+                // AI wins — no prize settlement (entry_fee forced to 0 in AI mode)
+            }
+
+            $nextPlayer   = ($sym === 'X') ? 'O' : 'X';
+            $turnDeadline = ($status === 'playing') ? now()->addSeconds(self::TURN_SECONDS) : null;
+
+            $game->update([
+                'moves'          => $moves,
+                'min_row'        => $minRow,
+                'max_row'        => $maxRow,
+                'min_col'        => $minCol,
+                'max_col'        => $maxCol,
+                'current_player' => $nextPlayer,
+                'moves_count'    => $movesCount,
+                'winner'         => $winner,
+                'winning_cells'  => $winCells,
+                'turn_deadline'  => $turnDeadline,
+                'status'         => $status,
+            ]);
+
+            if ($status === 'finished') {
+                $table->update(['status' => 'finished']);
+            }
+
+            return ['ok' => true, 'game' => $game->fresh()];
+        });
+    }
+
     /** Forfeit: a player left or timed out. */
     public static function forfeit(CaroGame $game, int $forfeitUserId): CaroGame
     {
@@ -155,6 +218,14 @@ class CaroEngine
             $secsLeft = max(0, (int) now()->diffInSeconds($game->turn_deadline, false));
         }
 
+        $aiLabel = $table->is_ai_mode
+            ? 'AI (' . match ($table->ai_difficulty) {
+                'easy'   => 'Dễ',
+                'hard'   => 'Khó',
+                default  => 'Vừa',
+            } . ')'
+            : null;
+
         return [
             'game_id'        => $game->id,
             'moves'          => $game->moves,          // [[row, col, sym], ...]
@@ -170,8 +241,9 @@ class CaroEngine
             'my_symbol'      => $mySymbol,
             'turn_deadline'  => $game->turn_deadline?->timestamp,
             'secs_left'      => $secsLeft,
+            'is_ai_mode'     => $table->is_ai_mode,
             'player_x'       => ['id' => $table->player_x_id, 'name' => $table->playerX?->name],
-            'player_o'       => ['id' => $table->player_o_id, 'name' => $table->playerO?->name],
+            'player_o'       => ['id' => $table->player_o_id, 'name' => $aiLabel ?? $table->playerO?->name],
         ];
     }
 

@@ -10,6 +10,15 @@
 .caro-balance { color:#4ade80;font-weight:700;margin-left:12px; }
 .btn-new-caro { background:linear-gradient(135deg,#10b981,#059669);color:#fff;border:none;
                 padding:10px 24px;border-radius:8px;font-weight:700;cursor:pointer;margin-bottom:24px; }
+.btn-ai-caro  { background:linear-gradient(135deg,#7c3aed,#5b21b6);color:#fff;border:none;
+                padding:10px 24px;border-radius:8px;font-weight:700;cursor:pointer;margin-bottom:24px;margin-left:10px; }
+.diff-btns    { display:flex;gap:8px;flex-wrap:wrap;margin-top:6px; }
+.diff-btn     { flex:1;padding:8px 0;border-radius:8px;border:2px solid rgba(255,255,255,.15);
+                background:rgba(255,255,255,.05);color:#ccc;cursor:pointer;font-weight:700;font-size:.85rem;transition:.15s; }
+.diff-btn.active{ border-color:#7c3aed;background:rgba(124,58,237,.25);color:#a78bfa; }
+.diff-btn:hover { border-color:#7c3aed;color:#a78bfa; }
+.ai-badge     { display:inline-block;background:linear-gradient(90deg,#7c3aed,#5b21b6);color:#fff;
+                font-size:.65rem;font-weight:800;padding:1px 6px;border-radius:4px;margin-left:6px;vertical-align:middle; }
 .caro-grid    { display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px; }
 .caro-card    { background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);
                 border-radius:12px;padding:18px;transition:transform .15s; }
@@ -57,6 +66,7 @@
     <div class="caro-sub">Đặt 5 quân liên tiếp để thắng. Bàn cờ tự mở rộng khi cần.</div>
 
     <button class="btn-new-caro" onclick="openModal()">+ Tạo bàn mới</button>
+    <button class="btn-ai-caro"  onclick="openAiModal()">🤖 Chơi vs AI</button>
 
     @if($tables->isEmpty())
         <div class="caro-empty" id="tableContainer">Chưa có bàn nào. Hãy tạo bàn để bắt đầu!</div>
@@ -89,7 +99,30 @@
     @endif
 </div>
 
-<!-- Modal -->
+<!-- AI Modal -->
+<div class="modal-overlay" id="aiModal">
+    <div class="modal-box">
+        <div class="modal-title">🤖 Chơi vs AI</div>
+        <div class="form-group">
+            <label>Tên bàn</label>
+            <input id="aiTableName" type="text" maxlength="60" placeholder="VD: Tôi vs AI">
+        </div>
+        <div class="form-group">
+            <label>Mức độ khó</label>
+            <div class="diff-btns">
+                <button class="diff-btn active" data-diff="easy"   onclick="selectDiff(this)">😊 Dễ</button>
+                <button class="diff-btn"        data-diff="medium" onclick="selectDiff(this)">😐 Vừa</button>
+                <button class="diff-btn"        data-diff="hard"   onclick="selectDiff(this)">😤 Khó</button>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-cancel" onclick="closeAiModal()">Hủy</button>
+            <button class="btn-submit" style="background:#7c3aed;" onclick="createAiTable()">Bắt đầu</button>
+        </div>
+    </div>
+</div>
+
+<!-- PvP Modal -->
 <div class="modal-overlay" id="createModal">
     <div class="modal-box">
         <div class="modal-title">Tạo bàn cờ caro</div>
@@ -113,13 +146,35 @@
 <script>
 const CSRF = document.querySelector('meta[name=csrf-token]').content;
 
-function openModal()  { document.getElementById('createModal').classList.add('open'); }
-function closeModal() { document.getElementById('createModal').classList.remove('open'); }
+function openModal()    { document.getElementById('createModal').classList.add('open'); }
+function closeModal()   { document.getElementById('createModal').classList.remove('open'); }
+function openAiModal()  { document.getElementById('aiModal').classList.add('open'); }
+function closeAiModal() { document.getElementById('aiModal').classList.remove('open'); }
+
+const DIFF_LABEL = { easy: '😊 Dễ', medium: '😐 Vừa', hard: '😤 Khó' };
+let selectedDiff = 'easy';
+function selectDiff(btn) {
+    document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    selectedDiff = btn.dataset.diff;
+}
 
 function showToast(msg, ms=3500) {
     const t = document.getElementById('toast');
     t.textContent = msg; t.style.display = 'block';
     setTimeout(() => t.style.display = 'none', ms);
+}
+
+async function createAiTable() {
+    const name = document.getElementById('aiTableName').value || 'Tôi vs AI';
+    const r = await fetch('{{ route("entertainment.caro.create") }}', {
+        method:'POST',
+        headers:{'Content-Type':'application/json','X-CSRF-TOKEN':CSRF},
+        body: JSON.stringify({ name, entry_fee: 0, is_ai_mode: true, ai_difficulty: selectedDiff })
+    });
+    const d = await r.json();
+    if (d.redirect) window.location = d.redirect;
+    else showToast(d.error ?? 'Lỗi');
 }
 
 async function createTable() {

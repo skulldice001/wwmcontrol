@@ -21,6 +21,11 @@
 .turn-arrow  { color:#10b981;font-size:1.1rem; }
 .btn-leave   { margin-left:auto;padding:6px 14px;background:#ef4444;color:#fff;border:none;
                border-radius:8px;cursor:pointer;font-size:.82rem;font-weight:600; }
+.ai-badge    { background:linear-gradient(90deg,#7c3aed,#5b21b6);color:#fff;font-size:.65rem;
+               font-weight:800;padding:1px 6px;border-radius:4px;margin-left:4px; }
+.thinking    { color:#a78bfa;font-style:italic; }
+@keyframes dots { 0%,20%{content:'.'}40%,60%{content:'..'}80%,100%{content:'...'} }
+.thinking::after { content:'.'; animation:dots 1.2s steps(1,end) infinite; }
 
 /* ── Status bar ── */
 .status-bar  { background:rgba(0,0,0,.4);border-radius:10px;padding:10px 16px;
@@ -75,7 +80,13 @@
         <span style="color:#555">VS</span>
         <div class="player-tag tag-o" id="tagO">
             <span class="sym-circle sym-o-fill">O</span>
-            <span id="nameO">{{ $table->playerO?->name ?? '?' }}</span>
+            <span id="nameO">
+                @if($table->is_ai_mode)
+                    AI <span class="ai-badge">{{ match($table->ai_difficulty) { 'easy'=>'Dễ','hard'=>'Khó',default=>'Vừa' } }}</span>
+                @else
+                    {{ $table->playerO?->name ?? '?' }}
+                @endif
+            </span>
         </div>
         <button class="btn-leave" onclick="leaveTable()">Rời bàn</button>
     </div>
@@ -123,9 +134,11 @@
 @push('scripts')
 <script>
 // ── Constants ────────────────────────────────────────────────────────────────
-const TABLE_ID  = {{ $table->id }};
-const MY_SYM    = '{{ $mySymbol }}';
-const CSRF      = document.querySelector('meta[name=csrf-token]').content;
+const TABLE_ID   = {{ $table->id }};
+const MY_SYM     = '{{ $mySymbol }}';
+const IS_AI      = {{ $table->is_ai_mode ? 'true' : 'false' }};
+const DIFF_LABEL = { easy: 'Dễ', medium: 'Vừa', hard: 'Khó' };
+const CSRF       = document.querySelector('meta[name=csrf-token]').content;
 const CELL      = 34;     // px per cell (grid spacing)
 const STONE_R   = 14;     // stone radius
 const EXPAND    = 3;      // cells to expand when near edge
@@ -370,8 +383,14 @@ function updateStatus() {
     overlay.style.display = 'none';
 
     if (state.current_player === MY_SYM) {
+        statusEl.className   = 'status-text';
         statusEl.textContent = `Lượt của bạn (${MY_SYM === 'X' ? '⚪' : '⚫'})`;
+    } else if (IS_AI && state.current_player === 'O') {
+        const diff = '{{ $table->ai_difficulty ?? "medium" }}';
+        statusEl.className   = 'status-text thinking';
+        statusEl.textContent = `AI (${DIFF_LABEL[diff] ?? 'Vừa'}) đang suy nghĩ`;
     } else {
+        statusEl.className   = 'status-text';
         const oppName = MY_SYM === 'X' ? state.player_o?.name : state.player_x?.name;
         statusEl.textContent = `Chờ ${oppName ?? 'đối thủ'}…`;
     }
@@ -398,8 +417,8 @@ function startTimer() {
 
         if (left <= 0) {
             clearInterval(timerInt);
-            // If it's not my turn, I can request timeout
-            if (state.current_player !== MY_SYM) {
+            // If it's not my turn (and not AI thinking), request timeout
+            if (state.current_player !== MY_SYM && !IS_AI) {
                 requestTimeout();
             }
         }
@@ -446,7 +465,8 @@ async function requestTimeout() {
 }
 
 async function leaveTable() {
-    if (!confirm('Rời bàn? Nếu ván đang chơi bạn sẽ thua.')) return;
+    const msg = IS_AI ? 'Rời bàn?' : 'Rời bàn? Nếu ván đang chơi bạn sẽ thua.';
+    if (!confirm(msg)) return;
     const r = await fetch(`/entertainment/caro/${TABLE_ID}/leave`, {
         method:'DELETE', headers:{'X-CSRF-TOKEN':CSRF}
     });
