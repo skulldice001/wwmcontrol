@@ -339,8 +339,8 @@
         <div class="ent-card-body">
             <div>
                 <div class="ent-card-tag">Board Game</div>
-                <div class="ent-card-title">Cờ Caro</div>
-                <div class="ent-card-sub">5 quân liên tiếp · Bàn vô hạn · 1 vs 1</div>
+                <div class="ent-card-title">{{ __('messages.caro_title') }}</div>
+                <div class="ent-card-sub">{{ __('messages.caro_sub') }}</div>
                 <div class="ent-stats">
                     <div class="ent-stat">
                         <div class="ent-stat-num">{{ $stats['caro']['total'] }}</div>

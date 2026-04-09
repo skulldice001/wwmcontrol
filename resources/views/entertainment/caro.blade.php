@@ -1,6 +1,6 @@
 @extends('layouts.admin')
 
-@section('title', 'Cờ Caro')
+@section('title', __('messages.caro_title'))
 
 @push('styles')
 <style>
@@ -60,16 +60,16 @@
 @section('content')
 <div class="caro-wrap">
     <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;">
-        <div class="caro-title">⊞ Cờ Caro</div>
+        <div class="caro-title">{{ __('messages.caro_title') }}</div>
         <span class="caro-balance">{{ number_format(auth()->user()->z_coins) }} Zoo</span>
     </div>
-    <div class="caro-sub">Đặt 5 quân liên tiếp để thắng. Bàn cờ tự mở rộng khi cần.</div>
+    <div class="caro-sub">{{ __('messages.caro_sub') }}</div>
 
-    <button class="btn-new-caro" onclick="openModal()">+ Tạo bàn mới</button>
-    <button class="btn-ai-caro"  onclick="openAiModal()">🤖 Chơi vs AI</button>
+    <button class="btn-new-caro" onclick="openModal()">{{ __('messages.caro_new_table') }}</button>
+    <button class="btn-ai-caro"  onclick="openAiModal()">{{ __('messages.caro_vs_ai') }}</button>
 
     @if($tables->isEmpty())
-        <div class="caro-empty" id="tableContainer">Chưa có bàn nào. Hãy tạo bàn để bắt đầu!</div>
+        <div class="caro-empty" id="tableContainer">{{ __('messages.caro_empty') }}</div>
     @else
         <div class="caro-grid" id="tableContainer">
             @foreach($tables as $t)
@@ -81,7 +81,7 @@
                             <span class="fee-tag">{{ number_format($t->entry_fee) }} Zoo</span>
                         @endif
                     </div>
-                    <div class="caro-card-meta">Bàn cờ tự mở rộng · 5 quân liên tiếp</div>
+                    <div class="caro-card-meta">{{ __('messages.caro_card_meta') }}</div>
                     <div class="caro-card-players">
                         <span class="caro-sym sym-x">X</span>
                         {{ $t->playerX?->name ?? '—' }}
@@ -91,7 +91,7 @@
                     </div>
                     <button class="btn-join-caro" {{ $full ? 'disabled' : '' }}
                             onclick="joinTable({{ $t->id }}, this)">
-                        {{ $full ? 'Đang chơi' : 'Vào bàn' }}
+                        {{ $full ? __('messages.caro_playing') : __('messages.caro_join') }}
                     </button>
                 </div>
             @endforeach
@@ -102,22 +102,22 @@
 <!-- AI Modal -->
 <div class="modal-overlay" id="aiModal">
     <div class="modal-box">
-        <div class="modal-title">🤖 Chơi vs AI</div>
+        <div class="modal-title">{{ __('messages.caro_ai_modal_title') }}</div>
         <div class="form-group">
-            <label>Tên bàn</label>
-            <input id="aiTableName" type="text" maxlength="60" placeholder="VD: Tôi vs AI">
+            <label>{{ __('messages.caro_modal_name_label') }}</label>
+            <input id="aiTableName" type="text" maxlength="60" placeholder="{{ __('messages.caro_ai_name_ph') }}">
         </div>
         <div class="form-group">
-            <label>Mức độ khó</label>
+            <label>{{ __('messages.caro_ai_diff_label') }}</label>
             <div class="diff-btns">
-                <button class="diff-btn active" data-diff="easy"   onclick="selectDiff(this)">😊 Dễ</button>
-                <button class="diff-btn"        data-diff="medium" onclick="selectDiff(this)">😐 Vừa</button>
-                <button class="diff-btn"        data-diff="hard"   onclick="selectDiff(this)">😤 Khó</button>
+                <button class="diff-btn active" data-diff="easy"   onclick="selectDiff(this)">{{ __('messages.caro_ai_easy') }}</button>
+                <button class="diff-btn"        data-diff="medium" onclick="selectDiff(this)">{{ __('messages.caro_ai_medium') }}</button>
+                <button class="diff-btn"        data-diff="hard"   onclick="selectDiff(this)">{{ __('messages.caro_ai_hard') }}</button>
             </div>
         </div>
         <div class="modal-footer">
-            <button class="btn-cancel" onclick="closeAiModal()">Hủy</button>
-            <button class="btn-submit" style="background:#7c3aed;" onclick="createAiTable()">Bắt đầu</button>
+            <button class="btn-cancel" onclick="closeAiModal()">{{ __('messages.caro_modal_cancel') }}</button>
+            <button class="btn-submit" style="background:#7c3aed;" onclick="createAiTable()">{{ __('messages.caro_ai_start') }}</button>
         </div>
     </div>
 </div>
@@ -125,18 +125,18 @@
 <!-- PvP Modal -->
 <div class="modal-overlay" id="createModal">
     <div class="modal-box">
-        <div class="modal-title">Tạo bàn cờ caro</div>
+        <div class="modal-title">{{ __('messages.caro_modal_title') }}</div>
         <div class="form-group">
-            <label>Tên bàn</label>
-            <input id="tableName" type="text" maxlength="60" placeholder="VD: Bàn của tôi">
+            <label>{{ __('messages.caro_modal_name_label') }}</label>
+            <input id="tableName" type="text" maxlength="60" placeholder="{{ __('messages.caro_modal_name_ph') }}">
         </div>
         <div class="form-group">
-            <label>Phí vào bàn (Zoo, 0 = miễn phí)</label>
+            <label>{{ __('messages.caro_modal_fee_label') }}</label>
             <input id="entryFee" type="number" min="0" max="100000" value="0">
         </div>
         <div class="modal-footer">
-            <button class="btn-cancel" onclick="closeModal()">Hủy</button>
-            <button class="btn-submit" onclick="createTable()">Tạo</button>
+            <button class="btn-cancel" onclick="closeModal()">{{ __('messages.caro_modal_cancel') }}</button>
+            <button class="btn-submit" onclick="createTable()">{{ __('messages.caro_modal_create') }}</button>
         </div>
     </div>
 </div>
@@ -145,16 +145,20 @@
 @push('scripts')
 <script>
 const CSRF       = document.querySelector('meta[name=csrf-token]').content;
-const DIFF_LABEL = { easy: '😊 Dễ', medium: '😐 Vừa', hard: '😤 Khó' };
+const DIFF_LABEL = {
+    easy:   '{{ __("messages.caro_ai_easy") }}',
+    medium: '{{ __("messages.caro_ai_medium") }}',
+    hard:   '{{ __("messages.caro_ai_hard") }}',
+};
 const TEXT = {
-    defaultName:  'Bàn Caro',
-    defaultAiName:'Tôi vs AI',
-    joinLoading:  '...',
-    joinBtn:      'Vào bàn',
-    playing:      'Đang chơi',
-    cardMeta:     'Bàn cờ tự mở rộng · 5 quân liên tiếp',
+    defaultName:  '{{ __("messages.caro_default_name") }}',
+    defaultAiName:'{{ __("messages.caro_default_ai_name") }}',
+    joinLoading:  '{{ __("messages.caro_join_loading") }}',
+    joinBtn:      '{{ __("messages.caro_join") }}',
+    playing:      '{{ __("messages.caro_playing") }}',
+    cardMeta:     '{{ __("messages.caro_card_meta") }}',
     emptySlot:    '—',
-    error:        'Lỗi',
+    error:        '{{ __("messages.caro_error") }}',
 };
 
 function openModal()    { document.getElementById('createModal').classList.add('open'); }

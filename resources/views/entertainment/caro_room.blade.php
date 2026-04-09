@@ -77,18 +77,18 @@
             <span class="sym-circle sym-x-fill">X</span>
             <span id="nameX">{{ $table->playerX?->name ?? '?' }}</span>
         </div>
-        <span style="color:#555">VS</span>
+        <span style="color:#555">{{ __('messages.caro_room_vs') }}</span>
         <div class="player-tag tag-o" id="tagO">
             <span class="sym-circle sym-o-fill">O</span>
             <span id="nameO">
                 @if($table->is_ai_mode)
-                    AI <span class="ai-badge">{{ match($table->ai_difficulty) { 'easy'=>'Dễ','hard'=>'Khó',default=>'Vừa' } }}</span>
+                    AI <span class="ai-badge">{{ match($table->ai_difficulty) { 'easy' => __('messages.caro_diff_easy'), 'hard' => __('messages.caro_diff_hard'), default => __('messages.caro_diff_medium') } }}</span>
                 @else
                     {{ $table->playerO?->name ?? '?' }}
                 @endif
             </span>
         </div>
-        <button class="btn-leave" onclick="leaveTable()">Rời bàn</button>
+        <button class="btn-leave" onclick="leaveTable()">{{ __('messages.caro_room_leave') }}</button>
     </div>
 
     <div class="status-bar">
@@ -103,8 +103,8 @@
             <div class="result-title" id="resultTitle">—</div>
             <div class="result-sub"   id="resultSub">—</div>
             <div>
-                <button class="btn-rematch"   onclick="rematch()">Tái đấu</button>
-                <button class="btn-leave-res" onclick="leaveTable()">Rời bàn</button>
+                <button class="btn-rematch"   onclick="rematch()">{{ __('messages.caro_room_rematch') }}</button>
+                <button class="btn-leave-res" onclick="leaveTable()">{{ __('messages.caro_room_leave_btn') }}</button>
             </div>
         </div>
     </div>
@@ -113,17 +113,17 @@
   <!-- Side -->
   <div class="room-side">
     <div class="info-card">
-        <div class="info-label">Số dư</div>
+        <div class="info-label">{{ __('messages.caro_room_balance') }}</div>
         <div class="info-value" id="myBalance">{{ number_format(auth()->user()->z_coins) }} Zoo</div>
     </div>
     @if($table->entry_fee > 0)
     <div class="info-card">
-        <div class="info-label">Phí vào bàn</div>
+        <div class="info-label">{{ __('messages.caro_room_entry_fee') }}</div>
         <div class="info-value">{{ number_format($table->entry_fee) }} Zoo</div>
     </div>
     @endif
     <div class="move-log">
-        <div class="move-log-title">Lịch sử nước đi</div>
+        <div class="move-log-title">{{ __('messages.caro_room_move_log') }}</div>
         <div class="move-list" id="moveList"></div>
     </div>
   </div>
@@ -138,29 +138,33 @@ const TABLE_ID   = {{ $table->id }};
 const MY_SYM     = '{{ $mySymbol }}';
 const IS_AI      = {{ $table->is_ai_mode ? 'true' : 'false' }};
 const AI_DIFF    = '{{ $table->ai_difficulty ?? 'medium' }}';
-const DIFF_LABEL = { easy: 'Dễ', medium: 'Vừa', hard: 'Khó' };
+const DIFF_LABEL = {
+    easy:   '{{ __("messages.caro_diff_easy") }}',
+    medium: '{{ __("messages.caro_diff_medium") }}',
+    hard:   '{{ __("messages.caro_diff_hard") }}',
+};
 const CSRF       = document.querySelector('meta[name=csrf-token]').content;
 const CELL       = 34;   // px per cell (grid spacing)
 const STONE_R    = 14;   // stone radius
 const TURN_MS    = {{ \App\Services\CaroEngine::TURN_SECONDS }} * 1000;
 const TEXT = {
-    loading:        'Đang tải…',
-    myTurn:         MY_SYM === 'X' ? 'Lượt của bạn (⚪)' : 'Lượt của bạn (⚫)',
-    aiThinking:     () => `AI (${DIFF_LABEL[AI_DIFF] ?? 'Vừa'}) đang suy nghĩ`,
-    waitOpp:        name => `Chờ ${name ?? 'đối thủ'}…`,
-    waitLobby:      'Chờ đối thủ vào bàn…',
-    winTitle:       '🏆 Bạn thắng!',
-    loseTitle:      '😞 Bạn thua',
-    drawTitle:      '🤝 Hoà',
-    drawSub:        'Không ai thắng.',
-    winSub:         name => `Chúc mừng ${name}!`,
-    loseSub:        name => `${name} giành chiến thắng!`,
-    oppLeft:        'Đối thủ đã rời bàn!',
-    leaveAi:        'Rời bàn?',
-    leavePvp:       'Rời bàn? Nếu ván đang chơi bạn sẽ thua.',
-    timerEmpty:     '—',
-    timerSuffix:    's',
-    error:          'Lỗi',
+    loading:    '{{ __("messages.caro_room_loading") }}',
+    myTurn:     MY_SYM === 'X' ? '{{ __("messages.caro_room_my_turn_x") }}' : '{{ __("messages.caro_room_my_turn_o") }}',
+    aiThinking: () => '{{ __("messages.caro_room_ai_thinking") }}'.replace(':diff', DIFF_LABEL[AI_DIFF] ?? '{{ __("messages.caro_diff_medium") }}'),
+    waitOpp:    name => '{{ __("messages.caro_room_wait_opp") }}'.replace(':name', name ?? '...'),
+    waitLobby:  '{{ __("messages.caro_room_wait_lobby") }}',
+    winTitle:   '{{ __("messages.caro_room_win") }}',
+    loseTitle:  '{{ __("messages.caro_room_lose") }}',
+    drawTitle:  '{{ __("messages.caro_room_draw") }}',
+    drawSub:    '{{ __("messages.caro_room_draw_sub") }}',
+    winSub:     name => '{{ __("messages.caro_room_win_sub") }}'.replace(':name', name),
+    loseSub:    name => '{{ __("messages.caro_room_lose_sub") }}'.replace(':name', name),
+    oppLeft:    '{{ __("messages.caro_room_opp_left") }}',
+    leaveAi:    '{{ __("messages.caro_room_leave_ai") }}',
+    leavePvp:   '{{ __("messages.caro_room_leave_pvp") }}',
+    timerEmpty: '—',
+    timerSuffix:'{{ __("messages.caro_room_timer_suffix") }}' ,
+    error:      '{{ __("messages.caro_error") }}',
 };
 
 // ── State ────────────────────────────────────────────────────────────────────
