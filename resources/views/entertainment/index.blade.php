@@ -98,6 +98,19 @@
 .ent-card-tienlen .ent-card-stripe { background: linear-gradient(90deg,#1b5e20,#4caf50,#1b5e20); }
 .ent-card-tienlen .ent-play-btn { background: linear-gradient(90deg,#1b5e20,#4caf50); color: #fff; }
 
+/* Caro – slate indigo */
+.ent-card-caro {
+    background: linear-gradient(145deg, #0d1117 0%, #1e2a3a 55%, #0d1117 100%);
+}
+.ent-card-caro .ent-suit-bg {
+    position: absolute; right: -6px; top: 50%; transform: translateY(-50%);
+    font-size: 90px; opacity: .1; line-height: 1; pointer-events: none;
+    user-select: none; color: #e2e8f0; letter-spacing: -2px;
+}
+.ent-card-caro .ent-card-tag { background: rgba(148,163,184,.15); color: #94a3b8; border: 1px solid rgba(148,163,184,.35); }
+.ent-card-caro .ent-card-stripe { background: linear-gradient(90deg,#1e3a5f,#60a5fa,#1e3a5f); }
+.ent-card-caro .ent-play-btn { background: linear-gradient(90deg,#1e3a5f,#3b82f6); color: #fff; }
+
 /* Tài Xỉu – crimson red */
 .ent-card-taixiu {
     background: linear-gradient(145deg, #2e0606 0%, #8b1a1a 55%, #2e0606 100%);
@@ -315,6 +328,36 @@
             </div>
             <span class="ent-play-btn">
                 <i class="fas fa-play"></i> {{ __('messages.ent_play_now') }}
+            </span>
+        </div>
+    </a>
+
+    {{-- Cờ Caro --}}
+    <a href="{{ route('entertainment.caro') }}" class="ent-card ent-card-caro">
+        <div class="ent-card-stripe"></div>
+        <div class="ent-suit-bg">⊞ ✕</div>
+        <div class="ent-card-body">
+            <div>
+                <div class="ent-card-tag">Board Game</div>
+                <div class="ent-card-title">Cờ Caro</div>
+                <div class="ent-card-sub">5 quân liên tiếp · Bàn vô hạn · 1 vs 1</div>
+                <div class="ent-stats">
+                    <div class="ent-stat">
+                        <div class="ent-stat-num">{{ $stats['caro']['total'] }}</div>
+                        <div class="ent-stat-lbl">{{ __('messages.ent_tables') }}</div>
+                    </div>
+                    <div class="ent-stat">
+                        <div class="ent-stat-num" style="color:#60a5fa;">{{ $stats['caro']['playing'] }}</div>
+                        <div class="ent-stat-lbl">{{ __('messages.ent_playing') }}</div>
+                    </div>
+                    <div class="ent-stat">
+                        <div class="ent-stat-num" style="color:#f6c23e;">{{ $stats['caro']['waiting'] }}</div>
+                        <div class="ent-stat-lbl">{{ __('messages.ent_waiting') }}</div>
+                    </div>
+                </div>
+            </div>
+            <span class="ent-play-btn">
+                <i class="fas fa-th"></i> {{ __('messages.ent_play_now') }}
             </span>
         </div>
     </a>

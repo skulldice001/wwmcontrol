@@ -98,6 +98,7 @@ use App\Http\Controllers\TaixiuController;
 use App\Http\Controllers\LotteryController;
 use App\Http\Controllers\BingoController;
 use App\Http\Controllers\TienLenController;
+use App\Http\Controllers\CaroController;
 
 Route::middleware('auth')->group(function () {
     Route::get('/dashboard', function () {
@@ -193,6 +194,18 @@ Route::middleware('auth')->group(function () {
     Route::get('/entertainment/tienlen/{table}/state',         [TienLenController::class, 'state'])->name('entertainment.tienlen.state');
     Route::post('/entertainment/tienlen/{table}/chat',         [TienLenController::class, 'chat'])->name('entertainment.tienlen.chat');
     Route::delete('/entertainment/tienlen/{table}/leave',      [TienLenController::class, 'leave'])->name('entertainment.tienlen.leave');
+
+    // Cờ Caro
+    Route::get('/entertainment/caro',                         [CaroController::class, 'index'])->name('entertainment.caro');
+    Route::post('/entertainment/caro',                        [CaroController::class, 'createTable'])->name('entertainment.caro.create');
+    Route::get('/entertainment/caro/{table}',                 [CaroController::class, 'show'])->name('entertainment.caro.show')
+        ->missing(fn () => redirect()->route('entertainment.caro'));
+    Route::post('/entertainment/caro/{table}/join',           [CaroController::class, 'join'])->name('entertainment.caro.join');
+    Route::delete('/entertainment/caro/{table}/leave',        [CaroController::class, 'leave'])->name('entertainment.caro.leave');
+    Route::post('/entertainment/caro/{table}/move',           [CaroController::class, 'move'])->name('entertainment.caro.move');
+    Route::get('/entertainment/caro/{table}/state',           [CaroController::class, 'state'])->name('entertainment.caro.state');
+    Route::post('/entertainment/caro/{table}/timeout',        [CaroController::class, 'requestTimeout'])->name('entertainment.caro.timeout');
+    Route::post('/entertainment/caro/{table}/rematch',        [CaroController::class, 'rematch'])->name('entertainment.caro.rematch');
 
     // Zoo-coin routes
     Route::post('/zoo-coins/transfer', [\App\Http\Controllers\ZooCoinController::class, 'transfer'])->name('zoo.transfer');
