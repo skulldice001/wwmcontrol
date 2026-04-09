@@ -2,9 +2,9 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ "poker_setup_V3" ]
+    branches: [ "main_source" ]
   pull_request:
-    branches: [ "poker_setup_V3" ]
+    branches: [ "main_source" ]
 
 jobs:
   # ---------------------------------------------------------------------------
@@ -56,7 +56,7 @@ jobs:
   # ---------------------------------------------------------------------------
   deploy:
     needs: test
-    if: github.ref == 'refs/heads/poker_setup_V3'
+    if: github.ref == 'refs/heads/main_source'
     runs-on: ubuntu-latest
 
     steps:
@@ -73,8 +73,8 @@ jobs:
 
           # Pull latest code
           git fetch origin
-          git checkout poker_setup_V3
-          git pull origin poker_setup_V3
+          git checkout main_source
+          git pull origin main_source
 
           # Install PHP dependencies
           composer install --no-dev --no-interaction --no-progress --prefer-dist --optimize-autoloader
