@@ -4,6 +4,10 @@
 
 @push('styles')
 <style>
+/* ── Force dark background for the entire content area ── */
+.content-wrapper { background: #0f172a !important; }
+.content-header  { background: #0f172a !important; }
+
 /* ── Layout ── */
 .room-wrap   { display:flex;gap:16px;max-width:1180px;margin:0 auto;padding:16px 12px;flex-wrap:wrap; }
 .room-main   { flex:1;min-width:0; }
@@ -13,12 +17,11 @@
 .room-header { display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px; }
 .room-title  { color:#f0c040;font-size:1.3rem;font-weight:800; }
 .player-tag  { display:flex;align-items:center;gap:6px;padding:5px 12px;border-radius:8px;font-size:.85rem;font-weight:700; }
-.tag-x       { background:rgba(226,232,240,.1);border:2px solid rgba(226,232,240,.3);color:#e2e8f0; }
-.tag-o       { background:rgba(30,30,30,.8);border:2px solid rgba(100,100,100,.5);color:#ccc; }
+.tag-x       { background:rgba(226,232,240,.12);border:2px solid rgba(226,232,240,.35);color:#e2e8f0; }
+.tag-o       { background:rgba(255,255,255,.07);border:2px solid rgba(150,150,150,.4);color:#ccc; }
 .sym-circle  { width:20px;height:20px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:900; }
 .sym-x-fill  { background:#e2e8f0;color:#111; }
 .sym-o-fill  { background:#333;color:#eee;border:2px solid #666; }
-.turn-arrow  { color:#10b981;font-size:1.1rem; }
 .btn-leave   { margin-left:auto;padding:6px 14px;background:#ef4444;color:#fff;border:none;
                border-radius:8px;cursor:pointer;font-size:.82rem;font-weight:600; }
 .ai-badge    { background:linear-gradient(90deg,#7c3aed,#5b21b6);color:#fff;font-size:.65rem;
@@ -28,12 +31,13 @@
 .thinking::after { content:'.'; animation:dots 1.2s steps(1,end) infinite; }
 
 /* ── Status bar ── */
-.status-bar  { background:rgba(0,0,0,.4);border-radius:10px;padding:10px 16px;
+.status-bar  { background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);
+               border-radius:10px;padding:10px 16px;
                margin-bottom:12px;display:flex;align-items:center;gap:12px;flex-wrap:wrap; }
 .status-text { font-size:.9rem;color:#e2e8f0;flex:1; }
-.timer-bar   { width:180px;height:5px;background:rgba(255,255,255,.1);border-radius:3px;overflow:hidden; }
+.timer-bar   { width:180px;height:5px;background:rgba(255,255,255,.12);border-radius:3px;overflow:hidden; }
 .timer-fill  { height:100%;border-radius:3px;background:#10b981;transition:width .5s linear,background .3s; }
-.timer-label { font-size:.8rem;color:#aaa;min-width:30px;text-align:right; }
+.timer-label { font-size:.8rem;color:#94a3b8;min-width:30px;text-align:right; }
 
 /* ── Canvas board ── */
 .board-wrapper { position:relative;overflow:hidden;border-radius:12px;
@@ -42,28 +46,29 @@
 #caroCanvas    { display:block; }
 
 /* ── Result overlay ── */
-.result-overlay { position:absolute;inset:0;background:rgba(0,0,0,.7);
+.result-overlay { position:absolute;inset:0;background:rgba(0,0,0,.75);
                   display:flex;flex-direction:column;align-items:center;justify-content:center;
                   border-radius:12px;z-index:10; }
 .result-title  { color:#f0c040;font-size:2rem;font-weight:900;margin-bottom:12px;text-shadow:0 2px 8px #000; }
-.result-sub    { color:#ccc;margin-bottom:20px;font-size:1rem; }
+.result-sub    { color:#cbd5e1;margin-bottom:20px;font-size:1rem; }
 .btn-rematch   { padding:10px 28px;background:#10b981;color:#fff;border:none;border-radius:10px;
                  cursor:pointer;font-weight:700;font-size:1rem;margin-right:8px; }
 .btn-leave-res { padding:10px 22px;background:#ef4444;color:#fff;border:none;border-radius:10px;
                  cursor:pointer;font-weight:700;font-size:1rem; }
 
 /* ── Side ── */
-.info-card   { background:rgba(0,0,0,.35);border-radius:12px;padding:14px; }
-.info-label  { color:#aaa;font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px; }
+.info-card   { background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:14px; }
+.info-label  { color:#94a3b8;font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px; }
 .info-value  { color:#f0c040;font-size:1.15rem;font-weight:800; }
-.move-log    { background:rgba(0,0,0,.35);border-radius:12px;padding:12px;flex:1;overflow:hidden; }
-.move-log-title { color:#aaa;font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px; }
-.move-list   { max-height:320px;overflow-y:auto;font-size:.8rem;color:#ccc; }
-.move-item   { padding:3px 0;border-bottom:1px solid rgba(255,255,255,.05); }
+.move-log    { background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:12px;flex:1;overflow:hidden; }
+.move-log-title { color:#94a3b8;font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px; }
+.move-list   { max-height:320px;overflow-y:auto;font-size:.8rem;color:#cbd5e1; }
+.move-item   { padding:3px 0;border-bottom:1px solid rgba(255,255,255,.06); }
 .move-item .sym{ font-weight:900; }
 
 #toast { position:fixed;bottom:24px;right:24px;background:#1e293b;color:#fff;
-         padding:12px 20px;border-radius:10px;display:none;z-index:9999;font-size:.9rem; }
+         padding:12px 20px;border-radius:10px;display:none;z-index:9999;font-size:.9rem;
+         border:1px solid rgba(255,255,255,.1); }
 </style>
 @endpush
 
@@ -182,8 +187,9 @@ const wrapper = document.getElementById('boardWrapper');
 
 function resizeCanvas() {
     const w = wrapper.clientWidth || wrapper.offsetWidth;
-    if (!w) { requestAnimationFrame(resizeCanvas); return; } // retry when layout is ready
+    if (!w) return;
     const h = Math.min(window.innerHeight - 180, Math.max(480, w * .75));
+    if (canvas.width === w && canvas.height === h) return; // nothing changed
     canvas.width  = w;
     canvas.height = h;
     wrapper.style.height = h + 'px';
@@ -191,7 +197,11 @@ function resizeCanvas() {
 }
 
 window.addEventListener('resize', resizeCanvas);
-window.addEventListener('load',   resizeCanvas);
+
+// ResizeObserver fires as soon as the element gets its real layout dimensions
+// — more reliable than requestAnimationFrame or load event timing
+const _ro = new ResizeObserver(() => resizeCanvas());
+_ro.observe(wrapper);
 
 // ── Coordinate helpers ───────────────────────────────────────────────────────
 // Logical (row, col) → canvas pixel (cx, cy) of cell center
@@ -519,8 +529,6 @@ document.getElementById('statusText').textContent = TEXT.loading;
 (async () => {
     const r = await fetch(`/entertainment/caro/${TABLE_ID}/state`);
     const d = await r.json();
-    // Ensure canvas is properly sized before drawing
-    if (!canvas.width) resizeCanvas();
     if (d.status !== 'waiting') applyState(d);
     else {
         document.getElementById('statusText').textContent = TEXT.waitLobby;
