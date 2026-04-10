@@ -42,8 +42,8 @@
 /* ── Canvas board ── */
 .board-wrapper { position:relative;overflow:hidden;border-radius:12px;
                  background:#f5deb3;cursor:crosshair;user-select:none;
-                 touch-action:none;border:2px solid #c8a96e; }
-#caroCanvas    { display:block; }
+                 touch-action:none;border:2px solid #c8a96e;min-height:480px; }
+#caroCanvas    { display:block;position:absolute;top:0;left:0;width:100%;height:100%; }
 
 /* ── Result overlay ── */
 .result-overlay { position:absolute;inset:0;background:rgba(0,0,0,.75);
@@ -186,25 +186,26 @@ const ctx     = canvas.getContext('2d');
 const wrapper = document.getElementById('boardWrapper');
 
 function resizeCanvas() {
-    const w = Math.round(wrapper.getBoundingClientRect().width) || 0;
+    const w = wrapper.clientWidth || 0;
     if (!w) return;
     const h = Math.min(window.innerHeight - 180, Math.max(480, Math.round(w * .75)));
-    // Only reset canvas bitmap when dimensions actually change (reset clears the canvas)
+    // Set explicit wrapper height so canvas (height:100%) fills it
+    wrapper.style.height = h + 'px';
+    // Only reset bitmap when dimensions actually change (reset clears the canvas)
     if (canvas.width !== w || canvas.height !== h) {
         canvas.width  = w;
         canvas.height = h;
-        wrapper.style.height = h + 'px';
     }
     redraw();
 }
 
 window.addEventListener('resize', resizeCanvas);
 
-// Initial sizing: wait one animation frame then poll until wrapper has real width
+// Initial sizing: poll until wrapper has real width
 function initCanvas() {
-    const w = Math.round(wrapper.getBoundingClientRect().width);
+    const w = wrapper.clientWidth || 0;
     if (w > 0) { resizeCanvas(); return; }
-    setTimeout(initCanvas, 50); // retry until layout is ready
+    setTimeout(initCanvas, 50);
 }
 requestAnimationFrame(initCanvas);
 
