@@ -48,7 +48,7 @@
                  background-size:34px 34px;
                  cursor:crosshair;user-select:none;
                  touch-action:none;border:2px solid #c8a96e;min-height:480px; }
-#caroCanvas    { display:block;position:absolute;top:0;left:0;width:100%;height:100%; }
+#caroCanvas    { display:block;position:absolute;top:0;left:0; }
 
 /* ── Result overlay ── */
 .result-overlay { position:absolute;inset:0;background:rgba(0,0,0,.75);
@@ -192,16 +192,16 @@ const wrapper = document.getElementById('boardWrapper');
 
 function resizeCanvas() {
     const w = wrapper.clientWidth || 0;
-    if (!w) return;
+    if (!w) { requestAnimationFrame(resizeCanvas); return; }
     const h = Math.min(window.innerHeight - 180, Math.max(480, Math.round(w * .75)));
+    // Set wrapper height so it has a fixed size
     wrapper.style.height = h + 'px';
-    // Use getBoundingClientRect so bitmap exactly matches CSS display size
-    const rect = canvas.getBoundingClientRect();
-    const cw = Math.round(rect.width)  || w;
-    const ch = Math.round(rect.height) || h;
-    if (canvas.width !== cw || canvas.height !== ch) {
-        canvas.width  = cw;
-        canvas.height = ch;
+    // Set both CSS style AND bitmap attribute to the same value (guarantees consistency)
+    if (canvas.width !== w || canvas.height !== h) {
+        canvas.width       = w;
+        canvas.height      = h;
+        canvas.style.width  = w + 'px';
+        canvas.style.height = h + 'px';
     }
     redraw();
 }
@@ -326,7 +326,7 @@ canvas.addEventListener('mousemove', e => {
 canvas.addEventListener('mouseup', e => {
     const wasDragging = isDragging;
     mouseDown = false; isDragging = false;
-    if (!wasDragging && state?.status === 'playing' && state.current_player === MY_SYM.trim()) {
+    if (!wasDragging && state?.status === 'playing') {
         const rect = canvas.getBoundingClientRect();
         const { row, col } = canvasToLogical(e.clientX - rect.left, e.clientY - rect.top);
         placeMove(row, col);
@@ -360,7 +360,7 @@ canvas.addEventListener('touchmove', e => {
 
 canvas.addEventListener('touchend', e => {
     const wasDragging = isDragging;
-    if (!wasDragging && touchStart && state?.status === 'playing' && state.current_player === MY_SYM.trim()) {
+    if (!wasDragging && touchStart && state?.status === 'playing') {
         const rect = canvas.getBoundingClientRect();
         const { row, col } = canvasToLogical(touchStart.x - rect.left, touchStart.y - rect.top);
         placeMove(row, col);
@@ -467,14 +467,18 @@ function updateMoveLog() {
 }
 
 async function placeMove(row, col) {
-    const r = await fetch(`/entertainment/caro/${TABLE_ID}/move`, {
-        method:'POST',
-        headers:{'Content-Type':'application/json','X-CSRF-TOKEN':CSRF},
-        body: JSON.stringify({ row, col })
-    });
-    const d = await r.json();
-    if (d.error) showToast(d.error ?? TEXT.error);
-    else if (d.state) applyState(d.state);
+    try {
+        const r = await fetch(`/entertainment/caro/${TABLE_ID}/move`, {
+            method:'POST',
+            headers:{'Content-Type':'application/json','X-CSRF-TOKEN':CSRF},
+            body: JSON.stringify({ row, col })
+        });
+        const d = await r.json();
+        if (d.error) showToast(d.error);
+        else if (d.state) applyState(d.state);
+    } catch(e) {
+        showToast(TEXT.error);
+    }
 }
 
 async function rematch() {
