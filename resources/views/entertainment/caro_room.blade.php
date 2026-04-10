@@ -226,36 +226,35 @@ function canvasToLogical(px, py) {
 
 // ── Draw ─────────────────────────────────────────────────────────────────────
 function redraw() {
-    if (!ctx) return;
+    if (!ctx || canvas.width < 2 || canvas.height < 2) return;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    if (!state) return;
 
-    const minRow = state.min_row - 1;
-    const maxRow = state.max_row + 1;
-    const minCol = state.min_col - 1;
-    const maxCol = state.max_col + 1;
+    // Draw grid lines across the entire visible canvas area (not just move bounds)
+    const visMinCol = Math.floor((-canvas.width  / 2 - offset.x) / CELL) - 1;
+    const visMaxCol = Math.ceil( ( canvas.width  / 2 - offset.x) / CELL) + 1;
+    const visMinRow = Math.floor((-canvas.height / 2 - offset.y) / CELL) - 1;
+    const visMaxRow = Math.ceil( ( canvas.height / 2 - offset.y) / CELL) + 1;
 
-    // Draw grid lines
     ctx.strokeStyle = 'rgba(0,0,0,.25)';
     ctx.lineWidth   = 1;
 
-    for (let r = minRow; r <= maxRow; r++) {
-        const { cx: x1, cy: y1 } = logicalToCanvas(r, minCol);
-        const { cx: x2 }         = logicalToCanvas(r, maxCol);
+    for (let r = visMinRow; r <= visMaxRow; r++) {
+        const { cx: x1, cy: y1 } = logicalToCanvas(r, visMinCol);
+        const { cx: x2 }         = logicalToCanvas(r, visMaxCol);
         ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y1); ctx.stroke();
     }
-    for (let c = minCol; c <= maxCol; c++) {
-        const { cx: x1, cy: y1 } = logicalToCanvas(minRow, c);
-        const { cy: y2 }         = logicalToCanvas(maxRow, c);
+    for (let c = visMinCol; c <= visMaxCol; c++) {
+        const { cx: x1, cy: y1 } = logicalToCanvas(visMinRow, c);
+        const { cy: y2 }         = logicalToCanvas(visMaxRow, c);
         ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x1, y2); ctx.stroke();
     }
 
-    // Draw board edges (outer border)
-    ctx.strokeStyle = 'rgba(0,0,0,.5)';
-    ctx.lineWidth   = 2;
-    const tl = logicalToCanvas(minRow, minCol);
-    const br = logicalToCanvas(maxRow, maxCol);
-    ctx.strokeRect(tl.cx, tl.cy, br.cx - tl.cx, br.cy - tl.cy);
+    // Draw center-point marker
+    const ctr = logicalToCanvas(0, 0);
+    ctx.fillStyle = 'rgba(0,0,0,.35)';
+    ctx.beginPath(); ctx.arc(ctr.cx, ctr.cy, 3, 0, Math.PI * 2); ctx.fill();
+
+    if (!state) return;
 
     // Draw winning cells highlight
     const winSet = new Set((state.winning_cells ?? []).map(([r,c]) => `${r},${c}`));
@@ -534,6 +533,8 @@ document.getElementById('statusText').textContent = TEXT.loading;
 (async () => {
     const r = await fetch(`/entertainment/caro/${TABLE_ID}/state`);
     const d = await r.json();
+    // Ensure canvas is sized before drawing (in case initCanvas hasn't fired yet)
+    resizeCanvas();
     if (d.status !== 'waiting') applyState(d);
     else {
         document.getElementById('statusText').textContent = TEXT.waitLobby;
