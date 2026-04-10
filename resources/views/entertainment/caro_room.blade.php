@@ -213,16 +213,21 @@ const ctx     = canvas.getContext('2d');
 const wrapper = document.getElementById('boardWrapper');
 
 function resizeCanvas() {
-    // canvas is static (display:block; width:100%) — its offsetWidth reflects real layout width
-    // We only need to set the bitmap dimensions to match
     const w = canvas.offsetWidth || Math.max(400, window.innerWidth - 320);
     const h = Math.min(window.innerHeight - 180, Math.max(480, Math.round(w * .75)));
+    console.log('[CARO] resizeCanvas', {
+        'canvas.offsetWidth': canvas.offsetWidth,
+        'wrapper.offsetWidth': wrapper.offsetWidth,
+        'wrapper.clientWidth': wrapper.clientWidth,
+        'wrapper.getBCR': wrapper.getBoundingClientRect(),
+        'window.innerWidth': window.innerWidth,
+        'computed w': w, 'computed h': h,
+    });
     canvas.style.height = h + 'px';
     if (canvas.width !== w || canvas.height !== h) {
         canvas.width  = w;
         canvas.height = h;
     }
-    // Sync grid background on wrapper
     wrapper.style.backgroundImage =
         'linear-gradient(rgba(0,0,0,.22) 1px, transparent 1px),' +
         'linear-gradient(90deg, rgba(0,0,0,.22) 1px, transparent 1px)';
@@ -364,6 +369,7 @@ canvas.addEventListener('mouseup', e => {
         const rect = canvas.getBoundingClientRect();
         const px = e.clientX - rect.left, py = e.clientY - rect.top;
         const { row, col } = canvasToLogical(px, py);
+        console.log('[CARO] click', { clientX: e.clientX, clientY: e.clientY, rect, px, py, row, col, status: state?.status, cur: state?.current_player });
         document.getElementById('d-click').textContent =
             `px(${Math.round(px)},${Math.round(py)})→(${row},${col}) status=${state?.status} cur=${state?.current_player}`;
         if (state?.status === 'playing') placeMove(row, col);
@@ -504,6 +510,7 @@ function updateMoveLog() {
 }
 
 async function placeMove(row, col) {
+    console.log('[CARO] placeMove', { row, col, MY_SYM, cur: state?.current_player, status: state?.status });
     document.getElementById('d-resp').textContent = `sending (${row},${col})…`;
     try {
         const r = await fetch(`/entertainment/caro/${TABLE_ID}/move`, {
@@ -566,6 +573,26 @@ function showToast(msg, ms=3500) {
 }
 
 document.getElementById('statusText').textContent = TEXT.loading;
+
+// Log element hierarchy and z-index at canvas center
+setTimeout(() => {
+    const cr = canvas.getBoundingClientRect();
+    const cx = cr.left + cr.width / 2, cy = cr.top + cr.height / 2;
+    const topEl = document.elementFromPoint(cx, cy);
+    console.log('[CARO] elementFromPoint at canvas center:', topEl, topEl?.tagName, topEl?.id, topEl?.className);
+    console.log('[CARO] canvas BCR:', cr);
+    console.log('[CARO] canvas style:', canvas.getAttribute('style'));
+    console.log('[CARO] wrapper style:', wrapper.getAttribute('style'));
+    const parent = canvas.parentElement;
+    while (parent) {
+        const s = window.getComputedStyle(parent);
+        if (s.overflow !== 'visible' || s.pointerEvents === 'none') {
+            console.warn('[CARO] blocking parent:', parent.tagName, parent.id, parent.className, 'overflow='+s.overflow, 'pointer-events='+s.pointerEvents);
+        }
+        if (!parent.parentElement) break;
+        parent = parent.parentElement;
+    }
+}, 1500);
 
 // Load initial state
 (async () => {
