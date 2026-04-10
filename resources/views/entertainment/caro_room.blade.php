@@ -154,7 +154,7 @@ const STONE_R    = 14;   // stone radius
 const TURN_MS    = {{ \App\Services\CaroEngine::TURN_SECONDS }} * 1000;
 const TEXT = {
     loading:    '{{ __("messages.caro_room_loading") }}',
-    myTurn:     MY_SYM === 'X' ? '{{ __("messages.caro_room_my_turn_x") }}' : '{{ __("messages.caro_room_my_turn_o") }}',
+    myTurn:     () => MY_SYM.trim() === 'X' ? '{{ __("messages.caro_room_my_turn_x") }}' : '{{ __("messages.caro_room_my_turn_o") }}',
     aiThinking: () => '{{ __("messages.caro_room_ai_thinking") }}'.replace(':diff', DIFF_LABEL[AI_DIFF] ?? '{{ __("messages.caro_diff_medium") }}'),
     waitOpp:    name => '{{ __("messages.caro_room_wait_opp") }}'.replace(':name', name ?? '...'),
     waitLobby:  '{{ __("messages.caro_room_wait_lobby") }}',
@@ -186,22 +186,27 @@ const ctx     = canvas.getContext('2d');
 const wrapper = document.getElementById('boardWrapper');
 
 function resizeCanvas() {
-    const w = wrapper.clientWidth || wrapper.offsetWidth;
+    const w = Math.round(wrapper.getBoundingClientRect().width) || 0;
     if (!w) return;
-    const h = Math.min(window.innerHeight - 180, Math.max(480, w * .75));
-    if (canvas.width === w && canvas.height === h) return; // nothing changed
-    canvas.width  = w;
-    canvas.height = h;
-    wrapper.style.height = h + 'px';
+    const h = Math.min(window.innerHeight - 180, Math.max(480, Math.round(w * .75)));
+    // Only reset canvas bitmap when dimensions actually change (reset clears the canvas)
+    if (canvas.width !== w || canvas.height !== h) {
+        canvas.width  = w;
+        canvas.height = h;
+        wrapper.style.height = h + 'px';
+    }
     redraw();
 }
 
 window.addEventListener('resize', resizeCanvas);
 
-// ResizeObserver fires as soon as the element gets its real layout dimensions
-// — more reliable than requestAnimationFrame or load event timing
-const _ro = new ResizeObserver(() => resizeCanvas());
-_ro.observe(wrapper);
+// Initial sizing: wait one animation frame then poll until wrapper has real width
+function initCanvas() {
+    const w = Math.round(wrapper.getBoundingClientRect().width);
+    if (w > 0) { resizeCanvas(); return; }
+    setTimeout(initCanvas, 50); // retry until layout is ready
+}
+requestAnimationFrame(initCanvas);
 
 // ── Coordinate helpers ───────────────────────────────────────────────────────
 // Logical (row, col) → canvas pixel (cx, cy) of cell center
@@ -420,7 +425,7 @@ function updateStatus() {
 
     if (state.current_player === MY_SYM) {
         statusEl.className   = 'status-text';
-        statusEl.textContent = TEXT.myTurn;
+        statusEl.textContent = TEXT.myTurn();
     } else if (IS_AI && state.current_player === 'O') {
         statusEl.className   = 'status-text thinking';
         statusEl.textContent = TEXT.aiThinking();
