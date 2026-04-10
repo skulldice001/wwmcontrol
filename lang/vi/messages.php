@@ -789,6 +789,7 @@ return [
     'caro_room_entry_fee'         => 'Phí vào bàn',
     'caro_room_move_log'          => 'Lịch sử nước đi',
     'caro_room_vs'                => 'VS',
+    'caro_room_timer_suffix'      => 's',
     'caro_diff_easy'              => 'Dễ',
     'caro_diff_medium'            => 'Vừa',
     'caro_diff_hard'              => 'Khó',

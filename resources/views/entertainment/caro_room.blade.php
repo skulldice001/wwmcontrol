@@ -181,7 +181,8 @@ const ctx     = canvas.getContext('2d');
 const wrapper = document.getElementById('boardWrapper');
 
 function resizeCanvas() {
-    const w = wrapper.clientWidth;
+    const w = wrapper.clientWidth || wrapper.offsetWidth;
+    if (!w) { requestAnimationFrame(resizeCanvas); return; } // retry when layout is ready
     const h = Math.min(window.innerHeight - 180, Math.max(480, w * .75));
     canvas.width  = w;
     canvas.height = h;
@@ -190,6 +191,7 @@ function resizeCanvas() {
 }
 
 window.addEventListener('resize', resizeCanvas);
+window.addEventListener('load',   resizeCanvas);
 
 // ── Coordinate helpers ───────────────────────────────────────────────────────
 // Logical (row, col) → canvas pixel (cx, cy) of cell center
@@ -511,13 +513,14 @@ function showToast(msg, ms=3500) {
     setTimeout(() => t.style.display = 'none', ms);
 }
 
-resizeCanvas();
 document.getElementById('statusText').textContent = TEXT.loading;
 
 // Load initial state
 (async () => {
     const r = await fetch(`/entertainment/caro/${TABLE_ID}/state`);
     const d = await r.json();
+    // Ensure canvas is properly sized before drawing
+    if (!canvas.width) resizeCanvas();
     if (d.status !== 'waiting') applyState(d);
     else {
         document.getElementById('statusText').textContent = TEXT.waitLobby;

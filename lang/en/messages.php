@@ -827,6 +827,7 @@ return [
     'caro_room_entry_fee'         => 'Entry Fee',
     'caro_room_move_log'          => 'Move History',
     'caro_room_vs'                => 'VS',
+    'caro_room_timer_suffix'      => 's',
     'caro_diff_easy'              => 'Easy',
     'caro_diff_medium'            => 'Medium',
     'caro_diff_hard'              => 'Hard',
