@@ -234,11 +234,17 @@ function resizeCanvas() {
 }
 
 window.addEventListener('resize', resizeCanvas);
-requestAnimationFrame(resizeCanvas);
-// AdminLTE sidebar animation takes ~250ms — retry to ensure canvas is sized correctly
-setTimeout(resizeCanvas, 300);
-setTimeout(resizeCanvas, 800);
-setTimeout(resizeCanvas, 1500);
+
+// ResizeObserver fires as soon as the element actually has a real size (immune to AdminLTE transitions)
+if (typeof ResizeObserver !== 'undefined') {
+    new ResizeObserver(() => resizeCanvas()).observe(wrapper);
+} else {
+    // Fallback for older browsers
+    requestAnimationFrame(resizeCanvas);
+    setTimeout(resizeCanvas, 300);
+    setTimeout(resizeCanvas, 800);
+    setTimeout(resizeCanvas, 1500);
+}
 
 // ── Coordinate helpers ───────────────────────────────────────────────────────
 // Logical (row, col) → canvas pixel (cx, cy) of cell center
