@@ -218,10 +218,13 @@ const ctx     = canvas.getContext('2d');
 const wrapper = document.getElementById('boardWrapper');
 
 function resizeCanvas() {
-    // Use getBoundingClientRect for actual visual width (immune to AdminLTE transform quirks)
-    const rect = wrapper.getBoundingClientRect();
-    const w = Math.round(rect.width) || 0;
-    if (!w) { requestAnimationFrame(resizeCanvas); return; }
+    // Try multiple methods to get real width
+    let w = Math.round(wrapper.getBoundingClientRect().width)
+         || wrapper.offsetWidth
+         || wrapper.scrollWidth
+         || 0;
+    // Last resort: estimate from window width (AdminLTE sidebar ~250px + padding)
+    if (!w) w = Math.max(400, window.innerWidth - 320);
     const h = Math.min(window.innerHeight - 180, Math.max(480, Math.round(w * .75)));
     wrapper.style.height = h + 'px';
     if (canvas.width !== w || canvas.height !== h) {
@@ -235,15 +238,15 @@ function resizeCanvas() {
 
 window.addEventListener('resize', resizeCanvas);
 
-// ResizeObserver fires as soon as the element actually has a real size (immune to AdminLTE transitions)
+// Run immediately with fallback estimate, then correct when real layout is ready
+resizeCanvas();
+setTimeout(resizeCanvas, 100);
+setTimeout(resizeCanvas, 500);
+setTimeout(resizeCanvas, 1200);
+
+// ResizeObserver fires whenever wrapper actually changes size
 if (typeof ResizeObserver !== 'undefined') {
     new ResizeObserver(() => resizeCanvas()).observe(wrapper);
-} else {
-    // Fallback for older browsers
-    requestAnimationFrame(resizeCanvas);
-    setTimeout(resizeCanvas, 300);
-    setTimeout(resizeCanvas, 800);
-    setTimeout(resizeCanvas, 1500);
 }
 
 // ── Coordinate helpers ───────────────────────────────────────────────────────
