@@ -41,7 +41,12 @@
 
 /* ── Canvas board ── */
 .board-wrapper { position:relative;overflow:hidden;border-radius:12px;
-                 background:#f5deb3;cursor:crosshair;user-select:none;
+                 background-color:#f5deb3;
+                 background-image:
+                     linear-gradient(rgba(0,0,0,.22) 1px, transparent 1px),
+                     linear-gradient(90deg, rgba(0,0,0,.22) 1px, transparent 1px);
+                 background-size:34px 34px;
+                 cursor:crosshair;user-select:none;
                  touch-action:none;border:2px solid #c8a96e;min-height:480px; }
 #caroCanvas    { display:block;position:absolute;top:0;left:0;width:100%;height:100%; }
 
@@ -225,52 +230,39 @@ function canvasToLogical(px, py) {
     return { row, col };
 }
 
+// ── Grid background sync (CSS background-position follows drag offset) ───────
+function updateGridBg() {
+    const bx = (((wrapper.clientWidth  / 2 + offset.x) % CELL) + CELL) % CELL;
+    const by = (((wrapper.clientHeight / 2 + offset.y) % CELL) + CELL) % CELL;
+    wrapper.style.backgroundPosition = `${bx}px ${by}px`;
+}
+
 // ── Draw ─────────────────────────────────────────────────────────────────────
+// Grid is drawn via CSS background-image (always visible).
+// Canvas only draws stones and hover preview.
 function redraw() {
+    updateGridBg();
     if (!ctx || canvas.width < 2 || canvas.height < 2) return;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Draw grid lines across the entire visible canvas area (not just move bounds)
-    const visMinCol = Math.floor((-canvas.width  / 2 - offset.x) / CELL) - 1;
-    const visMaxCol = Math.ceil( ( canvas.width  / 2 - offset.x) / CELL) + 1;
-    const visMinRow = Math.floor((-canvas.height / 2 - offset.y) / CELL) - 1;
-    const visMaxRow = Math.ceil( ( canvas.height / 2 - offset.y) / CELL) + 1;
-
-    ctx.strokeStyle = 'rgba(0,0,0,.25)';
-    ctx.lineWidth   = 1;
-
-    for (let r = visMinRow; r <= visMaxRow; r++) {
-        const { cx: x1, cy: y1 } = logicalToCanvas(r, visMinCol);
-        const { cx: x2 }         = logicalToCanvas(r, visMaxCol);
-        ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y1); ctx.stroke();
-    }
-    for (let c = visMinCol; c <= visMaxCol; c++) {
-        const { cx: x1, cy: y1 } = logicalToCanvas(visMinRow, c);
-        const { cy: y2 }         = logicalToCanvas(visMaxRow, c);
-        ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x1, y2); ctx.stroke();
-    }
-
-    // Draw center-point marker
+    // Center-point dot
     const ctr = logicalToCanvas(0, 0);
-    ctx.fillStyle = 'rgba(0,0,0,.35)';
+    ctx.fillStyle = 'rgba(0,0,0,.4)';
     ctx.beginPath(); ctx.arc(ctr.cx, ctr.cy, 3, 0, Math.PI * 2); ctx.fill();
 
     if (!state) return;
 
-    // Draw winning cells highlight
     const winSet = new Set((state.winning_cells ?? []).map(([r,c]) => `${r},${c}`));
 
-    // Draw stones
     const board = {};
     for (const [r, c, s] of (state.moves ?? [])) board[`${r},${c}`] = s;
 
     for (const [r, c, sym] of (state.moves ?? [])) {
         const { cx, cy } = logicalToCanvas(r, c);
-        const isWin = winSet.has(`${r},${c}`);
-        drawStone(cx, cy, sym, isWin);
+        drawStone(cx, cy, sym, winSet.has(`${r},${c}`));
     }
 
-    // Draw hover preview
+    // Hover preview
     if (hoveredCell && state.status === 'playing' && state.current_player === MY_SYM) {
         const key = `${hoveredCell.row},${hoveredCell.col}`;
         if (!board[key]) {
