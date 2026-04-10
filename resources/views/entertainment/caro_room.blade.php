@@ -41,6 +41,7 @@
 
 /* ── Canvas board ── */
 .board-wrapper { position:relative;overflow:hidden;border-radius:12px;
+                 width:100%;
                  background-color:#f5deb3;
                  background-image:
                      linear-gradient(rgba(0,0,0,.22) 1px, transparent 1px),
@@ -48,7 +49,7 @@
                  background-size:34px 34px;
                  cursor:crosshair;user-select:none;
                  touch-action:none;border:2px solid #c8a96e;min-height:480px; }
-#caroCanvas    { display:block;position:absolute;top:0;left:0; }
+#caroCanvas    { display:block;position:absolute;top:0;left:0;pointer-events:none; }
 
 /* ── Result overlay ── */
 .result-overlay { position:absolute;inset:0;background:rgba(0,0,0,.75);
@@ -193,9 +194,10 @@ const TEXT = {
 
 // ── Debug ─────────────────────────────────────────────────────────────────────
 function dbg() {
+    const wr = wrapper.getBoundingClientRect();
     document.getElementById('d-sym').textContent     = JSON.stringify(MY_SYM);
     document.getElementById('d-canvas').textContent  = canvas.width + 'x' + canvas.height;
-    document.getElementById('d-wrap').textContent    = wrapper.clientWidth + 'x' + wrapper.clientHeight;
+    document.getElementById('d-wrap').textContent    = Math.round(wr.width) + 'x' + Math.round(wr.height);
     document.getElementById('d-status').textContent  = state?.status ?? 'null';
     document.getElementById('d-cur').textContent     = state?.current_player ?? 'null';
     document.getElementById('d-moves').textContent   = (state?.moves ?? []).length;
@@ -216,15 +218,15 @@ const ctx     = canvas.getContext('2d');
 const wrapper = document.getElementById('boardWrapper');
 
 function resizeCanvas() {
-    const w = wrapper.clientWidth || 0;
+    // Use getBoundingClientRect for actual visual width (immune to AdminLTE transform quirks)
+    const rect = wrapper.getBoundingClientRect();
+    const w = Math.round(rect.width) || 0;
     if (!w) { requestAnimationFrame(resizeCanvas); return; }
     const h = Math.min(window.innerHeight - 180, Math.max(480, Math.round(w * .75)));
-    // Set wrapper height so it has a fixed size
     wrapper.style.height = h + 'px';
-    // Set both CSS style AND bitmap attribute to the same value (guarantees consistency)
     if (canvas.width !== w || canvas.height !== h) {
-        canvas.width       = w;
-        canvas.height      = h;
+        canvas.width        = w;
+        canvas.height       = h;
         canvas.style.width  = w + 'px';
         canvas.style.height = h + 'px';
     }
@@ -327,13 +329,14 @@ let dragDist        = 0;
 let dragStartMouse  = { x:0, y:0 };  // raw mouse pos at mousedown
 let dragStartOffset = { x:0, y:0 };  // offset at mousedown
 
-canvas.addEventListener('mousedown', e => {
+// All input events on wrapper (canvas has pointer-events:none)
+wrapper.addEventListener('mousedown', e => {
     mouseDown = true; isDragging = false; dragDist = 0;
     dragStartMouse  = { x: e.clientX, y: e.clientY };
     dragStartOffset = { x: offset.x,  y: offset.y  };
 });
 
-canvas.addEventListener('mousemove', e => {
+wrapper.addEventListener('mousemove', e => {
     if (mouseDown) {
         const dx = e.clientX - dragStartMouse.x;
         const dy = e.clientY - dragStartMouse.y;
@@ -346,17 +349,17 @@ canvas.addEventListener('mousemove', e => {
         }
     }
     if (!isDragging) {
-        const rect = canvas.getBoundingClientRect();
+        const rect = wrapper.getBoundingClientRect();
         hoveredCell = canvasToLogical(e.clientX - rect.left, e.clientY - rect.top);
         redraw();
     }
 });
 
-canvas.addEventListener('mouseup', e => {
+wrapper.addEventListener('mouseup', e => {
     const wasDragging = isDragging;
     mouseDown = false; isDragging = false;
     if (!wasDragging) {
-        const rect = canvas.getBoundingClientRect();
+        const rect = wrapper.getBoundingClientRect();
         const px = e.clientX - rect.left, py = e.clientY - rect.top;
         const { row, col } = canvasToLogical(px, py);
         document.getElementById('d-click').textContent =
@@ -365,18 +368,18 @@ canvas.addEventListener('mouseup', e => {
     }
 });
 
-canvas.addEventListener('mouseleave', () => { mouseDown = false; hoveredCell = null; redraw(); });
+wrapper.addEventListener('mouseleave', () => { mouseDown = false; hoveredCell = null; redraw(); });
 
 // Touch support
 let touchStart = null;
-canvas.addEventListener('touchstart', e => {
+wrapper.addEventListener('touchstart', e => {
     e.preventDefault();
     const t = e.touches[0];
     touchStart = { x: t.clientX, y: t.clientY, ox: offset.x, oy: offset.y };
     isDragging = false; dragDist = 0;
 }, { passive: false });
 
-canvas.addEventListener('touchmove', e => {
+wrapper.addEventListener('touchmove', e => {
     e.preventDefault();
     if (!touchStart) return;
     const dx = e.touches[0].clientX - touchStart.x;
@@ -390,10 +393,10 @@ canvas.addEventListener('touchmove', e => {
     }
 }, { passive: false });
 
-canvas.addEventListener('touchend', e => {
+wrapper.addEventListener('touchend', e => {
     const wasDragging = isDragging;
     if (!wasDragging && touchStart && state?.status === 'playing') {
-        const rect = canvas.getBoundingClientRect();
+        const rect = wrapper.getBoundingClientRect();
         const { row, col } = canvasToLogical(touchStart.x - rect.left, touchStart.y - rect.top);
         placeMove(row, col);
     }
