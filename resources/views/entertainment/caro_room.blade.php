@@ -233,6 +233,10 @@ function resizeCanvas() {
 
 window.addEventListener('resize', resizeCanvas);
 requestAnimationFrame(resizeCanvas);
+// AdminLTE sidebar animation takes ~250ms — retry to ensure canvas is sized correctly
+setTimeout(resizeCanvas, 300);
+setTimeout(resizeCanvas, 800);
+setTimeout(resizeCanvas, 1500);
 
 // ── Coordinate helpers ───────────────────────────────────────────────────────
 // Logical (row, col) → canvas pixel (cx, cy) of cell center
