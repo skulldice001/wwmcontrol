@@ -223,6 +223,8 @@ function resizeCanvas() {
         'window.innerWidth': window.innerWidth,
         'computed w': w, 'computed h': h,
     });
+    // Must set CSS size explicitly so getBoundingClientRect() returns real values for click detection
+    canvas.style.width  = w + 'px';
     canvas.style.height = h + 'px';
     if (canvas.width !== w || canvas.height !== h) {
         canvas.width  = w;
@@ -583,14 +585,13 @@ setTimeout(() => {
     console.log('[CARO] canvas BCR:', cr);
     console.log('[CARO] canvas style:', canvas.getAttribute('style'));
     console.log('[CARO] wrapper style:', wrapper.getAttribute('style'));
-    const parent = canvas.parentElement;
-    while (parent) {
-        const s = window.getComputedStyle(parent);
+    let el = canvas.parentElement;
+    while (el) {
+        const s = window.getComputedStyle(el);
         if (s.overflow !== 'visible' || s.pointerEvents === 'none') {
-            console.warn('[CARO] blocking parent:', parent.tagName, parent.id, parent.className, 'overflow='+s.overflow, 'pointer-events='+s.pointerEvents);
+            console.warn('[CARO] blocking parent:', el.tagName, el.id, el.className, 'overflow='+s.overflow, 'pointer-events='+s.pointerEvents);
         }
-        if (!parent.parentElement) break;
-        parent = parent.parentElement;
+        el = el.parentElement;
     }
 }, 1500);
 
