@@ -49,7 +49,7 @@
                  background-size:34px 34px;
                  cursor:crosshair;user-select:none;
                  touch-action:none;border:2px solid #c8a96e;min-height:480px; }
-#caroCanvas    { display:block;position:absolute;top:0;left:0;pointer-events:none; }
+#caroCanvas    { display:block;position:absolute;top:0;left:0; }
 
 /* ── Result overlay ── */
 .result-overlay { position:absolute;inset:0;background:rgba(0,0,0,.75);
@@ -226,6 +226,8 @@ function resizeCanvas() {
     // Last resort: estimate from window width (AdminLTE sidebar ~250px + padding)
     if (!w) w = Math.max(400, window.innerWidth - 320);
     const h = Math.min(window.innerHeight - 180, Math.max(480, Math.round(w * .75)));
+    // Force wrapper to have real dimensions so overflow:hidden doesn't block events
+    wrapper.style.width  = w + 'px';
     wrapper.style.height = h + 'px';
     if (canvas.width !== w || canvas.height !== h) {
         canvas.width        = w;
@@ -338,14 +340,13 @@ let dragDist        = 0;
 let dragStartMouse  = { x:0, y:0 };  // raw mouse pos at mousedown
 let dragStartOffset = { x:0, y:0 };  // offset at mousedown
 
-// All input events on wrapper (canvas has pointer-events:none)
-wrapper.addEventListener('mousedown', e => {
+canvas.addEventListener('mousedown', e => {
     mouseDown = true; isDragging = false; dragDist = 0;
     dragStartMouse  = { x: e.clientX, y: e.clientY };
     dragStartOffset = { x: offset.x,  y: offset.y  };
 });
 
-wrapper.addEventListener('mousemove', e => {
+canvas.addEventListener('mousemove', e => {
     if (mouseDown) {
         const dx = e.clientX - dragStartMouse.x;
         const dy = e.clientY - dragStartMouse.y;
@@ -358,17 +359,17 @@ wrapper.addEventListener('mousemove', e => {
         }
     }
     if (!isDragging) {
-        const rect = wrapper.getBoundingClientRect();
+        const rect = canvas.getBoundingClientRect();
         hoveredCell = canvasToLogical(e.clientX - rect.left, e.clientY - rect.top);
         redraw();
     }
 });
 
-wrapper.addEventListener('mouseup', e => {
+canvas.addEventListener('mouseup', e => {
     const wasDragging = isDragging;
     mouseDown = false; isDragging = false;
     if (!wasDragging) {
-        const rect = wrapper.getBoundingClientRect();
+        const rect = canvas.getBoundingClientRect();
         const px = e.clientX - rect.left, py = e.clientY - rect.top;
         const { row, col } = canvasToLogical(px, py);
         document.getElementById('d-click').textContent =
@@ -377,18 +378,18 @@ wrapper.addEventListener('mouseup', e => {
     }
 });
 
-wrapper.addEventListener('mouseleave', () => { mouseDown = false; hoveredCell = null; redraw(); });
+canvas.addEventListener('mouseleave', () => { mouseDown = false; hoveredCell = null; redraw(); });
 
 // Touch support
 let touchStart = null;
-wrapper.addEventListener('touchstart', e => {
+canvas.addEventListener('touchstart', e => {
     e.preventDefault();
     const t = e.touches[0];
     touchStart = { x: t.clientX, y: t.clientY, ox: offset.x, oy: offset.y };
     isDragging = false; dragDist = 0;
 }, { passive: false });
 
-wrapper.addEventListener('touchmove', e => {
+canvas.addEventListener('touchmove', e => {
     e.preventDefault();
     if (!touchStart) return;
     const dx = e.touches[0].clientX - touchStart.x;
@@ -402,10 +403,10 @@ wrapper.addEventListener('touchmove', e => {
     }
 }, { passive: false });
 
-wrapper.addEventListener('touchend', e => {
+canvas.addEventListener('touchend', e => {
     const wasDragging = isDragging;
     if (!wasDragging && touchStart && state?.status === 'playing') {
-        const rect = wrapper.getBoundingClientRect();
+        const rect = canvas.getBoundingClientRect();
         const { row, col } = canvasToLogical(touchStart.x - rect.left, touchStart.y - rect.top);
         placeMove(row, col);
     }
