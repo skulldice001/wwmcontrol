@@ -40,16 +40,12 @@
 .timer-label { font-size:.8rem;color:#94a3b8;min-width:30px;text-align:right; }
 
 /* ── Canvas board ── */
-.board-wrapper { position:relative;overflow:hidden;border-radius:12px;
+.board-wrapper { position:relative;border-radius:12px;
                  width:100%;
                  background-color:#f5deb3;
-                 background-image:
-                     linear-gradient(rgba(0,0,0,.22) 1px, transparent 1px),
-                     linear-gradient(90deg, rgba(0,0,0,.22) 1px, transparent 1px);
-                 background-size:34px 34px;
                  cursor:crosshair;user-select:none;
                  touch-action:none;border:2px solid #c8a96e;min-height:480px; }
-#caroCanvas    { display:block;position:absolute;top:0;left:0; }
+#caroCanvas    { display:block;width:100%;border-radius:10px; }
 
 /* ── Result overlay ── */
 .result-overlay { position:absolute;inset:0;background:rgba(0,0,0,.75);
@@ -194,10 +190,9 @@ const TEXT = {
 
 // ── Debug ─────────────────────────────────────────────────────────────────────
 function dbg() {
-    const wr = wrapper.getBoundingClientRect();
     document.getElementById('d-sym').textContent     = JSON.stringify(MY_SYM);
     document.getElementById('d-canvas').textContent  = canvas.width + 'x' + canvas.height;
-    document.getElementById('d-wrap').textContent    = Math.round(wr.width) + 'x' + Math.round(wr.height);
+    document.getElementById('d-wrap').textContent    = canvas.offsetWidth + 'x' + canvas.offsetHeight;
     document.getElementById('d-status').textContent  = state?.status ?? 'null';
     document.getElementById('d-cur').textContent     = state?.current_player ?? 'null';
     document.getElementById('d-moves').textContent   = (state?.moves ?? []).length;
@@ -218,23 +213,20 @@ const ctx     = canvas.getContext('2d');
 const wrapper = document.getElementById('boardWrapper');
 
 function resizeCanvas() {
-    // Try multiple methods to get real width
-    let w = Math.round(wrapper.getBoundingClientRect().width)
-         || wrapper.offsetWidth
-         || wrapper.scrollWidth
-         || 0;
-    // Last resort: estimate from window width (AdminLTE sidebar ~250px + padding)
-    if (!w) w = Math.max(400, window.innerWidth - 320);
+    // canvas is static (display:block; width:100%) — its offsetWidth reflects real layout width
+    // We only need to set the bitmap dimensions to match
+    const w = canvas.offsetWidth || Math.max(400, window.innerWidth - 320);
     const h = Math.min(window.innerHeight - 180, Math.max(480, Math.round(w * .75)));
-    // Force wrapper to have real dimensions so overflow:hidden doesn't block events
-    wrapper.style.width  = w + 'px';
-    wrapper.style.height = h + 'px';
+    canvas.style.height = h + 'px';
     if (canvas.width !== w || canvas.height !== h) {
-        canvas.width        = w;
-        canvas.height       = h;
-        canvas.style.width  = w + 'px';
-        canvas.style.height = h + 'px';
+        canvas.width  = w;
+        canvas.height = h;
     }
+    // Sync grid background on wrapper
+    wrapper.style.backgroundImage =
+        'linear-gradient(rgba(0,0,0,.22) 1px, transparent 1px),' +
+        'linear-gradient(90deg, rgba(0,0,0,.22) 1px, transparent 1px)';
+    wrapper.style.backgroundSize = '34px 34px';
     redraw();
 }
 
