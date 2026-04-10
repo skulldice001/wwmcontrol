@@ -40,12 +40,22 @@
 .timer-label { font-size:.8rem;color:#94a3b8;min-width:30px;text-align:right; }
 
 /* ── Canvas board ── */
-.board-wrapper { position:relative;border-radius:12px;
-                 width:100%;
-                 background-color:#f5deb3;
-                 cursor:crosshair;user-select:none;
-                 touch-action:none;border:2px solid #c8a96e;min-height:480px; }
-#caroCanvas    { display:block;width:100%;border-radius:10px; }
+/* board-wrapper is just a placeholder that reserves vertical space */
+.board-wrapper { position:relative;width:100%;min-height:480px;border-radius:12px;border:2px solid #c8a96e; }
+/* canvas is fixed to viewport so AdminLTE layout bugs can't affect it */
+#caroCanvas    {
+    position:fixed;
+    border-radius:10px;
+    cursor:crosshair;
+    background-color:#f5deb3;
+    background-image:
+        linear-gradient(rgba(0,0,0,.22) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,0,0,.22) 1px, transparent 1px);
+    background-size:34px 34px;
+    z-index:100;
+    touch-action:none;
+    user-select:none;
+}
 
 /* ── Result overlay ── */
 .result-overlay { position:absolute;inset:0;background:rgba(0,0,0,.75);
@@ -213,27 +223,29 @@ const ctx     = canvas.getContext('2d');
 const wrapper = document.getElementById('boardWrapper');
 
 function resizeCanvas() {
-    const w = canvas.offsetWidth || Math.max(400, window.innerWidth - 320);
-    const h = Math.min(window.innerHeight - 180, Math.max(480, Math.round(w * .75)));
-    console.log('[CARO] resizeCanvas', {
-        'canvas.offsetWidth': canvas.offsetWidth,
-        'wrapper.offsetWidth': wrapper.offsetWidth,
-        'wrapper.clientWidth': wrapper.clientWidth,
-        'wrapper.getBCR': wrapper.getBoundingClientRect(),
-        'window.innerWidth': window.innerWidth,
-        'computed w': w, 'computed h': h,
-    });
-    // Must set CSS size explicitly so getBoundingClientRect() returns real values for click detection
-    canvas.style.width  = w + 'px';
-    canvas.style.height = h + 'px';
+    // canvas is position:fixed — position it to visually overlap the placeholder wrapper
+    const wbcr     = wrapper.getBoundingClientRect();
+    const sidebar  = document.querySelector('.main-sidebar');
+    const sidebarW = sidebar ? sidebar.getBoundingClientRect().width : 250;
+
+    // Use wrapper BCR if it has real size, else estimate from viewport
+    const left = wbcr.width > 1 ? wbcr.left  : sidebarW + 16;
+    const top  = wbcr.width > 1 ? wbcr.top   : 160;
+    const w    = wbcr.width > 1 ? Math.round(wbcr.width) : Math.max(400, window.innerWidth - sidebarW - 48);
+    const h    = Math.min(window.innerHeight - 180, Math.max(480, Math.round(w * .75)));
+
+    console.log('[CARO] resizeCanvas', { wbcr, sidebarW, left, top, w, h });
+
+    canvas.style.left   = left + 'px';
+    canvas.style.top    = top  + 'px';
+    canvas.style.width  = w    + 'px';
+    canvas.style.height = h    + 'px';
+    wrapper.style.height = h   + 'px';
+
     if (canvas.width !== w || canvas.height !== h) {
         canvas.width  = w;
         canvas.height = h;
     }
-    wrapper.style.backgroundImage =
-        'linear-gradient(rgba(0,0,0,.22) 1px, transparent 1px),' +
-        'linear-gradient(90deg, rgba(0,0,0,.22) 1px, transparent 1px)';
-    wrapper.style.backgroundSize = '34px 34px';
     redraw();
 }
 
@@ -268,9 +280,10 @@ function canvasToLogical(px, py) {
 
 // ── Grid background sync (CSS background-position follows drag offset) ───────
 function updateGridBg() {
+    // Grid is now a CSS background on canvas (position:fixed), update its offset to follow drag
     const bx = (((canvas.width  / 2 + offset.x) % CELL) + CELL) % CELL;
     const by = (((canvas.height / 2 + offset.y) % CELL) + CELL) % CELL;
-    wrapper.style.backgroundPosition = `${bx}px ${by}px`;
+    canvas.style.backgroundPosition = `${bx}px ${by}px`;
 }
 
 // ── Draw ─────────────────────────────────────────────────────────────────────
