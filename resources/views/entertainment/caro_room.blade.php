@@ -194,25 +194,20 @@ function resizeCanvas() {
     const w = wrapper.clientWidth || 0;
     if (!w) return;
     const h = Math.min(window.innerHeight - 180, Math.max(480, Math.round(w * .75)));
-    // Set explicit wrapper height so canvas (height:100%) fills it
     wrapper.style.height = h + 'px';
-    // Only reset bitmap when dimensions actually change (reset clears the canvas)
-    if (canvas.width !== w || canvas.height !== h) {
-        canvas.width  = w;
-        canvas.height = h;
+    // Use getBoundingClientRect so bitmap exactly matches CSS display size
+    const rect = canvas.getBoundingClientRect();
+    const cw = Math.round(rect.width)  || w;
+    const ch = Math.round(rect.height) || h;
+    if (canvas.width !== cw || canvas.height !== ch) {
+        canvas.width  = cw;
+        canvas.height = ch;
     }
     redraw();
 }
 
 window.addEventListener('resize', resizeCanvas);
-
-// Initial sizing: poll until wrapper has real width
-function initCanvas() {
-    const w = wrapper.clientWidth || 0;
-    if (w > 0) { resizeCanvas(); return; }
-    setTimeout(initCanvas, 50);
-}
-requestAnimationFrame(initCanvas);
+requestAnimationFrame(resizeCanvas);
 
 // ── Coordinate helpers ───────────────────────────────────────────────────────
 // Logical (row, col) → canvas pixel (cx, cy) of cell center
@@ -232,8 +227,8 @@ function canvasToLogical(px, py) {
 
 // ── Grid background sync (CSS background-position follows drag offset) ───────
 function updateGridBg() {
-    const bx = (((wrapper.clientWidth  / 2 + offset.x) % CELL) + CELL) % CELL;
-    const by = (((wrapper.clientHeight / 2 + offset.y) % CELL) + CELL) % CELL;
+    const bx = (((canvas.width  / 2 + offset.x) % CELL) + CELL) % CELL;
+    const by = (((canvas.height / 2 + offset.y) % CELL) + CELL) % CELL;
     wrapper.style.backgroundPosition = `${bx}px ${by}px`;
 }
 
@@ -263,7 +258,7 @@ function redraw() {
     }
 
     // Hover preview
-    if (hoveredCell && state.status === 'playing' && state.current_player === MY_SYM) {
+    if (hoveredCell && state.status === 'playing' && state.current_player === MY_SYM.trim()) {
         const key = `${hoveredCell.row},${hoveredCell.col}`;
         if (!board[key]) {
             const { cx, cy } = logicalToCanvas(hoveredCell.row, hoveredCell.col);
@@ -298,39 +293,44 @@ function drawStone(cx, cy, sym, isWin, alpha = 1) {
 }
 
 // ── Mouse / touch handling ────────────────────────────────────────────────────
-let mouseDown = false;
-let dragDist  = 0;
+let mouseDown       = false;
+let dragDist        = 0;
+let dragStartMouse  = { x:0, y:0 };  // raw mouse pos at mousedown
+let dragStartOffset = { x:0, y:0 };  // offset at mousedown
 
 canvas.addEventListener('mousedown', e => {
     mouseDown = true; isDragging = false; dragDist = 0;
-    dragStart = { x: e.clientX - offset.x, y: e.clientY - offset.y };
+    dragStartMouse  = { x: e.clientX, y: e.clientY };
+    dragStartOffset = { x: offset.x,  y: offset.y  };
 });
 
 canvas.addEventListener('mousemove', e => {
     if (mouseDown) {
-        const dx = e.clientX - offset.x - dragStart.x;
-        const dy = e.clientY - offset.y - dragStart.y;
+        const dx = e.clientX - dragStartMouse.x;
+        const dy = e.clientY - dragStartMouse.y;
         dragDist = Math.sqrt(dx*dx + dy*dy);
         if (dragDist > 4) {
             isDragging = true;
-            offset.x   = e.clientX - dragStart.x;
-            offset.y   = e.clientY - dragStart.y;
+            offset.x   = dragStartOffset.x + dx;
+            offset.y   = dragStartOffset.y + dy;
             redraw();
         }
     }
-    const rect = canvas.getBoundingClientRect();
-    hoveredCell = canvasToLogical(e.clientX - rect.left, e.clientY - rect.top);
-    if (!isDragging) redraw();
+    if (!isDragging) {
+        const rect = canvas.getBoundingClientRect();
+        hoveredCell = canvasToLogical(e.clientX - rect.left, e.clientY - rect.top);
+        redraw();
+    }
 });
 
 canvas.addEventListener('mouseup', e => {
-    mouseDown = false;
-    if (!isDragging && state?.status === 'playing' && state.current_player === MY_SYM) {
+    const wasDragging = isDragging;
+    mouseDown = false; isDragging = false;
+    if (!wasDragging && state?.status === 'playing' && state.current_player === MY_SYM.trim()) {
         const rect = canvas.getBoundingClientRect();
         const { row, col } = canvasToLogical(e.clientX - rect.left, e.clientY - rect.top);
         placeMove(row, col);
     }
-    isDragging = false;
 });
 
 canvas.addEventListener('mouseleave', () => { mouseDown = false; hoveredCell = null; redraw(); });
@@ -339,7 +339,8 @@ canvas.addEventListener('mouseleave', () => { mouseDown = false; hoveredCell = n
 let touchStart = null;
 canvas.addEventListener('touchstart', e => {
     e.preventDefault();
-    touchStart = { x: e.touches[0].clientX, y: e.touches[0].clientY, ox: offset.x, oy: offset.y };
+    const t = e.touches[0];
+    touchStart = { x: t.clientX, y: t.clientY, ox: offset.x, oy: offset.y };
     isDragging = false; dragDist = 0;
 }, { passive: false });
 
@@ -358,11 +359,10 @@ canvas.addEventListener('touchmove', e => {
 }, { passive: false });
 
 canvas.addEventListener('touchend', e => {
-    if (!isDragging && touchStart && state?.status === 'playing' && state.current_player === MY_SYM) {
+    const wasDragging = isDragging;
+    if (!wasDragging && touchStart && state?.status === 'playing' && state.current_player === MY_SYM.trim()) {
         const rect = canvas.getBoundingClientRect();
-        const tx   = touchStart.x - rect.left;
-        const ty   = touchStart.y - rect.top;
-        const { row, col } = canvasToLogical(tx, ty);
+        const { row, col } = canvasToLogical(touchStart.x - rect.left, touchStart.y - rect.top);
         placeMove(row, col);
     }
     touchStart = null; isDragging = false;
