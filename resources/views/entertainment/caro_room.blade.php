@@ -101,6 +101,20 @@
         <button class="btn-leave" onclick="leaveTable()">{{ __('messages.caro_room_leave') }}</button>
     </div>
 
+    <!-- DEBUG PANEL — remove after fixing -->
+    <div id="dbgPanel" style="background:#111;color:#0f0;font-family:monospace;font-size:11px;
+         padding:6px 10px;border-radius:6px;margin-bottom:8px;line-height:1.7;border:1px solid #0f0;">
+        <b style="color:#ff0">[DEBUG]</b>
+        &nbsp;MY_SYM=<span id="d-sym" style="color:#0ff"></span>
+        &nbsp;canvas=<span id="d-canvas"></span>
+        &nbsp;wrapper=<span id="d-wrap"></span>
+        &nbsp;status=<span id="d-status"></span>
+        &nbsp;cur=<span id="d-cur"></span>
+        &nbsp;moves=<span id="d-moves"></span>
+        &nbsp;last_click=<span id="d-click"></span>
+        &nbsp;last_resp=<span id="d-resp" style="color:#f80"></span>
+    </div>
+
     <div class="status-bar">
         <div class="status-text" id="statusText"></div>
         <div class="timer-bar"><div class="timer-fill" id="timerFill" style="width:100%"></div></div>
@@ -176,6 +190,17 @@ const TEXT = {
     timerSuffix:'{{ __("messages.caro_room_timer_suffix") }}' ,
     error:      '{{ __("messages.caro_error") }}',
 };
+
+// ── Debug ─────────────────────────────────────────────────────────────────────
+function dbg() {
+    document.getElementById('d-sym').textContent     = JSON.stringify(MY_SYM);
+    document.getElementById('d-canvas').textContent  = canvas.width + 'x' + canvas.height;
+    document.getElementById('d-wrap').textContent    = wrapper.clientWidth + 'x' + wrapper.clientHeight;
+    document.getElementById('d-status').textContent  = state?.status ?? 'null';
+    document.getElementById('d-cur').textContent     = state?.current_player ?? 'null';
+    document.getElementById('d-moves').textContent   = (state?.moves ?? []).length;
+}
+setInterval(dbg, 500);
 
 // ── State ────────────────────────────────────────────────────────────────────
 let state      = null;
@@ -326,10 +351,13 @@ canvas.addEventListener('mousemove', e => {
 canvas.addEventListener('mouseup', e => {
     const wasDragging = isDragging;
     mouseDown = false; isDragging = false;
-    if (!wasDragging && state?.status === 'playing') {
+    if (!wasDragging) {
         const rect = canvas.getBoundingClientRect();
-        const { row, col } = canvasToLogical(e.clientX - rect.left, e.clientY - rect.top);
-        placeMove(row, col);
+        const px = e.clientX - rect.left, py = e.clientY - rect.top;
+        const { row, col } = canvasToLogical(px, py);
+        document.getElementById('d-click').textContent =
+            `px(${Math.round(px)},${Math.round(py)})→(${row},${col}) status=${state?.status} cur=${state?.current_player}`;
+        if (state?.status === 'playing') placeMove(row, col);
     }
 });
 
@@ -467,6 +495,7 @@ function updateMoveLog() {
 }
 
 async function placeMove(row, col) {
+    document.getElementById('d-resp').textContent = `sending (${row},${col})…`;
     try {
         const r = await fetch(`/entertainment/caro/${TABLE_ID}/move`, {
             method:'POST',
@@ -474,9 +503,12 @@ async function placeMove(row, col) {
             body: JSON.stringify({ row, col })
         });
         const d = await r.json();
+        document.getElementById('d-resp').textContent =
+            `HTTP ${r.status} | ` + (d.error ? 'ERR: '+d.error : d.state ? 'OK state cur='+d.state.current_player : JSON.stringify(d).slice(0,60));
         if (d.error) showToast(d.error);
         else if (d.state) applyState(d.state);
     } catch(e) {
+        document.getElementById('d-resp').textContent = 'EXCEPTION: ' + e.message;
         showToast(TEXT.error);
     }
 }
